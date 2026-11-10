@@ -4,14 +4,14 @@ import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useAccount } from '@/features/auth/account';
-import { MODES, type WwMode } from '@/features/games/werewolf/cards';
+import { toMode } from '@/features/games/werewolf/cards';
 import { WerewolfHome } from '@/features/games/werewolf/home/WerewolfHome';
 import { hasBackend } from '@/lib/supabase';
 import { space } from '@/theme/tokens';
 
 /**
- * IRLY Games. For now one game, Loup-Garou, in three modes (Classic, Dubaï,
- * Chaos): Ludo is put aside (its tables still open from a link, nothing is
+ * IRLY Games. For now one game, Loup-Garou, in five modes (Classic, Dubaï,
+ * Chaos, Nightmare, All powers): Ludo is put aside (its tables still open from a link, nothing is
  * deleted). ?mode= opens the home on a mode.
  */
 export default function GamesScreen() {
@@ -28,7 +28,7 @@ export default function GamesScreen() {
       </Page>
     );
   }
-  return <WerewolfHome initialMode={MODES.includes(mode as WwMode) ? (mode as WwMode) : 'classic'} />;
+  return <WerewolfHome initialMode={toMode(mode)} />;
 }
 
 const styles = StyleSheet.create({

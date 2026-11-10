@@ -56,10 +56,14 @@ const VILLAGE: Scene = {
   victory: require('../../../../../assets/games/classic/bg_victory.webp') as ImageSourcePropType,
 };
 const CHAOS_SKY = require('../../../../../assets/games/classic/bg_chaos.webp') as ImageSourcePropType;
+const NIGHTMARE_FOG = require('../../../../../assets/games/classic/bg_nightmare.webp') as ImageSourcePropType;
+const POWERS_SQUARE = require('../../../../../assets/games/classic/bg_powers.webp') as ImageSourcePropType;
 
 /** Each mode's scenes: its home, its night, its day and its victory. */
 export const SCENES: Record<WwMode, Scene> = {
   classic: VILLAGE,
   dubai: BACKGROUND,
   chaos: { ...VILLAGE, home: CHAOS_SKY, night: CHAOS_SKY },
+  nightmare: { ...VILLAGE, home: NIGHTMARE_FOG, night: NIGHTMARE_FOG },
+  powers: { ...VILLAGE, home: POWERS_SQUARE, night: POWERS_SQUARE },
 };

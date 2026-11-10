@@ -28,6 +28,8 @@ export const SERVER_ERRORS: Record<string, string> = {
   'composition: that role cannot be added at this size': 'That card cannot be added at this size',
   'this mode is not available yet': 'This mode is not available yet',
   'Chaos: the deck is drawn in secret': 'Chaos: the deck is drawn in secret',
+  // Raised only while a migration runs, never to a member.
+  'ww modes: % does not have the expected mode check': GENERIC,
   'composition: that role is not in this game': 'That role is not in this game',
   'composition: unknown card': GENERIC,
   'composition: werewolves must be fewer than half the players': 'Werewolves must be fewer than half the players',

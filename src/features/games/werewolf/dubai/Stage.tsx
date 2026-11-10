@@ -39,28 +39,33 @@ type Props = {
  */
 export const Stage = memo(function Stage({ phase, title, subtitle, clock, players, mySeat, targets, chosen, marks, onPick, onMenu, hint, scene = BACKGROUND }: Props) {
   const fonts = useDubaiFonts();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const W = Math.min(width - 32, 560);
   const n = players.length;
-  const face = n <= 8 ? 56 : n <= 12 ? 48 : n <= 16 ? 42 : 36;
-  const H = Math.max(380, Math.round(W * 1.12));
+  // The whole table stays on screen above the docked actions, on short phones too: there it is drawn compact.
+  const H = Math.max(250, Math.min(Math.round(W * 1.12), height - 326));
+  const compact = H < 340 || W < 330;
+  const base = n <= 8 ? 56 : n <= 12 ? 48 : n <= 16 ? 42 : 36;
+  const face = compact ? Math.min(base, n <= 8 ? 42 : n <= 12 ? 36 : 30) : base;
   const rx = W / 2 - face / 2 - 6;
   const ry = H / 2 - face / 2 - 18;
+  // The title sits between the side seats.
+  const centerW = Math.max(120, W - 2 * (face + 26));
   return (
     <View style={[styles.stage, { width: W, height: H }]} testID="ww-stage">
       <LivingScene source={phase === 'night' ? scene.night : phase === 'day' ? scene.day : scene.victory} />
       <LinearGradient colors={['rgba(11,9,7,0.25)', 'rgba(11,9,7,0.1)', 'rgba(11,9,7,0.7)']} style={StyleSheet.absoluteFill} />
       {phase === 'night' ? <GoldDust count={10} height={H} /> : null}
       <View style={styles.center} pointerEvents="none">
-        <Animated.View key={title} entering={FadeIn.duration(600)} style={styles.banner}>
-          <Text style={[styles.title, serif(fonts, '900')]} accessibilityRole="header">
+        <Animated.View key={title} entering={FadeIn.duration(600)} style={[styles.banner, { maxWidth: centerW }, compact && styles.bannerCompact]}>
+          <Text style={[styles.title, serif(fonts, '900'), compact && { fontSize: 15 }]} accessibilityRole="header">
             {title.toUpperCase()}
           </Text>
-          {subtitle ? <Text style={[styles.sub, serif(fonts, '600')]}>{subtitle}</Text> : null}
+          {subtitle && !compact ? <Text style={[styles.sub, serif(fonts, '600')]}>{subtitle}</Text> : null}
         </Animated.View>
         {clock ? <View style={styles.clock}>{clock}</View> : null}
-        {hint ? (
-          <Animated.View key={hint} entering={FadeIn.duration(400)} style={styles.hint}>
+        {hint && !compact ? (
+          <Animated.View key={hint} entering={FadeIn.duration(400)} style={[styles.hint, { maxWidth: centerW }]}>
             <Text style={styles.hintText}>{hint}</Text>
           </Animated.View>
         ) : null}
@@ -167,14 +172,15 @@ const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, ma
 const styles = StyleSheet.create({
   stage: { borderRadius: 22, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.gold, alignSelf: 'center' },
   center: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  banner: { alignItems: 'center', borderWidth: 1.5, borderColor: DX.gold, borderRadius: 12, backgroundColor: 'rgba(11,9,7,0.78)', paddingHorizontal: 18, paddingVertical: 6, maxWidth: '62%' },
+  banner: { alignItems: 'center', borderWidth: 1.5, borderColor: DX.gold, borderRadius: 12, backgroundColor: 'rgba(11,9,7,0.78)', paddingHorizontal: 14, paddingVertical: 6 },
+  bannerCompact: { paddingHorizontal: 8, paddingVertical: 3 },
   title: { color: DX.goldLight, fontSize: 20, letterSpacing: 1.2, textAlign: 'center' },
   sub: { color: DX.ivory, fontSize: 12, textAlign: 'center' },
   clock: { borderWidth: 1.5, borderColor: DX.gold, borderRadius: 18, backgroundColor: 'rgba(11,9,7,0.85)', paddingHorizontal: 14, paddingVertical: 3 },
   seat: { position: 'absolute', alignItems: 'center' },
   ring: { position: 'absolute', left: -4, top: -4, borderWidth: 2.5 },
   halo: { position: 'absolute', left: -9, top: -9, backgroundColor: 'rgba(247,222,151,0.28)', shadowColor: DX.goldLight, shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
-  hint: { maxWidth: '58%', alignItems: 'center' },
+  hint: { alignItems: 'center' },
   hintText: { color: DX.black, backgroundColor: DX.goldLight, borderRadius: 14, overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 5, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   face: { overflow: 'hidden', borderWidth: 2, backgroundColor: DX.black, alignItems: 'center', justifyContent: 'center' },
   initialBox: { alignItems: 'center', justifyContent: 'center' },

@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { CARD_ORDER, DUBAI_ORDER, type CardId } from '@/features/games/werewolf/cards';
+import { CARD_ORDER, DUBAI_ORDER, MODE_LABEL, toMode, type CardId } from '@/features/games/werewolf/cards';
 import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { DubaiCard } from '@/features/games/werewolf/dubai/DubaiCard';
 import { DX, factionLabel, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
@@ -14,10 +14,10 @@ import { t as tx } from '@/i18n';
 
 type Filter = 'all' | Faction;
 
-/** A mode's collection (official mockup): every card, filtered by faction. ?mode=classic|dubai|chaos (Chaos plays the Classic cards). */
+/** A mode's collection (official mockup): every card, filtered by faction. ?mode= (every mode but Dubaï plays the Classic cards). */
 export default function CardsScreen() {
   const { mode: m } = useLocalSearchParams<{ mode?: string }>();
-  const mode = m === 'dubai' || m === 'chaos' ? m : 'classic';
+  const mode = toMode(m);
   const deck: CardId[] = mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER;
   const factions: Faction[] = mode === 'dubai' ? ['expats', 'escrocs', 'independents', 'double'] : ['village', 'wolves'];
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function CardsScreen() {
             {'IRLY\nLOUP-GAROU'}
           </Text>
           <View style={styles.modeBadge}>
-            <Text style={[styles.modeText, serif(fonts, '700')]}>{tx(mode === 'dubai' ? 'Dubai mode' : mode === 'chaos' ? 'Chaos mode' : 'Classic mode').toUpperCase()}</Text>
+            <Text style={[styles.modeText, serif(fonts, '700')]}>{tx(MODE_LABEL[mode]).toUpperCase()}</Text>
           </View>
           <Text style={[styles.sub, serif(fonts, '600')]}>{tx(mode === 'dubai' ? 'Dubai collection' : 'The village collection')}</Text>
         </View>

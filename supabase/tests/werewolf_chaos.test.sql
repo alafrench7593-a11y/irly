@@ -61,7 +61,7 @@ begin
   perform pg_temp.check(v ->> 'phase' = 'ended' and v ? 'composition', 'the deck is shown once the game is over');
   perform pg_temp.check(pg_temp.err(format($q$select public.ww_create('mixte', 'private', 8, 'online', '{"werewolf": 2, "villager": 6}', null, 'fr', 'chaos')$q$)) = 'Chaos: the deck is drawn in secret',
     'a Chaos table refuses a chosen deck');
-  perform pg_temp.check(pg_temp.err($q$select public.ww_training('mixte', 8, null, 'intermediate', 'nightmare')$q$) = 'this mode is not available yet',
+  perform pg_temp.check(pg_temp.err($q$select public.ww_training('mixte', 8, null, 'intermediate', 'apocalypse')$q$) = 'this mode is not available yet',
     'an unknown mode is refused');
 end $$;
 

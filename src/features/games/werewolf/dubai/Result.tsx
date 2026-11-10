@@ -11,7 +11,7 @@ import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import type { Room } from '../../api';
 import type { WwView } from '../api';
-import { CARDS, type CardId, type WwMode } from '../cards';
+import { CARDS, MODE_LABEL, toMode, type CardId } from '../cards';
 import { PORTRAIT, SCENES } from './art';
 import { GoldConfetti, LivingScene, useEntrance } from './Motion';
 import { Avatar } from '@/components/ui/Avatar';
@@ -20,7 +20,6 @@ import { wwTraining } from '../api';
 
 type Revealed = { seat: number; name: string; bot: boolean; card: CardId; alive: boolean; won: boolean };
 
-const MODE_LABEL: Record<WwMode, string> = { classic: 'Classic mode', dubai: 'Dubai mode', chaos: 'Chaos mode' };
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 
 /**
@@ -41,7 +40,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
   const solo = r?.solo ?? [];
   const double = r?.double ?? [];
   const winner = r?.winner;
-  const mode: WwMode = view.mode === 'dubai' || view.mode === 'chaos' ? view.mode : 'classic';
+  const mode = toMode(view.mode);
   const dubai = mode === 'dubai';
   const banner =
     winner === 'village'
