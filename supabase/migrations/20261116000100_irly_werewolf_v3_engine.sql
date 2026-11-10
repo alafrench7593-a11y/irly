@@ -527,7 +527,8 @@ begin
     update private.ww_players set card = 'scammer', charges = jsonb_set(p.charges, '{scam}', '0'), camp = p.camp, wolf_since = case when p.camp = 'wolves' then g.night + 1 end
       where room_id = p_room and seat = a.target;
     -- What both had planned for tonight with their old cards is void; nothing new is played before the next window.
-    delete from private.ww_actions where room_id = p_room and phase = 'night' and round = g.night and seat in (a.seat, a.target) and kind <> 'pass';
+    delete from private.ww_actions where room_id = p_room and phase = 'night' and round = g.night and seat in (a.seat, a.target) and kind <> 'pass'
+      and not (seat = a.seat and kind = 'scam');
     swapped := swapped || a.seat || a.target;
     perform private.ww_log_add(p_room, 'seat:' || a.seat, 'scam_done', jsonb_build_object('seat', a.target, 'card', q.card));
     perform private.ww_log_add(p_room, 'seat:' || a.target, 'scam_victim', jsonb_build_object('card', 'scammer'));

@@ -754,6 +754,22 @@ begin
       (select count(*) from private.ww_players p join v3_sims s on s.room = p.room_id where s.mode = m and (p.memory ->> 'solo_won')::boolean);
     perform pg_temp.check(not wins ? 'stuck', format('every simulated %s game ends', m));
   end loop;
+  -- Every power must really be played by an AI player, and every effect must really happen. Which cards are dealt and
+  -- when an AI player uses a one-shot power are draws: more Apocalypse games (every card can be dealt there) are
+  -- played until each has been seen, within a fixed limit. A power never seen by then fails the test.
+  for k in 1..80 loop
+    exit when not exists (select 1 from unnest(array['scam', 'exchange', 'gamble', 'sabotage', 'copy', 'disguise', 'hide', 'exorcise', 'mark', 'web', 'bite', 'dig', 'visit', 'omen',
+        'hack', 'forge', 'spy', 'bounty', 'detect', 'predict_wolf', 'predict_village', 'guard', 'mute', 'bribe', 'plead', 'decree']) x
+        where not exists (select 1 from private.ww_actions a join v3_sims s on s.room = a.room_id where a.kind = x))
+      and not exists (select 1 from unnest(array['scam_done', 'exchange_done', 'copy_done', 'gamble_result', 'power_blocked', 'mirror_reflected', 'anomaly_event', 'opening',
+        'cursed_turned', 'exorcise_result', 'prey', 'marked', 'bite_done', 'dig_result', 'visit_result', 'omen_result', 'hack_result', 'spy_result', 'paparazzi_result',
+        'detect_result', 'predict_result', 'muted', 'bribed', 'lawyer_saved', 'decree', 'solo_won']) x
+        where not exists (select 1 from private.ww_log l join v3_sims s on s.room = l.room_id where l.kind = x));
+    rid := pg_temp.sim('apocalypse', 14 + k % 7, (array['beginner', 'intermediate', 'expert'])[1 + k % 3]);
+    insert into v3_sims values ('apocalypse+', rid);
+    perform pg_temp.check((select phase = 'ended' from private.ww_games where room_id = rid), 'an extra Apocalypse game ends');
+    total := total + 1;
+  end loop;
   -- Every power was really played by an AI player in these games.
   select array_agg(k) into missing from unnest(array['scam', 'exchange', 'gamble', 'sabotage', 'copy', 'disguise', 'hide', 'exorcise', 'mark', 'web', 'bite', 'dig', 'visit', 'omen',
     'hack', 'forge', 'spy', 'bounty', 'detect', 'predict_wolf', 'predict_village', 'guard', 'mute', 'bribe', 'plead', 'decree',
