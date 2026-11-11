@@ -19,7 +19,7 @@ export const PRODUCT = [
     title: 'What Is IRLY? The App to Make Friends in Dubai | IRLY',
     description: 'IRLY is a free app to make friends in real life in Dubai and the UAE: communities, activities and group chats. What it is, who it is for, what it is not.',
     h1: 'What is IRLY?',
-    lead: 'IRLY is a free app for making friends in real life: you join communities built around your interests, join or organise activities, and talk in a group chat before you meet. It starts in Dubai and covers the other emirates of the UAE, in English and French. It is not a dating app, and it works today in the browser, with iOS and Android apps coming soon.',
+    lead: 'IRLY is a free app for making friends in real life: you join communities built around your interests, join or organise activities, and talk in a group chat before you meet. It starts in Dubai, its launch city, with the other emirates of the UAE opening in early access; it is in English and French. It is not a dating app, and it works today in the browser, with iOS and Android apps coming soon.',
     sections: [
       {
         h2: 'IRLY in a few lines',
@@ -62,7 +62,7 @@ export const PRODUCT = [
       },
       {
         h2: 'Where it works, and on which device',
-        html: `<p>IRLY starts in Dubai and covers the other emirates of the United Arab Emirates. When you sign up, you choose your emirate.</p>
+        html: `<p>IRLY starts in Dubai, its launch city; the other emirates of the United Arab Emirates are opening in early access. When you sign up, you choose your emirate.</p>
 <p>Today IRLY works in the browser, as a web app, at getirly.com/app: on a phone, a tablet or a computer, with nothing to install. iOS and Android apps are coming soon.</p>`,
       },
       {
@@ -79,7 +79,7 @@ export const PRODUCT = [
     faq: [
       { q: 'Is IRLY free?', a: 'Yes, IRLY is free. An organiser can mark an activity as paid when it has a cost of its own, and the activity page shows it before you join.' },
       { q: 'Is IRLY a dating app?', a: 'No. IRLY is made for friendship: communities, group activities and group chats. It is not designed for dating.' },
-      { q: 'Where can I use IRLY?', a: 'IRLY starts in Dubai and covers the other emirates of the UAE. It works today in the browser at getirly.com/app, and iOS and Android apps are coming soon.' },
+      { q: 'Where can I use IRLY?', a: 'IRLY starts in Dubai, its launch city; the other emirates of the UAE are opening in early access. It works today in the browser at getirly.com/app, and iOS and Android apps are coming soon.' },
       { q: 'Which languages does IRLY support?', a: 'English and French. You choose the language in the app’s settings.' },
       { q: 'What is IRLY Girl?', a: 'IRLY Girl is a space inside IRLY reserved for women, with its own communities and activities. The team checks each profile once before opening access.' },
       { q: 'Who is behind IRLY?', a: 'IRLY is published by ALF FASHION BRAND FZCO, a company based in Dubai. The team can be reached at getirly@gmail.com.' },
@@ -102,7 +102,7 @@ export const PRODUCT = [
     title: 'IRLY, c’est quoi ? L’appli pour se faire des amis | IRLY',
     description: 'IRLY est une appli gratuite pour se faire des amis en vrai à Dubaï et aux Émirats : communautés, activités, chats de groupe. Pour qui, et ce que ce n’est pas.',
     h1: 'IRLY, c’est quoi ?',
-    lead: 'IRLY est une application gratuite pour se faire des amis dans la vraie vie : tu rejoins des communautés autour de tes centres d’intérêt, tu participes à des activités ou tu en organises, et tu discutes dans un chat de groupe avant la rencontre. Elle démarre à Dubaï et couvre les autres émirats, en français et en anglais. Ce n’est pas une appli de rencontres amoureuses, et elle fonctionne aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt.',
+    lead: 'IRLY est une application gratuite pour se faire des amis dans la vraie vie : tu rejoins des communautés autour de tes centres d’intérêt, tu participes à des activités ou tu en organises, et tu discutes dans un chat de groupe avant la rencontre. Elle démarre à Dubaï, sa ville de lancement, et les autres émirats ouvrent en accès anticipé ; elle est en français et en anglais. Ce n’est pas une appli de rencontres amoureuses, et elle fonctionne aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt.',
     sections: [
       {
         h2: 'IRLY en quelques lignes',
@@ -145,7 +145,7 @@ export const PRODUCT = [
       },
       {
         h2: 'Où ça marche, et sur quel appareil',
-        html: `<p>IRLY démarre à Dubaï et couvre les autres émirats des Émirats arabes unis. À l’inscription, tu choisis ton émirat.</p>
+        html: `<p>IRLY démarre à Dubaï, sa ville de lancement ; les autres émirats des Émirats arabes unis ouvrent en accès anticipé. À l’inscription, tu choisis ton émirat.</p>
 <p>Aujourd’hui, IRLY fonctionne dans le navigateur, en application web, à l’adresse getirly.com/app : sur téléphone, tablette ou ordinateur, sans rien installer. Les applications iOS et Android arrivent bientôt.</p>`,
       },
       {
@@ -162,7 +162,7 @@ export const PRODUCT = [
     faq: [
       { q: 'IRLY est-elle gratuite ?', a: 'Oui, IRLY est gratuite. Un organisateur peut indiquer qu’une activité est payante quand elle a un coût propre, et la page de l’activité l’affiche avant que tu la rejoignes.' },
       { q: 'IRLY est-elle une appli de rencontres amoureuses ?', a: 'Non. IRLY est faite pour l’amitié : communautés, activités de groupe et chats de groupe. Elle n’est pas conçue pour les rencontres amoureuses.' },
-      { q: 'Où peut-on utiliser IRLY ?', a: 'IRLY démarre à Dubaï et couvre les autres émirats. Elle fonctionne aujourd’hui dans le navigateur à l’adresse getirly.com/app, et les applications iOS et Android arrivent bientôt.' },
+      { q: 'Où peut-on utiliser IRLY ?', a: 'IRLY démarre à Dubaï, sa ville de lancement ; les autres émirats ouvrent en accès anticipé. Elle fonctionne aujourd’hui dans le navigateur à l’adresse getirly.com/app, et les applications iOS et Android arrivent bientôt.' },
       { q: 'Dans quelles langues IRLY est-elle disponible ?', a: 'En français et en anglais. Tu choisis la langue dans les réglages de l’appli.' },
       { q: 'IRLY Girl, c’est quoi ?', a: 'IRLY Girl est un espace réservé aux femmes à l’intérieur d’IRLY, avec ses propres communautés et activités. L’équipe vérifie chaque profil une fois avant d’ouvrir l’accès.' },
       { q: 'Qui est derrière IRLY ?', a: 'IRLY est éditée par ALF FASHION BRAND FZCO, une société basée à Dubaï. L’équipe se contacte à getirly@gmail.com.' },

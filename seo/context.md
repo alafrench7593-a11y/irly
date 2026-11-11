@@ -37,8 +37,5 @@ User numbers, ratings, reviews, testimonials, awards, partners, press, a count o
 - Paying for a paid activity inside the app: not checked, so nothing is said about it.
 - Voice tables in Loup-Garou: built, not switched on.
 
-## For the owner to settle
-- « Covers the other emirates of the UAE » (the site and llms.txt) against « Early access » (the app): the new pages say « Dubai is the launch city ». If the other emirates are not really open, the older sentence should be softened too.
-
 ## Who is named beside IRLY in search results (12 November 2026, one search each, results from the United States)
 For « how to make friends in Dubai »: guides from property portals and from The National, Gulf News and Khaleej Times; the apps they name are Bumble BFF, Meetup, InterNations and Belong (a Dubai start-up covered by The National). For « comment se faire des amis à Dubaï »: almost no French editorial page; forum threads on expat.com and routard.com. The French search is the more open one.

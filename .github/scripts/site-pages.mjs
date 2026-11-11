@@ -455,7 +455,7 @@ fs.writeFileSync(
   `${OUT}/llms.txt`,
   `# IRLY
 
-> IRLY (app name: IRLY — Make Friends IRL) is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai and covers the other emirates of the UAE; Bali is announced and coming soon. It is in English and French. It is not a dating app. IRLY Girl is a space reserved for women.
+> IRLY (app name: IRLY — Make Friends IRL) is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai, its launch city; the other emirates of the UAE are opening in early access; Bali is announced and coming soon. It is in English and French. It is not a dating app. IRLY Girl is a space reserved for women.
 
 ## Facts
 

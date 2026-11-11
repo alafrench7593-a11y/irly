@@ -237,7 +237,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY belongs to the first type: a friendship and community app, and not a dating app. You join communities around your interests, join an activity or create your own, and talk in the group chat before you meet in real life. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings. The app starts in Dubai and covers the other emirates, in English and French. It is free and works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the types above. Try it alongside whatever else suits you, and keep the one that gets you out of the house.</p>`,
+        html: `<p>IRLY belongs to the first type: a friendship and community app, and not a dating app. You join communities around your interests, join an activity or create your own, and talk in the group chat before you meet in real life. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings. The app is in English and French; it starts in Dubai, with the other emirates opening in early access. It is free and works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the types above. Try it alongside whatever else suits you, and keep the one that gets you out of the house.</p>`,
       },
     ],
     faq: [
@@ -320,7 +320,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY fait partie du premier type : une application d’amitié et de communautés, et non une application de rencontres amoureuses. Tu rejoins des communautés autour de tes centres d’intérêt, tu participes à une activité ou tu crées la tienne, et tu discutes dans le chat du groupe avant de vous voir en vrai. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles. L’application commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle est gratuite et fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types décrits plus haut. Essaie-la à côté de ce qui te convient déjà, et garde ce qui te fait sortir de chez toi.</p>`,
+        html: `<p>IRLY fait partie du premier type : une application d’amitié et de communautés, et non une application de rencontres amoureuses. Tu rejoins des communautés autour de tes centres d’intérêt, tu participes à une activité ou tu crées la tienne, et tu discutes dans le chat du groupe avant de vous voir en vrai. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles. L’application est en français et en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle est gratuite et fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types décrits plus haut. Essaie-la à côté de ce qui te convient déjà, et garde ce qui te fait sortir de chez toi.</p>`,
       },
     ],
     faq: [
@@ -777,7 +777,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It is organised around communities: you join the ones that match your interests, take part in their activities or create your own, and talk in the group chat. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings between entrepreneurs, freelancers and professionals. The app starts in Dubai and covers the other emirates, in English and French. It is free, it is not a dating app, and it works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the kinds of communities described above.</p>`,
+        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It is organised around communities: you join the ones that match your interests, take part in their activities or create your own, and talk in the group chat. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings between entrepreneurs, freelancers and professionals. The app is in English and French; it starts in Dubai, with the other emirates opening in early access. It is free, it is not a dating app, and it works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the kinds of communities described above.</p>`,
       },
     ],
     faq: [
@@ -859,7 +859,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle est organisée autour de communautés : tu rejoins celles qui correspondent à tes centres d’intérêt, tu participes à leurs activités ou tu crées la tienne, et tu discutes dans le chat du groupe. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles entre entrepreneurs, indépendants et professionnels. L’application commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle est gratuite, ce n’est pas une application de rencontres amoureuses, et elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types de communautés décrits plus haut.</p>`,
+        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle est organisée autour de communautés : tu rejoins celles qui correspondent à tes centres d’intérêt, tu participes à leurs activités ou tu crées la tienne, et tu discutes dans le chat du groupe. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles entre entrepreneurs, indépendants et professionnels. L’application est en français et en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle est gratuite, ce n’est pas une application de rencontres amoureuses, et elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types de communautés décrits plus haut.</p>`,
       },
     ],
     faq: [
@@ -1097,7 +1097,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It follows the same logic as this page: you choose communities by interest, join an activity or create your own, a run, a padel game or a brunch for example, and talk in the group chat before you meet. IRLY Girl is a space reserved for women, IRLY Network is the part for professional meetings, and IRLY Games lets members play a Werewolf-style party game together in the app. IRLY is free, starts in Dubai and covers the other emirates, in English and French. It works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among others.</p>`,
+        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It follows the same logic as this page: you choose communities by interest, join an activity or create your own, a run, a padel game or a brunch for example, and talk in the group chat before you meet. IRLY Girl is a space reserved for women, IRLY Network is the part for professional meetings, and IRLY Games lets members play a Werewolf-style party game together in the app. IRLY is free, in English and French; it starts in Dubai, with the other emirates opening in early access. It works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among others.</p>`,
       },
     ],
     faq: [
@@ -1172,7 +1172,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle suit la même logique que cette page : tu choisis des communautés par centre d’intérêt, tu rejoins une activité ou tu crées la tienne, un footing, une partie de padel ou un brunch par exemple, et tu discutes dans le chat du groupe avant de vous voir. IRLY Girl est un espace réservé aux femmes, IRLY Network est la partie consacrée aux rencontres professionnelles, et IRLY Games permet aux membres de jouer ensemble, dans l’application, à un jeu d’ambiance de type Loup-Garou. IRLY est gratuite, commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi d’autres.</p>`,
+        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle suit la même logique que cette page : tu choisis des communautés par centre d’intérêt, tu rejoins une activité ou tu crées la tienne, un footing, une partie de padel ou un brunch par exemple, et tu discutes dans le chat du groupe avant de vous voir. IRLY Girl est un espace réservé aux femmes, IRLY Network est la partie consacrée aux rencontres professionnelles, et IRLY Games permet aux membres de jouer ensemble, dans l’application, à un jeu d’ambiance de type Loup-Garou. IRLY est gratuite et en français comme en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi d’autres.</p>`,
       },
     ],
     faq: [
