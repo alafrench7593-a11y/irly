@@ -182,6 +182,7 @@ h2{font-size:26px;line-height:1.2;letter-spacing:-.01em;margin:44px 0 12px;font-
 h3{font-size:19px;margin:24px 0 6px;font-weight:700}
 p,li{color:var(--g1)}strong{color:var(--paper)}
 ul,ol{padding-left:22px}li{margin:6px 0}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px;line-height:1.5}th,td{text-align:left;padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--paper);font-weight:700}td{color:var(--g1)}.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .cta{margin:52px 0 0;padding:28px;border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.04)}
 .cta h2{margin:0 0 8px}.cta p{margin:0 0 18px}
 .btn{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:999px;background:var(--paper);color:var(--ink);font-weight:800;text-decoration:none}
@@ -276,6 +277,8 @@ for (const a of PAGES) {
   alternates.push(`<link rel="alternate" hreflang="x-default" href="${SITE + (a.lang === 'en' ? a.path : twin?.path ?? a.path)}">`);
   const body = a.sections.map((s, i) => `<section><h2>${s.h2}</h2>\n${s.html}</section>${a.figure && a.figure.after === i ? `\n${figure(a.figure.photo, a.lang, up, false)}` : ''}`).join('\n');
   const share = a.cover ? photoUrl(a.cover) : `${SITE}og.jpg`;
+  // The button opens the app in the page's language, and says which page sent the visitor (read by any audience tool, ignored by the app).
+  const appLink = `${APP_URL}?lang=${a.lang}&amp;utm_source=getirly&amp;utm_medium=${a.blog ? 'blog' : 'guide'}&amp;utm_campaign=${a.path.split('/').filter(Boolean).at(-1)}`;
   const html = `<!doctype html>
 <html lang="${a.lang}" dir="ltr">
 <head>
@@ -329,7 +332,7 @@ ${body}${faq}
   <aside class="cta">
     <h2>${a.cta.title}</h2>
     <p>${a.cta.body}</p>
-    <a class="btn" href="${a.cta.href ?? APP_URL}" data-cta="guide">${a.cta.label} <span aria-hidden="true">→</span></a>
+    <a class="btn" href="${a.cta.href ?? appLink}" data-cta="guide">${a.cta.label} <span aria-hidden="true">→</span></a>
   </aside>
   <p class="related">${t.read}${a.lang === 'fr' ? ' : ' : ': '}${a.related.map((r) => `<a href="${up + r.path}">${r.label}</a>`).join(' · ')}</p>
 </main>
@@ -417,6 +420,36 @@ ${cards}
   fs.mkdirSync(path.join(OUT, hubPath(l)), { recursive: true });
   fs.writeFileSync(path.join(OUT, hubPath(l), 'index.html'), html);
 }
+
+/* ───────── The page shown for an address that does not exist (kept out of search engines) ───────── */
+fs.writeFileSync(
+  `${OUT}/404.html`,
+  `<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found | IRLY</title>
+<meta name="theme-color" content="#050505">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<style>${css}</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="/" aria-label="IRLY">IRLY</a></header>
+<main>
+  <h1>This page does not exist</h1>
+  <p class="lead">The address may have changed. Here is where to go next.</p>
+  <p><a href="/">Home</a> · <a href="/guides/">Guides</a> · <a href="/blog/">Blog</a> · <a href="/girl">IRLY Girl</a> · <a href="${APP_URL}">Open IRLY</a></p>
+  <h2 lang="fr">Cette page n’existe pas</h2>
+  <p lang="fr">L’adresse a peut-être changé. <a href="/fr/">Accueil</a> · <a href="/fr/guides/">Guides</a> · <a href="/fr/blog/">Blog</a> · <a href="/fr/girl">IRLY Girl</a> · <a href="${APP_URL}">Ouvrir IRLY</a></p>
+</main>
+<footer><a href="/">IRLY</a> · © 2026 IRLY</footer>
+</body>
+</html>
+`,
+);
 
 /* ───────── FAQ as FAQPage data on each home page (same words as on the page) ───────── */
 for (const l of LANGS) {
