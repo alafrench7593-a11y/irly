@@ -21,27 +21,6 @@ const BLOG = POSTS.map((p) => ({ ...p, blog: true })).sort((a, b) => (b.publishe
 const GUIDES = [...ARTICLES, ...STRATEGIC];
 const PAGES = [...GUIDES, ...BLOG];
 
-// The older guides point to the pages written since on a neighbouring question (same language), under « Read also ».
-const ALSO = {
-  'dubai/make-friends/': ['dubai/app-to-make-friends/', 'dubai/expat-communities/', 'dubai/meet-french-people/'],
-  'fr/dubai/se-faire-des-amis/': ['fr/dubai/rencontrer-des-francais/', 'fr/dubai/application-pour-se-faire-des-amis/', 'fr/dubai/communautes-expatries/'],
-  'dubai/group-activities/': ['dubai/activities/', 'dubai/free-social-activities/', 'dubai/running-clubs/'],
-  'fr/dubai/activites-de-groupe/': ['fr/dubai/activites/', 'fr/dubai/activites-gratuites/', 'fr/dubai/clubs-de-running/'],
-  'dubai/activities-for-women/': ['dubai/make-female-friends/'],
-  'fr/dubai/activites-entre-femmes/': ['fr/dubai/trouver-des-copines/'],
-  'dubai/networking/': ['dubai/expat-communities/', 'dubai/activities/'],
-  'fr/dubai/networking/': ['fr/dubai/communautes-expatries/', 'fr/dubai/activites/'],
-  'dubai/lonely/': ['dubai/free-social-activities/'],
-  'fr/dubai/solitude/': ['fr/dubai/activites-gratuites/'],
-  'dubai/moving-to-dubai/': ['dubai/expat-communities/', 'dubai/app-to-make-friends/'],
-  'fr/dubai/s-installer/': ['fr/dubai/communautes-expatries/', 'fr/dubai/rencontrer-des-francais/'],
-};
-const lower = (h) => h.replace(/\s*\?$/, '');
-for (const a of PAGES) {
-  const more = (ALSO[a.path] ?? []).map((path) => PAGES.find((x) => x.path === path)).filter((x) => x && !a.related.some((r) => r.path === x.path));
-  if (more.length) a.related = [...a.related, ...more.map((x) => ({ label: lower(x.h1), path: x.path }))];
-}
-
 const OUT = process.argv[2] || 'dist/site';
 const SITE = 'https://getirly.com/';
 const LANGS = ['en', 'fr', 'ar'];

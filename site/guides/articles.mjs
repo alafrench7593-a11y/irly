@@ -34,7 +34,7 @@ export const ARTICLES = [
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
     updated: '2026-10-30',
-    title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
+    title: 'How to Make Friends in Dubai: A Newcomer’s Guide | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
     h1: 'How to make friends in Dubai',
     lead: 'Making friends in Dubai is very possible, but it rarely happens by chance: most friendships here start around a shared activity you show up to again and again. Pick two or three things you enjoy, join the groups that do them, and go back every week. Below: why it can feel hard at first, and what works.',
@@ -93,7 +93,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Meeting people who speak your language',
-        html: `<p>It helps to have people who share your language and culture, especially at the start. Look for national and language communities, cultural associations and their events. Then make sure you also join mixed groups: Dubai is international, and that mix is one of the best things about living here.</p>`,
+        html: `<p>It helps to have people who share your language and culture, especially at the start. Look for national and language communities, cultural associations and their events. Our guide to <a href="../expat-communities/">expat communities in Dubai</a> explains how to choose one. Then make sure you also join mixed groups: Dubai is international, and that mix is one of the best things about living here.</p>`,
       },
       {
         h2: 'Meeting new people safely',
@@ -122,7 +122,7 @@ export const ARTICLES = [
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
     updated: '2026-10-30',
-    title: 'Se faire des amis à Dubaï : le guide des nouveaux arrivants | IRLY',
+    title: 'Comment se faire des amis à Dubaï : le guide pratique | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
     h1: 'Comment se faire des amis à Dubaï',
     lead: 'Se faire des amis à Dubaï, c’est tout à fait possible, mais ça arrive rarement par hasard : ici, la plupart des amitiés naissent autour d’une activité où l’on revient chaque semaine. Choisis deux ou trois choses que tu aimes, rejoins les groupes qui les pratiquent et reviens régulièrement. Voici pourquoi c’est parfois difficile au début, et ce qui marche.',
@@ -181,7 +181,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Rencontrer des francophones',
-        html: `<p>Au début, ça aide d’avoir des personnes qui partagent ta langue et ta culture. Cherche les associations et communautés francophones et leurs événements. Puis rejoins aussi des groupes mixtes : Dubaï est internationale, et ce mélange fait partie de ce qu’il y a de mieux ici.</p>`,
+        html: `<p>Au début, ça aide d’avoir des personnes qui partagent ta langue et ta culture. Cherche les associations et communautés francophones et leurs événements. Les portes d’entrée sont détaillées dans <a href="../rencontrer-des-francais/">comment rencontrer des Français à Dubaï</a>. Puis rejoins aussi des groupes mixtes : Dubaï est internationale, et ce mélange fait partie de ce qu’il y a de mieux ici.</p>`,
       },
       {
         h2: 'Rencontrer de nouvelles personnes en sécurité',
@@ -210,7 +210,7 @@ export const ARTICLES = [
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
     updated: '2026-11-01',
-    title: 'How to Make Friends in Bali: Travellers, Nomads and Newcomers | IRLY',
+    title: 'How to Make Friends in Bali: Travellers and Newcomers | IRLY',
     description: 'Arriving in Bali alone? How friendships work on an island where people come and go, and practical ways to meet people in Canggu, Ubud and beyond.',
     h1: 'How to make friends in Bali',
     lead: 'Meeting people in Bali is easy; keeping friends is the real challenge, because so many people are only passing through. The trick is to mix: join the open, sociable scene for quick connections, and build a few regular habits with people who are staying as long as you are.',
@@ -296,6 +296,8 @@ export const ARTICLES = [
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
       { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' },
       { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' },
+      { label: 'How often to see someone before they become a friend', path: 'blog/how-often-see-someone-become-friend/' },
+      { label: 'How to start a small group yourself', path: 'blog/start-small-group-weekly-walk-book-club/' },
     ],
   },
   {
@@ -306,7 +308,7 @@ export const ARTICLES = [
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
     updated: '2026-11-01',
-    title: 'Se faire des amis à Bali : voyageurs et nouveaux arrivants | IRLY',
+    title: 'Comment se faire des amis à Bali quand on arrive seul | IRLY',
     description: 'Tu arrives seul à Bali ? Comment naissent les amitiés sur une île où tout le monde bouge, et des façons concrètes de rencontrer du monde à Canggu ou Ubud.',
     h1: 'Comment se faire des amis à Bali',
     lead: 'Rencontrer des gens à Bali est facile ; garder des amis, c’est le vrai défi, parce que beaucoup ne font que passer. L’astuce : mélanger les deux. Profite de l’ambiance ouverte pour les rencontres rapides, et construis quelques habitudes régulières avec des personnes qui restent aussi longtemps que toi.',
@@ -392,6 +394,8 @@ export const ARTICLES = [
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
       { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' },
       { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' },
+      { label: 'Combien de fois se voir avant de devenir amis', path: 'fr/blog/combien-de-fois-se-voir-pour-devenir-amis/' },
+      { label: 'Lancer ton propre petit groupe', path: 'fr/blog/creer-un-petit-groupe-balade-club-lecture/' },
     ],
   },
   {
@@ -402,7 +406,7 @@ export const ARTICLES = [
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
     updated: '2026-11-03',
-    title: 'Bali for Digital Nomads: Finding Community and Coworking | IRLY',
+    title: 'Bali for Digital Nomads: Community and Coworking | IRLY',
     description: 'Working remotely from Bali? How to find a community, choose an area and a coworking space, and build a routine that keeps you social without losing your workdays.',
     h1: 'Bali for digital nomads: community and coworking',
     lead: 'Bali makes it easy to meet other remote workers, but a good stay depends on three choices you make early: the area you live in, the place you work from, and the few regular activities you commit to. Get those right and the community usually follows. Below: how to choose each one, and how to stay social without losing your workdays.',
@@ -483,6 +487,7 @@ export const ARTICLES = [
     related: [
       { label: 'How to make friends in Bali', path: 'bali/make-friends/' },
       { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' },
+      { label: 'Feeling lonely even with people around you', path: 'blog/lonely-even-with-people-around/' },
     ],
   },
   {
@@ -574,6 +579,7 @@ export const ARTICLES = [
     related: [
       { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' },
       { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' },
+      { label: 'Se sentir seul même entouré', path: 'fr/blog/se-sentir-seul-meme-entoure/' },
     ],
   },
   {
@@ -598,7 +604,7 @@ export const ARTICLES = [
 <li><strong>Work takes a lot of room.</strong> Long weeks leave little energy for meeting people.</li>
 <li><strong>Summer moves life indoors.</strong> From roughly June to September, the heat makes spontaneous meetings rarer.</li>
 </ul>
-<p>Knowing this helps: it is the situation, not you.</p>`,
+<p>Knowing this helps: it is the situation, not you. If you feel alone even though your days are full of people, read <a href="../../blog/lonely-even-with-people-around/">feeling lonely even with people around you</a>.</p>`,
       },
       {
         h2: 'Small steps that help this week',
@@ -668,7 +674,7 @@ export const ARTICLES = [
 <li><strong>Le travail prend beaucoup de place.</strong> Les semaines longues laissent peu d’énergie pour rencontrer du monde.</li>
 <li><strong>L’été ramène la vie à l’intérieur.</strong> De juin à septembre environ, la chaleur rend les rencontres spontanées plus rares.</li>
 </ul>
-<p>Le savoir aide : c’est la situation, pas toi.</p>`,
+<p>Le savoir aide : c’est la situation, pas toi. Si tu te sens seul alors que tes journées sont pleines de monde, lis <a href="../../blog/se-sentir-seul-meme-entoure/">se sentir seul même entouré</a>.</p>`,
       },
       {
         h2: 'Les petits pas qui aident cette semaine',
@@ -754,7 +760,7 @@ export const ARTICLES = [
 <li><strong>Come back.</strong> The second time at the same class or club, faces are familiar and talking is much easier.</li>
 <li><strong>Suggest a next step only when it fits.</strong> “Same time next week?” is often enough to turn a chat into a habit.</li>
 </ol>
-<p>And if nobody talks to you, the evening still counts: you went, you did something you like, and the next time will be easier.</p>`,
+<p>And if nobody talks to you, the evening still counts: you went, you did something you like, and the next time will be easier. For ready-made first lines, read <a href="../../blog/what-to-say-start-conversation-activity/">what to say to start a conversation at an activity</a>.</p>`,
       },
       {
         h2: 'Simple habits to feel at ease',
@@ -793,7 +799,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Going out on your own?', body: 'Find an activity this week where joining alone is the norm.', label: 'Find an activity' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Free social activities in Dubai', path: 'dubai/free-social-activities/' }],
   },
   {
     lang: 'fr',
@@ -833,7 +839,7 @@ export const ARTICLES = [
 <li><strong>Reviens.</strong> La deuxième fois au même cours ou au même club, les visages sont familiers et parler devient bien plus simple.</li>
 <li><strong>Propose une suite seulement si ça s’y prête.</strong> « Même heure la semaine prochaine ? » suffit souvent à transformer une discussion en habitude.</li>
 </ol>
-<p>Et si personne ne te parle, la soirée compte quand même : tu y es allé, tu as fait quelque chose que tu aimes, et la prochaine fois sera plus facile.</p>`,
+<p>Et si personne ne te parle, la soirée compte quand même : tu y es allé, tu as fait quelque chose que tu aimes, et la prochaine fois sera plus facile. Pour des phrases toutes prêtes, lis <a href="../../blog/quoi-dire-pour-lancer-une-conversation-activite/">quoi dire pour lancer une conversation pendant une activité</a>.</p>`,
       },
       {
         h2: 'Des réflexes simples pour être à l’aise',
@@ -872,7 +878,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu sors seul ?', body: 'Trouve une activité cette semaine où venir seul est la norme.', label: 'Trouver une activité' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Activités gratuites à Dubaï', path: 'fr/dubai/activites-gratuites/' }],
   },
   {
     lang: 'en',
@@ -882,8 +888,8 @@ export const ARTICLES = [
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
     updated: '2026-10-31',
-    title: '15 Group Activities to Meet People in Dubai | IRLY',
-    description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
+    title: 'Meet New People in Dubai: 15 Group Activities | IRLY',
+    description: 'Meet new people in Dubai through fifteen group activities, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
     h1: '15 group activities to meet people in Dubai',
     lead: 'The group activities that work best for meeting people in Dubai are the ones that meet every week with the same faces: run clubs, padel, team sports, classes, volunteering and hobby groups. Pick two from the list below that you would enjoy even without meeting anyone, go back every week, and suggest a coffee after the third session.',
     sections: [
@@ -899,7 +905,7 @@ export const ARTICLES = [
       {
         h2: 'Sport and outdoors',
         html: `<ol>
-<li><strong>Run clubs.</strong> Groups meet early in the morning or after sunset, all paces welcome in most of them. Often followed by breakfast.</li>
+<li><strong>Run clubs.</strong> Groups meet early in the morning or after sunset, all paces welcome in most of them. Often followed by breakfast. See <a href="../running-clubs/">how to join a social running club in Dubai</a>.</li>
 <li><strong>Padel.</strong> Played in fours, so you always meet three people. Many groups mix levels and look for a fourth player.</li>
 <li><strong>Football and other team sports.</strong> Casual leagues and weekly pick-up games, for men, women and mixed teams.</li>
 <li><strong>Beach volleyball.</strong> Easy to join, played in small teams, best in the cooler hours.</li>
@@ -990,7 +996,7 @@ export const ARTICLES = [
       {
         h2: 'Sport et plein air',
         html: `<ol>
-<li><strong>Les clubs de course.</strong> Les groupes se retrouvent tôt le matin ou après le coucher du soleil, et la plupart accueillent tous les niveaux. Souvent suivis d’un petit-déjeuner.</li>
+<li><strong>Les clubs de course.</strong> Les groupes se retrouvent tôt le matin ou après le coucher du soleil, et la plupart accueillent tous les niveaux. Souvent suivis d’un petit-déjeuner. Vois <a href="../clubs-de-running/">comment rejoindre un running club à Dubaï</a>.</li>
 <li><strong>Le padel.</strong> Il se joue à quatre, donc tu rencontres toujours trois personnes. Beaucoup de groupes mélangent les niveaux et cherchent un quatrième joueur.</li>
 <li><strong>Le football et les autres sports d’équipe.</strong> Ligues loisir et matchs hebdomadaires ouverts, pour hommes, femmes et équipes mixtes.</li>
 <li><strong>Le beach-volley.</strong> Facile à rejoindre, en petites équipes, idéal aux heures plus fraîches.</li>
@@ -1085,7 +1091,7 @@ export const ARTICLES = [
 <h3>Coworking community events</h3>
 <p>Many coworking spaces run breakfasts, workshops and talks, often open to non-members. Even a day pass can put you in a room with founders and freelancers.</p>
 <h3>Business groups and chambers of commerce</h3>
-<p>Business councils, chambers of commerce and groups organised by nationality or by industry hold regular networking events. They are useful if you work with a specific market or country.</p>
+<p>Business councils, chambers of commerce and groups organised by nationality or by industry hold regular networking events. They are useful if you work with a specific market or country. For one example, see <a href="../meet-french-people/">how to meet French people in Dubai</a>, which covers the French business network.</p>
 <h3>Free zone and accelerator communities</h3>
 <p>Companies set up in a free zone, or taking part in an incubator or accelerator programme, often have access to their own events and member networks. Ask what is available when you register.</p>
 <h3>Conferences and trade shows</h3>
@@ -1178,7 +1184,7 @@ export const ARTICLES = [
 <h3>Les événements des espaces de coworking</h3>
 <p>Beaucoup d’espaces de coworking organisent des petits-déjeuners, des ateliers et des conférences, souvent ouverts aux non-membres. Même un pass à la journée peut te mettre dans une salle avec des fondateurs et des freelances.</p>
 <h3>Les groupes d’affaires et chambres de commerce</h3>
-<p>Les conseils d’affaires, les chambres de commerce et les groupes organisés par nationalité ou par secteur tiennent des soirées de networking régulières. Utile si tu travailles avec un marché ou un pays précis.</p>
+<p>Les conseils d’affaires, les chambres de commerce et les groupes organisés par nationalité ou par secteur tiennent des soirées de networking régulières. Utile si tu travailles avec un marché ou un pays précis. Pour le réseau français, vois <a href="../rencontrer-des-francais/">comment rencontrer des Français à Dubaï</a>.</p>
 <h3>Les communautés de free zones et d’accélérateurs</h3>
 <p>Les entreprises installées en free zone, ou qui suivent un programme d’incubation ou d’accélération, ont souvent accès à leurs propres événements et réseaux de membres. Demande ce qui existe au moment de ton enregistrement.</p>
 <h3>Les conférences et salons professionnels</h3>
@@ -1250,8 +1256,8 @@ export const ARTICLES = [
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
     updated: '2026-10-27',
-    title: 'Activities for Women in Dubai: Where to Meet Other Women | IRLY',
-    description: 'Activities for women in Dubai to meet other women: classes, sport, culture and communities, women-only options, and simple habits to feel at ease.',
+    title: 'Women’s Communities and Activities in Dubai | IRLY',
+    description: 'Women’s communities and activities in Dubai to meet other women: classes, sport, culture, women-only options, and simple habits to feel at ease.',
     h1: 'Activities for women in Dubai: where to meet other women',
     lead: 'The easiest way to meet other women in Dubai is a regular activity in a small group: a class, a sport session, a book club or a community that meets every week. Women-only options exist for those who prefer them, and many mixed activities are just as welcoming. Below: the kinds of activities that work, how to choose, and how to turn a first meeting into a friendship.',
     sections: [
@@ -1285,7 +1291,8 @@ export const ARTICLES = [
 <li><strong>Suggest something small.</strong> A coffee after the class or walking together next time is easier to say yes to than a big plan.</li>
 <li><strong>Swap contacts naturally.</strong> “Shall we make a group for this class?” works well and includes everyone.</li>
 <li><strong>Take the first step.</strong> Many women around you are new too and are waiting for someone to suggest a plan.</li>
-</ol>`,
+</ol>
+<p>Each of these steps is covered in more detail in <a href="../make-female-friends/">how to find female friends in Dubai</a>.</p>`,
       },
       {
         h2: 'Can’t find the group you want? Start a small one',
@@ -1323,8 +1330,8 @@ export const ARTICLES = [
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
     updated: '2026-10-27',
-    title: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes | IRLY',
-    description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture, communautés réservées aux femmes, et réflexes simples pour être à l’aise.',
+    title: 'Sorties entre filles à Dubaï : activités entre femmes | IRLY',
+    description: 'Sorties entre filles à Dubaï : des activités entre femmes pour rencontrer d’autres femmes, cours, sport, culture, groupes réservés aux femmes, réflexes simples.',
     h1: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes',
     lead: 'Le plus simple pour rencontrer d’autres femmes à Dubaï : une activité régulière en petit groupe, comme un cours, une séance de sport, un club de lecture ou une communauté qui se retrouve chaque semaine. Des options réservées aux femmes existent pour celles qui les préfèrent, et beaucoup d’activités mixtes sont tout aussi accueillantes. Ci-dessous : les activités qui marchent, comment choisir, et comment transformer une première rencontre en amitié.',
     sections: [
@@ -1358,7 +1365,8 @@ export const ARTICLES = [
 <li><strong>Propose quelque chose de petit.</strong> Un café après le cours ou marcher ensemble la prochaine fois, c’est plus facile à accepter qu’un grand projet.</li>
 <li><strong>Échange tes contacts naturellement.</strong> « On fait un groupe pour ce cours ? » marche bien et inclut tout le monde.</li>
 <li><strong>Fais le premier pas.</strong> Beaucoup de femmes autour de toi sont nouvelles aussi et attendent que quelqu’un propose.</li>
-</ol>`,
+</ol>
+<p>Ces étapes sont détaillées dans <a href="../trouver-des-copines/">comment trouver des copines à Dubaï</a>.</p>`,
       },
       {
         h2: 'Tu ne trouves pas le groupe qu’il te faut ? Lance-en un petit',
@@ -1444,7 +1452,7 @@ export const ARTICLES = [
 <li><strong>Join a community</strong> around your language, your work or something you love.</li>
 <li><strong>Plan one social thing every weekend.</strong> Since 2022, the official weekend is Saturday and Sunday.</li>
 </ol>
-<p>For more ideas, read <a href="../make-friends/">how to make friends in Dubai</a> and <a href="../group-activities/">15 group activities to meet people</a>.</p>`,
+<p>For more ideas, read <a href="../make-friends/">how to make friends in Dubai</a> and <a href="../group-activities/">15 group activities to meet people</a>. If you moved as a couple, see <a href="../../blog/new-dubai-couple-social-life/">building a social life together in Dubai</a>.</p>`,
       },
       {
         h2: 'When the excitement wears off',
@@ -1521,7 +1529,7 @@ export const ARTICLES = [
 <li><strong>Rejoins une communauté</strong> autour de ta langue, de ton métier ou d’une passion.</li>
 <li><strong>Prévois une sortie sociale chaque week-end.</strong> Depuis 2022, le week-end officiel est le samedi et le dimanche.</li>
 </ol>
-<p>Pour d’autres idées, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde</a>.</p>`,
+<p>Pour d’autres idées, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde</a>. Si vous arrivez à deux, lis <a href="../../blog/arriver-dubai-en-couple-vie-sociale/">construire une vie sociale à deux à Dubaï</a>.</p>`,
       },
       {
         h2: 'Quand l’enthousiasme retombe',
@@ -1636,7 +1644,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Starting over somewhere new?', body: 'Join a community around what you like and find people to do things with, in real life.', label: 'Find my people' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' }, { label: 'Lonely after a breakup in a new city', path: 'blog/lonely-after-breakup-new-city/' }],
   },
   {
     lang: 'fr',
@@ -1732,7 +1740,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu repars de zéro ailleurs ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve des gens avec qui faire des choses, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' }, { label: 'Seul après une rupture loin de chez toi', path: 'fr/blog/seul-apres-rupture-nouvelle-ville/' }],
   },
 ];
 
