@@ -90,6 +90,7 @@ export const PRODUCT = [
       { label: 'How to join a community on IRLY', path: 'irly/join-a-community/' },
       { label: 'IRLY vs other ways to meet people in Dubai', path: 'irly/irly-vs-other-ways-to-meet-people/' },
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'IRLY press kit', path: 'irly/press/' }
     ],
   },
   {
@@ -173,6 +174,8 @@ export const PRODUCT = [
       { label: 'Comment rejoindre une communauté sur IRLY ?', path: 'fr/irly/rejoindre-une-communaute/' },
       { label: 'IRLY et les autres façons de rencontrer du monde à Dubaï', path: 'fr/irly/irly-et-les-autres-solutions/' },
       { label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Espace presse', path: 'fr/irly/presse/' },
+      { label: 'IRLY Network', path: 'irly/irly-network/' }
     ],
   },
   {
@@ -250,6 +253,7 @@ export const PRODUCT = [
       { label: 'How to join a community on IRLY', path: 'irly/join-a-community/' },
       { label: 'How to organise an activity on IRLY', path: 'irly/create-an-activity/' },
       { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
+      { label: 'IRLY Network', path: 'fr/irly/irly-network/' }
     ],
   },
   {

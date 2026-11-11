@@ -11,6 +11,17 @@ Ordered by expected effect for the effort. « Owner » means it cannot be done f
 | 4 | Done on 12 November 2026: from GitHub's network, the host answers `Googlebot`, `Bingbot`, `OAI-SearchBot` and `PerplexityBot` with the same page as a browser (200, full HTML). Re-run the « Website probe » workflow after any change of firewall settings. | high | done | repo |
 | 5 | Send the five drafts in `seo/outreach/`, each to a named person. External mentions are what the site lacks most. | high | 2 h | owner |
 
+## Routine
+| When | What | Who |
+| --- | --- | --- |
+| every morning | « Website probe » reads every page of the sitemap on the live site; a problem fails the run and GitHub writes to the owner | automatic |
+| after each deployment | « Announce pages » sends the sitemap's addresses to Bing and the other IndexNow engines | automatic |
+| every day | two blog posts from `docs/BLOG-PLAN.md`, checked by `scripts/test-site.mjs` before they are merged | scheduled task |
+| every week | read Search Console (Indexing → Pages, Performance → Queries) into `seo/dashboard.md` | owner, until Search Console can be read by the repo |
+| every month | the 25 questions of `seo/ai-prompts.md`, then `seo/reports/` from the template | owner + repo |
+
+Reading Search Console from the repo (so that the weekly and monthly steps run by themselves) needs a Google service account added as a user of the property, with its key stored as a repository secret. It is the owner's to create.
+
 ## Next
 | # | What | Effect | Effort | Who |
 | --- | --- | --- | --- | --- |
