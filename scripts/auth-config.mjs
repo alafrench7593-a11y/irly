@@ -120,24 +120,18 @@ if (smtpHost && smtpUser && smtpPass) {
   console.log('No own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): email confirmation unchanged (on), 2 emails an hour');
 }
 
-// The sign-in and confirmation emails carry the 6-digit code the app asks for, and the link as well: the app says
-// « enter the code », and Supabase's own templates only send a link. French and English in one email (the server
-// does not know the member's language). Supabase fills {{ .Token }} and {{ .ConfirmationURL }}.
-const codeEmail = [
-  '<h2>IRLY</h2>',
-  '<p>Ton code IRLY · Your IRLY code</p>',
-  '<p style="font-size:30px;font-weight:700;letter-spacing:6px;margin:12px 0">{{ .Token }}</p>',
-  '<p>Saisis-le dans l’application, ou ouvre ce lien sur ton téléphone.<br>Enter it in the app, or open this link on your phone.</p>',
-  '<p><a href="{{ .ConfirmationURL }}">Continuer vers IRLY · Continue to IRLY</a></p>',
-  '<p style="color:#777;font-size:13px">Si tu n’as rien demandé, ignore cet e-mail.<br>If you did not ask for this, ignore this email.</p>',
-].join('\n');
+// The sign-in, confirmation and forgotten-password emails, in IRLY's look (scripts/auth-emails.mjs). The first two
+// carry the 6-digit code the app asks for, and the link.
+const { signInEmail, signInSubject, recoveryEmail, recoverySubject } = await import('./auth-emails.mjs');
 Object.assign(patch, {
-  mailer_subjects_confirmation: 'Ton code IRLY · Your IRLY code',
-  mailer_templates_confirmation_content: codeEmail,
-  mailer_subjects_magic_link: 'Ton code IRLY · Your IRLY code',
-  mailer_templates_magic_link_content: codeEmail,
+  mailer_subjects_confirmation: signInSubject,
+  mailer_templates_confirmation_content: signInEmail,
+  mailer_subjects_magic_link: signInSubject,
+  mailer_templates_magic_link_content: signInEmail,
+  mailer_subjects_recovery: recoverySubject,
+  mailer_templates_recovery_content: recoveryEmail,
 });
-console.log('Sign-in emails: 6-digit code and link, French and English');
+console.log('Sign-in emails: IRLY template (code and link; forgotten password), French and English');
 
 const put = await fetch(api, { method: 'PATCH', headers, body: JSON.stringify(patch) });
 if (!put.ok) throw new Error(`Updating the auth config failed (${put.status}): ${(await put.text()).slice(0, 200)}`);
