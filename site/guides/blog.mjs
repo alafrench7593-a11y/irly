@@ -1071,4 +1071,174 @@ export const POSTS = [
       { label: 'Salle de sport ou cours : faire d’une connaissance un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-how-often-see-friend',
+    path: 'blog/how-often-see-someone-become-friend/',
+    city: 'Dubai',
+    published: '2026-11-11',
+    title: 'How Often to See Someone Before They Become a Friend | IRLY',
+    description: 'There is no magic number, but a rhythm helps. How often to meet a new person, what kind of time counts, and how to keep it going when life gets busy.',
+    h1: 'How often to see someone before they become a friend',
+    lead: 'There is no fixed number of meetings that turns someone into a friend. What helps most is a steady rhythm: seeing the same person again and again over a few months, rather than one long evening followed by silence. Short and regular usually works better than rare and intense.',
+    sections: [
+      {
+        h2: 'Why regular beats intense',
+        html: `<p>Friendship grows from repeated time together. Each meeting adds a little: a shared joke, a story you both remember, the feeling that this person shows up. One great dinner can make you feel close for an evening, but if a month passes before the next one, you almost start again. Seeing someone often, even briefly, keeps the thread alive. This is why school, university and shared flats produce friends so easily: the rhythm is built in. As an adult in a new city, you have to build that rhythm yourself.</p>`,
+      },
+      {
+        h2: 'A rhythm you can actually keep',
+        html: `<p>For a new connection, aim for something like once a week or once every two weeks at the start, if both of you are willing. The easiest way is to attach it to something that already repeats: the same class, the same weekly walk, the same weekend coffee. Then you do not have to plan each meeting from zero, and nobody has to feel they are always the one asking.</p>
+<p>Between meetings, a short message keeps the connection warm: a photo of something you talked about, a quick “how did the interview go?”. It does not replace seeing each other, but it tells the other person you thought of them. Our guide on <a href="../../dubai/group-activities/">group activities in Dubai</a> explains why recurring activities make this simpler.</p>`,
+      },
+      {
+        h2: 'What kind of time counts',
+        html: `<p>Not all hours are equal. Time where you actually talk, do something together or help each other counts more than standing in the same room. A few things move a connection forward:</p>
+<ul>
+<li>seeing each other in a second setting, outside the place where you met;</li>
+<li>one-to-one time, even short, after several group meetings;</li>
+<li>sharing something a little more personal, and listening when they do;</li>
+<li>once you know each other a little, doing something slightly out of the ordinary together, like a day trip or cooking a meal.</li>
+</ul>
+<p>If you met at a class, the step from classmate to friend is covered in <a href="../gym-class-acquaintance-to-friend/">from gym or class acquaintance to friend</a>.</p>`,
+      },
+      {
+        h2: 'When it slows down',
+        html: `<p>In a city where many people travel and work long hours, gaps are normal. A slow reply or a cancelled plan is rarely a verdict on you. Suggest another date once or twice, and keep it light. If the other person never proposes anything in return after several tries, put your energy elsewhere without bitterness: you need a few people who meet you halfway, not everyone. Keep meeting new people in parallel, so that one quiet connection does not leave your whole week empty. The pillar guide on <a href="../../dubai/make-friends/">making friends in Dubai</a> gives a wider plan.</p>`,
+      },
+    ],
+    cta: { title: 'Want a rhythm that is already there?', body: 'Join a small activity that comes back every week, and see the same faces again, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'Make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Group activities in Dubai', path: 'dubai/group-activities/' },
+      { label: 'From gym or class acquaintance to friend', path: 'blog/gym-class-acquaintance-to-friend/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-how-often-see-friend',
+    path: 'fr/blog/combien-de-fois-se-voir-pour-devenir-amis/',
+    city: 'Dubaï',
+    published: '2026-11-11',
+    title: 'Combien de fois se voir avant de devenir amis ? | IRLY',
+    description: 'Pas de chiffre magique, mais un rythme aide. À quelle fréquence revoir une nouvelle personne, quel temps compte vraiment, et comment tenir dans la durée.',
+    h1: 'Combien de fois faut-il se voir avant de devenir amis ?',
+    lead: 'Il n’existe pas de nombre de rencontres qui transforme quelqu’un en ami. Ce qui aide le plus, c’est un rythme régulier : revoir la même personne encore et encore pendant quelques mois, plutôt qu’une longue soirée suivie d’un silence. Court et régulier marche en général mieux que rare et intense.',
+    sections: [
+      {
+        h2: 'Pourquoi la régularité compte plus que l’intensité',
+        html: `<p>L’amitié se construit avec du temps passé ensemble, répété. Chaque rencontre ajoute un peu : une blague partagée, une histoire dont vous vous souvenez tous les deux, le sentiment qu’on peut compter sur cette personne. Un super dîner peut vous rapprocher le temps d’une soirée, mais si un mois passe avant le suivant, vous repartez presque de zéro. Se voir souvent, même brièvement, entretient le lien. C’est pour ça que l’école, les études ou la colocation créent si facilement des amis : le rythme est déjà là. Adulte dans une nouvelle ville, c’est à toi de le construire.</p>`,
+      },
+      {
+        h2: 'Un rythme que tu peux vraiment tenir',
+        html: `<p>Avec une nouvelle connaissance, vise au début quelque chose comme une fois par semaine ou toutes les deux semaines, si vous en avez tous les deux envie. Le plus simple est de l’accrocher à quelque chose qui se répète déjà : le même cours, la même balade hebdomadaire, le même café du week-end. Tu n’as plus à organiser chaque rencontre de zéro, et personne n’a l’impression d’être toujours celui qui propose.</p>
+<p>Entre deux rencontres, un petit message entretient le contact : une photo de quelque chose dont vous avez parlé, un rapide « alors, cet entretien ? ». Ça ne remplace pas le fait de se voir, mais ça dit à l’autre que tu as pensé à lui. Notre guide sur les <a href="../../dubai/activites-de-groupe/">activités de groupe à Dubaï</a> explique pourquoi les activités récurrentes simplifient tout ça.</p>`,
+      },
+      {
+        h2: 'Quel temps compte vraiment',
+        html: `<p>Toutes les heures ne se valent pas. Le temps où vous parlez vraiment, où vous faites quelque chose ensemble ou vous vous rendez service compte plus que le fait d’être dans la même pièce. Quelques éléments font avancer une relation :</p>
+<ul>
+<li>se voir dans un deuxième cadre, en dehors du lieu où vous vous êtes rencontrés ;</li>
+<li>un moment à deux, même court, après plusieurs rencontres en groupe ;</li>
+<li>partager quelque chose d’un peu plus personnel, et écouter quand l’autre le fait ;</li>
+<li>une fois que vous vous connaissez un peu, faire ensemble quelque chose qui sort de l’ordinaire, comme une sortie à la journée ou un repas cuisiné à deux.</li>
+</ul>
+<p>Si vous vous êtes rencontrés dans un cours, le passage de simple connaissance à ami est détaillé dans <a href="../connaissance-sport-cours-devenir-ami/">salle de sport ou cours : faire d’une connaissance un ami</a>.</p>`,
+      },
+      {
+        h2: 'Quand ça ralentit',
+        html: `<p>Dans une ville où beaucoup de gens voyagent et ont de longues journées de travail, les creux sont normaux. Une réponse lente ou un plan annulé est rarement un jugement sur toi. Propose une autre date une ou deux fois, sans en faire une affaire. Si l’autre ne propose jamais rien en retour après plusieurs essais, mets ton énergie ailleurs, sans amertume : tu as besoin de quelques personnes qui font la moitié du chemin, pas de tout le monde. Continue à rencontrer de nouvelles personnes en parallèle, pour qu’un lien en sommeil ne vide pas toute ta semaine. Le guide principal <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan plus large.</p>`,
+      },
+    ],
+    cta: { title: 'Envie d’un rythme déjà en place ?', body: 'Rejoins une petite activité qui revient chaque semaine et retrouve les mêmes visages, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Activités de groupe à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Salle de sport ou cours : faire d’une connaissance un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-lonely-with-people-around',
+    path: 'blog/lonely-even-with-people-around/',
+    city: 'Dubai',
+    published: '2026-11-11',
+    title: 'Feeling Lonely Even With People Around You | IRLY',
+    description: 'You have colleagues, flatmates or a busy calendar and still feel alone? Why it happens, how to tell what is missing, and small steps towards closer ties.',
+    h1: 'Feeling lonely even with people around you',
+    lead: 'You can feel lonely in a full office, at a busy brunch or in a shared flat. Loneliness is less about how many people are around you than about whether anyone really knows you. The way forward is usually fewer, closer connections, not a fuller calendar.',
+    sections: [
+      {
+        h2: 'Why it happens',
+        html: `<p>Being surrounded and being connected are two different things. Many conversations stay at the surface: work, plans, the weather, where to eat. They are pleasant, but nobody learns how you are really doing. In a city where people arrive and leave often, it is common to know many people a little and nobody well. Add a new job, a different language at work or friends in another time zone, and you can spend whole days talking without feeling heard. This does not mean something is wrong with you, or with the people around you.</p>`,
+      },
+      {
+        h2: 'Work out what is missing',
+        html: `<p>It helps to name the gap, because the answer is not the same each time. Ask yourself:</p>
+<ul>
+<li>Is there someone here I could call with good or bad news?</li>
+<li>Do I miss being understood, or simply doing things with someone?</li>
+<li>Do I act like myself with the people I see, or a more polished version?</li>
+<li>Do I miss people who share my language, my humour or my history?</li>
+</ul>
+<p>If the answer is “someone to do things with”, activities are the most direct route. If it is “someone who knows me”, you need depth with one or two people, which takes time and a little openness.</p>`,
+      },
+      {
+        h2: 'Go a little deeper with one or two people',
+        html: `<p>Pick one or two people you already like and give those connections more room. Suggest a one-to-one coffee instead of another group outing. Ask a real question (“how are you finding life here, honestly?”) and answer it truthfully yourself when it comes back. Sharing something small and real, such as a doubt or a bad week, often gives the other person permission to do the same. Not everyone will follow, and that is fine. See the same people regularly: closeness needs repetition, as explained in <a href="../how-often-see-someone-become-friend/">how often to see someone before they become a friend</a>. The guide on <a href="../../dubai/make-friends/">making friends in Dubai</a> covers where to meet people in the first place.</p>`,
+      },
+      {
+        h2: 'When the feeling does not lift',
+        html: `<p>Feeling lonely from time to time is part of life, especially far from home. If it lasts for weeks, weighs on your sleep, your appetite or your work, or comes with a sense that nothing will change, talk to a doctor or a mental health professional. It is a normal step, not a failure, and it can sit alongside everything above. Staying in touch with people who know you well back home also helps while new ties grow. Our guide on <a href="../../dubai/lonely/">feeling lonely in Dubai</a> goes further, including where to turn for urgent help.</p>`,
+      },
+    ],
+    cta: { title: 'Looking for closer connections?', body: 'Small activities with a few people make it easier to really talk. IRLY is one way to find them, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'Feeling lonely in Dubai', path: 'dubai/lonely/' },
+      { label: 'Make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'How often to see someone before they become a friend', path: 'blog/how-often-see-someone-become-friend/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-lonely-with-people-around',
+    path: 'fr/blog/se-sentir-seul-meme-entoure/',
+    city: 'Dubaï',
+    published: '2026-11-11',
+    title: 'Se sentir seul même entouré : pourquoi, et quoi faire | IRLY',
+    description: 'Des collègues, un agenda plein, et pourtant tu te sens seul ? Pourquoi ça arrive, comment savoir ce qui manque, et comment créer des liens plus proches.',
+    h1: 'Se sentir seul même quand on est entouré',
+    lead: 'On peut se sentir seul dans un bureau plein, à un brunch animé ou en colocation. La solitude tient moins au nombre de personnes autour de toi qu’au fait que quelqu’un te connaisse vraiment. La solution passe en général par des liens moins nombreux mais plus proches, pas par un agenda plus rempli.',
+    sections: [
+      {
+        h2: 'Pourquoi ça arrive',
+        html: `<p>Être entouré et être vraiment en lien avec quelqu’un, ce n’est pas la même chose. Beaucoup de conversations restent en surface : le travail, les projets, la météo, où manger. Elles sont agréables, mais personne n’apprend comment tu vas vraiment. Dans une ville où les gens arrivent et repartent souvent, il est courant de connaître un peu beaucoup de monde, et vraiment personne. Ajoute un nouveau poste, une autre langue au travail ou des amis sur un autre fuseau horaire, et tu peux passer des journées entières à parler sans te sentir entendu. Ça ne veut pas dire que quelque chose cloche chez toi, ni chez les gens qui t’entourent.</p>`,
+      },
+      {
+        h2: 'Trouve ce qui manque',
+        html: `<p>Mettre un mot sur le manque aide, parce que la réponse n’est pas la même à chaque fois. Demande-toi :</p>
+<ul>
+<li>Y a-t-il ici quelqu’un que je pourrais appeler pour une bonne ou une mauvaise nouvelle ?</li>
+<li>Est-ce qu’il me manque d’être compris, ou simplement de faire des choses avec quelqu’un ?</li>
+<li>Est-ce que je suis moi-même avec les gens que je vois, ou une version plus lisse ?</li>
+<li>Est-ce qu’il me manque des gens qui partagent ma langue, mon humour ou mon histoire ?</li>
+</ul>
+<p>Si la réponse est « quelqu’un avec qui faire des choses », les activités sont le chemin le plus court. Si c’est « quelqu’un qui me connaît », il te faut un lien plus profond avec une ou deux personnes, ce qui demande du temps et un peu d’ouverture.</p>`,
+      },
+      {
+        h2: 'Va un peu plus loin avec une ou deux personnes',
+        html: `<p>Choisis une ou deux personnes que tu apprécies déjà et donne plus de place à ces liens. Propose un café à deux plutôt qu’une sortie de groupe de plus. Pose une vraie question (« franchement, tu la vis comment, la vie ici ? ») et réponds-y sincèrement quand elle te revient. Confier quelque chose de petit mais vrai, un doute ou une mauvaise semaine, donne souvent à l’autre la permission d’en faire autant. Tout le monde ne suivra pas, et ce n’est pas grave. Revois les mêmes personnes régulièrement : la proximité demande de la répétition, comme on l’explique dans <a href="../combien-de-fois-se-voir-pour-devenir-amis/">combien de fois se voir avant de devenir amis</a>. Le guide <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> détaille où rencontrer des gens au départ.</p>`,
+      },
+      {
+        h2: 'Quand le sentiment ne passe pas',
+        html: `<p>Se sentir seul de temps en temps fait partie de la vie, surtout loin de chez soi. Si ça dure des semaines, que ça pèse sur ton sommeil, ton appétit ou ton travail, ou que tu as l’impression que rien ne changera, parles-en à un médecin ou à un professionnel de santé mentale. C’est une démarche normale, pas un échec, et elle peut s’ajouter à tout ce qui précède. Garder le contact avec ceux qui te connaissent bien, restés au pays, aide aussi le temps que de nouveaux liens se créent. Notre guide <a href="../../dubai/solitude/">se sentir seul à Dubaï</a> va plus loin, y compris pour savoir vers qui te tourner en cas d’urgence.</p>`,
+      },
+    ],
+    cta: { title: 'Envie de liens plus proches ?', body: 'Les petites activités à quelques personnes facilitent les vraies conversations. IRLY est une façon parmi d’autres d’en trouver, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Combien de fois se voir avant de devenir amis ?', path: 'fr/blog/combien-de-fois-se-voir-pour-devenir-amis/' },
+    ],
+  },
 ];
