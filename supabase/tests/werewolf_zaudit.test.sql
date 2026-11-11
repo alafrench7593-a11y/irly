@@ -133,6 +133,9 @@ begin
   delete from private.ww_actions where room_id = g and round = 98;
 
   -- A host who left no longer cuts the day short.
+  -- Cards are dealt at random: fix them so the host's departure cannot end the game (one wolf, four villagers left).
+  update private.ww_players set card = 'villager', camp = 'village', lover = null where room_id = g;
+  update private.ww_players set card = 'werewolf', camp = 'wolves' where room_id = g and user_id = pg_temp.uid(2);
   update private.ww_games set phase = 'day', day = greatest(day, 1), deadline = now() + interval '1 hour' where room_id = g;
   perform pg_temp.as_user(2);
   perform pg_temp.check(pg_temp.err(format('select public.ww_skip_day(%L)', g)) = 'only the host can do this', 'a player who is not the host cannot cut the day short');
