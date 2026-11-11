@@ -363,6 +363,9 @@ export function useCommunityFeed(communityId: string, space?: string | null, opt
       .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'));
   }, [load, land]);
 
+  // Someone blocked or unblocked: their posts leave (or return) now.
+  useRefreshOn(['people'], refresh);
+
   // Every live change of this feed (posts, pins, likes, comments, votes) and the catch-up
   // after a channel starts listening go through ONE gate: a burst is one reload (the two
   // channels' first catch-ups used to be two more reloads of the first page), and none

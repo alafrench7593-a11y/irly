@@ -93,6 +93,8 @@ export function ConversationView({ id, draft, pane = false, keyboardOffset = 0 }
   // Server conversations (signed in) have UUIDs; the rest live on the device.
   let body;
   if (isServerId(id) && status === 'out') body = <SignedOut />;
+  // The stored session is not read yet (a chat opened at launch): neither « Say hello » nor a composer before it is.
+  else if (isServerId(id) && status === 'unknown') body = <SessionLoading />;
   else if (isServerId(id)) body = <ServerThreadView id={id} draft={draft} />;
   // The on-device example chats (with their canned replies) belong to the demonstration build only.
   else body = DEMO ? <Thread id={id} /> : <NotFound title="This conversation is not available" />;
@@ -111,6 +113,16 @@ function SignedOut() {
       </Text>
       <Button label="Sign in" onPress={() => router.push('/account')} />
       {pane ? null : <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />}
+    </View>
+  );
+}
+
+/** A chat opened before the session is known: the same wait as the other pages. */
+function SessionLoading() {
+  const t = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.c.bg }}>
+      <ActivityIndicator color={t.c.text} />
     </View>
   );
 }
@@ -488,9 +500,12 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
         >
           {thread.loading ? <ActivityIndicator color={t.c.text} /> : null}
           {thread.error ? (
-            <Text variant="body" tone="secondary" align="center">
-              {thread.error}
-            </Text>
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <Text variant="body" tone="secondary" align="center">
+                {thread.error}
+              </Text>
+              <Button label="Try again" size="sm" variant="secondary" onPress={thread.reload} />
+            </View>
           ) : null}
           {thread.hasEarlier || hidden > 0 ? (
             <PressableScale

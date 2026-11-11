@@ -450,6 +450,11 @@ export function useComments(t: Target) {
     };
   }, [t.type, t.id, uid, read]);
 
+  // Someone blocked or unblocked: their comments leave (or return) now.
+  useRefreshOn(['people'], () => {
+    if (supabase && uid) read(false);
+  });
+
   // Likes on this thread's comments only (it listened to every comment like
   // in the app), re-subscribed when the comments change.
   const likeKey = useMemo(

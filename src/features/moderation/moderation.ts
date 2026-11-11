@@ -3,6 +3,7 @@ import { useAccount } from '@/features/auth/account';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
 import { changed } from '@/features/server/sync';
+import { clearCommunityCache } from '@/features/community/cache';
 import type { ReportCategory } from '@/features/server/engage';
 
 /**
@@ -71,6 +72,8 @@ export async function blockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('block_user', { p_target: userId });
   if (error) throw new Error(plain(error.message));
   forgetBlocked();
+  // The community pages kept on the phone were read before this: never shown again as they were.
+  clearCommunityCache();
   changed('inbox', 'people', 'activities', 'communities');
   // Their live moments leave the feed now, not at the next live event.
   void import('@/features/server/social').then((m) => m.bumpIrl());
@@ -80,6 +83,8 @@ export async function unblockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('unblock_user', { p_target: userId });
   if (error) throw new Error(error.message);
   forgetBlocked();
+  // The community pages kept on the phone were read before this: never shown again as they were.
+  clearCommunityCache();
   changed('inbox', 'people', 'activities', 'communities');
   void import('@/features/server/social').then((m) => m.bumpIrl());
 }

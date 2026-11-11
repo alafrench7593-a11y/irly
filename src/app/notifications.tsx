@@ -105,7 +105,8 @@ function Notifications() {
   return (
     <Page title="Notifications" subtitle="Only what helps you meet people." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onScrolled={viewport.moved}>
       {/* The demo has no server: only its examples, no loading line. */}
-      {DEMO ? null : <ServerNotifications viewport={viewport} />}
+      {/* Signed out: nothing to read either (it waited forever); the sign-in block below says so. */}
+      {DEMO || auth === 'out' ? null : <ServerNotifications viewport={viewport} />}
       {auth === 'out' && !items.length ? (
         <View style={[styles.list, { alignItems: 'center', gap: 12, paddingTop: space[6] }]}>
           <Icon name="bell" size={26} color={t.c.textSecondary} />
@@ -399,12 +400,21 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
     // A tap opens it (when there is something to open) and clears it from the bell. A friend request
     // still waiting for an answer stays until it is answered (its buttons live on this row).
     const opens = destinationOf(n, now) !== null;
-    const tap = () => {
-      if (opens) void openNotification(n, 'list');
+    const clear = () => {
       if (d.accept) return void markNotificationsRead([n.id]);
       void dismissNotifications([n.id]).then((ok) => {
         if (!ok) toast('Could not remove it. Check your connection.', 'x', 'live');
       });
+    };
+    const tap = () => {
+      if (!opens) return clear();
+      // A tap ignored (another notification is opening) clears nothing: this one was not opened.
+      void openNotification(n, 'list').then(
+        (took) => {
+          if (took) clear();
+        },
+        () => clear(),
+      );
     };
     return (
       <Animated.View key={n.id} entering={enter.rise(Math.min(i, 8), 60)}>
