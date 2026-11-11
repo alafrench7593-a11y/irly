@@ -146,7 +146,7 @@ export default function RulesScreen() {
       <LinearGradient colors={['rgba(11,9,7,0.4)', 'rgba(11,9,7,0.85)', DX.black]} locations={[0, 0.35, 0.7]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32, alignItems: 'center' }}>
         <View style={[styles.head, { width: Math.min(width, 640) }]}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/games/werewolf'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
           </Pressable>
           <Text style={[styles.title, serif(fonts, '900')]} accessibilityRole="header">

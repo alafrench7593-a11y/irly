@@ -490,6 +490,8 @@ export type ServerThread = {
   send: (text: string, replyTo?: string) => Promise<void>;
   /** Sends a message that failed again (same id: it can never arrive twice). */
   retry: (messageId: string) => Promise<void>;
+  /** Reads the chat again after a load that failed (« Try again »). */
+  reload: () => void;
   /** Deletes my message for everyone (author only). */
   remove: (messageId: string) => Promise<void>;
   /** Removes a message from my view only; the others keep it. */
@@ -527,6 +529,13 @@ export function useServerThread(conversationId: string): ServerThread {
   const [kind, setKind] = useState<InboxRow['kind'] | null>(seen?.kind ?? listed?.kind ?? null);
   const [loading, setLoading] = useState(!seen);
   const [error, setError] = useState<string | null>(null);
+  // « Try again » after a load that failed: the whole read starts over.
+  const [again, setAgain] = useState(0);
+  const reload = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setAgain((n) => n + 1);
+  }, []);
   const [hasEarlier, setHasEarlier] = useState(seen?.hasEarlier ?? false);
   const [archived, setArchived] = useState(seen?.archived ?? Boolean(listed?.archived));
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
@@ -651,20 +660,28 @@ export function useServerThread(conversationId: string): ServerThread {
       },
       () => undefined,
     );
+    // The chat's own row, once read: its title, kind and what it belongs to.
+    const applyHead = (conv: NonNullable<ConversationHead['conv']>) => {
+      titled = true;
+      convTitle = (conv.title as string | null) ?? null;
+      applyTitle();
+      setKind(conv.kind);
+      setRefs({ community: (conv.community_id as string | null) ?? null, activity: (conv.activity_id as string | null) ?? null });
+    };
+    // The first load failed: the catch-up below reads the chat's row again, and clears the error when it works.
+    let failed = false;
     const initial = (async () => {
       try {
         const [{ conv, error: e1 }, msgs] = await Promise.all([head, page]);
         if (!alive) return;
         if (e1 || !conv) {
+          failed = true;
           setError(e1 ? friendlyError(e1) : 'This conversation is not available');
           setLoading(false);
           return;
         }
-        titled = true;
-        convTitle = (conv.title as string | null) ?? null;
-        applyTitle();
-        setKind(conv.kind);
-        setRefs({ community: (conv.community_id as string | null) ?? null, activity: (conv.activity_id as string | null) ?? null });
+        applyHead(conv);
+        setError(null);
         // The newest page replaces what was shown (deleted ones go), except messages that arrived live meanwhile.
         setRows((list) => merge(list.filter((x) => arrived.has(x.id)), msgs));
         setHasEarlier(msgs.length === PAGE);
@@ -672,6 +689,7 @@ export function useServerThread(conversationId: string): ServerThread {
         markRead();
       } catch (e) {
         if (!alive) return;
+        failed = true;
         // In the member's words (« No connection: try again »), never the raw « TypeError: Failed to fetch ».
         setError(e instanceof Error ? friendlyError(e.message) : 'Can’t reach IRLY right now');
         setLoading(false);
@@ -686,8 +704,16 @@ export function useServerThread(conversationId: string): ServerThread {
           if (!alive) return;
           // Heard live or sent after this moment: the page asked now cannot have it yet, so it stays.
           const asked = arrivals.current;
-          const msgs = await latest();
+          // After a first load that failed: the chat's row too (its title and kind were never read).
+          const [msgs, reread] = await Promise.all([latest(), failed ? conversationHead(conversationId, uid) : null]);
           if (!alive) return;
+          if (reread) {
+            // Still not readable: the error stays, with its « Try again ».
+            if (reread.error || !reread.conv) return;
+            failed = false;
+            applyHead(reread.conv);
+            setError(null);
+          }
           const keep = (x: MessageRow) => (arrived.get(x.id) ?? 0) > asked;
           const shown = new Set(rowsRef.current.map((x) => x.id));
           const fromOthers = msgs.some((x) => x.sender_id !== uid && !shown.has(x.id));
@@ -770,7 +796,7 @@ export function useServerThread(conversationId: string): ServerThread {
       supabase?.removeChannel(removals);
       typingChannel.leave();
     };
-  }, [conversationId, uid, markRead, gone]);
+  }, [conversationId, uid, markRead, gone, again]);
 
   // "Typing…" fades 4 seconds after the last signal.
   const typingCount = Object.keys(typing).length;
@@ -1045,6 +1071,7 @@ export function useServerThread(conversationId: string): ServerThread {
     send,
     sendPhotos,
     retry,
+    reload,
     remove,
     hideForMe,
     archived,

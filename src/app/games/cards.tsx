@@ -43,7 +43,7 @@ export default function CardsScreen() {
           <Image source={SCENES[mode].home} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
           <LinearGradient colors={['rgba(11,9,7,0.25)', 'rgba(11,9,7,0.35)', DX.black]} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroRow, { width: pageW }]}>
-            <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
+            <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/games/werewolf'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
               <Icon name="arrowLeft" size={20} color={DX.goldLight} />
             </Pressable>
           </View>

@@ -165,7 +165,7 @@ const T = {
     otherLang: "fr",
     title: "IRLY Girl — Meet women and make friends in Dubai",
     description:
-      "IRLY Girl is IRLY’s women-only space in Dubai: meet women, make new friends, join women’s communities and activities, plan outings and trips, and chat, in the IRLY app.",
+      "IRLY Girl is IRLY’s women-only space in Dubai: meet women, make new friends, join women’s communities and activities, and plan outings together.",
     ogAlt: "IRLY Girl: Your next friendship starts here. Friends at sunset in Dubai.",
     skip: "Skip to content",
     nav: { home: "IRLY", circles: "Communities", app: "The app", how: "How it works", dubai: "Dubai" },
@@ -312,7 +312,7 @@ const T = {
     otherLang: "en",
     title: "IRLY Girl — Rencontrer des femmes et se faire des amies à Dubaï",
     description:
-      "IRLY Girl est l’espace d’IRLY réservé aux femmes à Dubaï : rencontre des femmes, fais-toi de nouvelles amies, rejoins des communautés et des activités entre femmes, organise sorties et voyages, et discute, dans l’app IRLY.",
+      "IRLY Girl, l’espace d’IRLY réservé aux femmes à Dubaï : fais-toi de nouvelles amies, rejoins des communautés et des activités entre femmes, organise des sorties.",
     ogAlt: "IRLY Girl : Ta prochaine amitié commence ici. Des amies au coucher du soleil à Dubaï.",
     skip: "Aller au contenu",
     nav: { home: "IRLY", circles: "Communautés", app: "L’app", how: "Comment ça marche", dubai: "Dubaï" },

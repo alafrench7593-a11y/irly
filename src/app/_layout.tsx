@@ -180,6 +180,8 @@ function App() {
         <Stack.Screen name="girl/moms" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="comments" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="post/new" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        {/* Unsaved changes are asked about on Back: a swipe would drop them without asking. */}
+        <Stack.Screen name="edit-profile" options={{ gestureEnabled: false }} />
         <Stack.Screen name="share" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="a/[id]" options={{ animation: 'fade_from_bottom' }} />

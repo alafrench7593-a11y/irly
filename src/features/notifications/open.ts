@@ -180,10 +180,11 @@ let opening = false;
  * Opens a notification: marks it read (at once on screen, then on the server;
  * unread again with a message if that fails) and goes to its page, or to a
  * fallback with a message when that page is gone. `from: 'push'` falls back to
- * the Notifications list when there is no better page. Resolves when done.
+ * the Notifications list when there is no better page. Resolves when done:
+ * true when it took the tap, false when another one was already opening (nothing done).
  */
-export async function openNotification(n: NotificationLike, from: 'list' | 'push'): Promise<void> {
-  if (opening) return;
+export async function openNotification(n: NotificationLike, from: 'list' | 'push'): Promise<boolean> {
+  if (opening) return false;
   opening = true;
   try {
     void markNotificationRead(n.id).then((ok) => {
@@ -192,20 +193,31 @@ export async function openNotification(n: NotificationLike, from: 'list' | 'push
     let d = destinationOf(n);
     if (d?.comment) {
       const t = await commentThread(d.comment);
-      if (t === 'gone') return gone(from);
+      if (t === 'gone') {
+        gone(from);
+        return true;
+      }
       if (t === 'unknown') {
         toast('Can’t reach IRLY right now', 'x', 'live');
-        return from === 'push' ? go('/notifications') : undefined;
+        if (from === 'push') go('/notifications');
+        return true;
       }
       d = t;
     }
-    if (!d) return from === 'push' ? go('/notifications') : undefined;
-    if (d.check && (await exists(d.check)) === 'gone') return gone(from, d.fallback);
+    if (!d) {
+      if (from === 'push') go('/notifications');
+      return true;
+    }
+    if (d.check && (await exists(d.check)) === 'gone') {
+      gone(from, d.fallback);
+      return true;
+    }
     // Opened in its own universe's app space (IRLY Girl content in IRLY Girl, Mixte content in Mixte):
     // Messages and the lists behind the page then show what it belongs to.
     const target = spaceOf(n);
     if (target && useSpaceStore.getState().space !== target) setAppSpace(target);
     go(d.href);
+    return true;
   } finally {
     // Kept a moment: the page being pushed has not taken the screen yet.
     setTimeout(() => {

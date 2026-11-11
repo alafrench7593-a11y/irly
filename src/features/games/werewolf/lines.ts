@@ -44,6 +44,8 @@ export function logLine(e: WwLog, name: Name): string | null {
       return tx('Another tie: nobody is eliminated today');
     case 'left_game':
       return tx('{name} left the game', { name: name(seat('seat')) });
+    case 'idle_end':
+      return tx('Nobody has played for twenty minutes: the game ends as a draw.');
     case 'game_over':
       return tx('The game is over');
     // Private lines (only their reader receives them).

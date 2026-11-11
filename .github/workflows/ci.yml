@@ -34,5 +34,7 @@ jobs:
         run: npm run -s test:ludo
       - name: Voice tokens (claims, signature)
         run: node --experimental-strip-types --no-warnings scripts/test-voice-token.mts
+      - name: Website (titles, canonical, language versions, structured data, links, sitemap)
+        run: node scripts/test-site.mjs
       - name: Web build
         run: npx expo export --platform web

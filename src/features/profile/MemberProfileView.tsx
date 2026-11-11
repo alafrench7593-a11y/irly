@@ -175,7 +175,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
         <ActivityIndicator color={t.c.text} />
       </Centered>
     );
-  if (error)
+  // A refresh that failed behind a profile already shown keeps it on screen.
+  if (error && !p)
     return (
       <Centered onBack={onBack}>
         <Text variant="body" tone="secondary" align="center">

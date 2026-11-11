@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -114,7 +114,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
   const { data } = useGamesOverview();
   const scroller = useRef<ScrollView>(null);
   const tablesY = useRef(0);
-  const { rooms } = useOpenRooms('werewolf');
+  const { rooms, failed: roomsFailed, reload: reloadRooms } = useOpenRooms('werewolf');
   const [comms, setComms] = useState<Record<string, 'text' | 'voice'>>({});
   const roomIds = (rooms ?? []).map((r) => r.id).join(',');
   useEffect(() => {
@@ -264,8 +264,20 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
           <Text style={[styles.sectionTitle, serif(fonts, '700')]}>{tx('Loup-Garou tables')}</Text>
           {rooms && rooms.length > 0 ? (
             rooms.map((r) => <RoomRow key={r.id} room={r} voice={comms[r.id] === 'voice'} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />)
-          ) : (
+          ) : rooms ? (
             <Text style={styles.small}>{tx('No table is open right now. Create one, or play online: a table opens for you.')}</Text>
+          ) : roomsFailed ? (
+            // The list could not be read: said so (never « no table »), with a way to ask again.
+            <View style={styles.room} testID="ww-tables-failed">
+              <Text style={[styles.small, { flex: 1 }]}>{tx('The tables could not be loaded. Check your connection.')}</Text>
+              <PressableScale onPress={reloadRooms} accessibilityRole="button" accessibilityLabel={tx('Try again')}>
+                <View style={styles.roomBtn}>
+                  <Text style={styles.roomBtnText}>{tx('Try again')}</Text>
+                </View>
+              </PressableScale>
+            </View>
+          ) : (
+            <ActivityIndicator color={DX.gold} accessibilityLabel={tx('Loading…')} testID="ww-tables-loading" />
           )}
         </View>
 
@@ -491,7 +503,8 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
     setBusy(true);
     wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en', mode })
       .then(async (r) => {
-        if (voice) await wwSetComm(r.id, 'voice');
+        // The table exists from here on: if voice cannot be turned on, say so and open the table all the same (in writing).
+        if (voice) await wwSetComm(r.id, 'voice').catch(fail);
         onClose();
         onCreated(r.id);
       })

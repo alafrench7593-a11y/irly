@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useIsFocused } from 'expo-router';
 import { AppState } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { primeFaces } from '@/features/server/faces';
@@ -125,11 +126,16 @@ export function useGamesOverview(): { data: GamesOverview | null; failed: boolea
       .then((data) => setState({ key, data, failed: false }))
       .catch(() => setState((s) => ({ key, data: s.key === key ? s.data : null, failed: true })));
   }, [uid, space, key]);
+  // Only while its screen is the one shown and the app is in front (as useGamesPresence).
+  const focused = useIsFocused();
   useEffect(() => {
+    if (!focused) return;
     load();
-    const timer = setInterval(load, 20_000);
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') load();
+    }, 20_000);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, focused]);
   return { data: state.key === key ? state.data : null, failed: state.key === key && state.failed, reload: load };
 }
 
@@ -163,11 +169,15 @@ export function useOpenRooms(game: GameId = 'ludo') {
       })
       .catch(() => setFailed(true));
   }, [uid, space, game]);
+  const focused = useIsFocused();
   useEffect(() => {
+    if (!focused) return;
     load();
-    const timer = setInterval(load, 15_000);
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') load();
+    }, 15_000);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, focused]);
   return { rooms, failed, reload: load };
 }
 
@@ -195,6 +205,8 @@ export function useRoom(roomId: string | undefined) {
   const uid = useAccount()?.userId;
   const [room, setRoom] = useState<Room | null>(null);
   const [missing, setMissing] = useState(false);
+  // The server's refusal when the room could not be read (anything but « it no longer exists »).
+  const [failed, setFailed] = useState<string | null>(null);
   const [messages, setMessages] = useState<GameMessage[]>([]);
   // Server clock minus phone clock, measured on each read (deadlines are the server's).
   const [skew, setSkew] = useState(0);
@@ -209,10 +221,14 @@ export function useRoom(roomId: string | undefined) {
         setRoom(r);
         setSkew(Date.parse(r.now) - Date.now());
         setMissing(false);
+        setFailed(null);
         primeFaces(r.people.map((p) => ({ id: p.id, path: p.photo })));
       })
       .catch((e: Error) => {
-        if (n === seq.current && /no longer exists/.test(e.message)) setMissing(true);
+        if (n !== seq.current) return;
+        // An id that is not one (a mistyped link) is a game that does not exist.
+        if (/no longer exists|invalid input syntax for type uuid/.test(e.message)) setMissing(true);
+        else setFailed(e.message);
       });
   }, [uid, roomId]);
 
@@ -268,5 +284,12 @@ export function useRoom(roomId: string | undefined) {
     return () => clearInterval(timer);
   }, [status, deadline, skew, roomId, load, loadMessages]);
 
-  return { room, missing, messages, reload: load, skew };
+  // A waiting room: read again every 6 s, in case a live update was missed (someone joined, the host started).
+  useEffect(() => {
+    if (status !== 'waiting' || !roomId) return;
+    const timer = setInterval(load, 6000);
+    return () => clearInterval(timer);
+  }, [status, roomId, load]);
+
+  return { room, missing, failed, messages, reload: load, skew };
 }

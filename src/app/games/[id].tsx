@@ -13,11 +13,13 @@ import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { createRoom, joinByCode, kickPlayer, leaveRoom, moveToken, rollDie, sayInRoom, startRoom, useGamesPresence, useRoom, type GameMessage, type LudoState, type Room } from '@/features/games/api';
 import { LudoBoard } from '@/features/games/ludo/Board';
+import { DX } from '@/features/games/werewolf/dubai/theme';
 import { WerewolfRoom } from '@/features/games/werewolf/WerewolfRoom';
 import { legalTokens, LUDO_COLORS, LUDO_COLOR_NAMES } from '@/features/games/ludo/geometry';
 import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
 import { t as tx } from '@/i18n';
+import { serverError } from '@/i18n/errors';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -44,7 +46,7 @@ export default function GameRoomScreen() {
   const keyboard = useKeyboardHeight();
   const insets = useSafeAreaInsets();
   const uid = useAccount()?.userId;
-  const { room, missing, messages, reload, skew } = useRoom(id);
+  const { room, missing, failed, messages, reload, skew } = useRoom(id);
   useGamesPresence(id);
 
   if (!uid) {
@@ -59,6 +61,18 @@ export default function GameRoomScreen() {
       <View style={[styles.center, { backgroundColor: t.c.bg, paddingTop: insets.top }]}>
         <Text tone="secondary">This game no longer exists</Text>
         <Button label="IRLY Games" onPress={() => router.replace('/games')} />
+      </View>
+    );
+  }
+  // The room could not be read at all: the reason, and two ways out (never an endless « Loading… »).
+  if (failed && !room) {
+    return (
+      <View style={[styles.center, { backgroundColor: t.c.bg, paddingTop: insets.top }]}>
+        <Text tone="secondary" align="center" raw>
+          {tx(serverError(failed) ? failed : 'Something went wrong. Try again')}
+        </Text>
+        <Button label="Try again" onPress={reload} />
+        <Button label="IRLY Games" variant="secondary" onPress={() => router.replace('/games')} />
       </View>
     );
   }
@@ -85,7 +99,7 @@ export default function GameRoomScreen() {
           // Loup-Garou lays out its own screen: the table scrolls, what to do now stays docked at the bottom.
           <WerewolfRoom room={room} me={uid} messages={messages} onBack={back} onLeave={leaveGame}>
             {/* Before the start, the table talks in the shared chat; in the game, the Loup-Garou chat follows the night. */}
-            {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} /> : null}
+            {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} dark /> : null}
           </WerewolfRoom>
         ) : (
           <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + space[4] }]} keyboardShouldPersistTaps="handled">
@@ -438,7 +452,7 @@ function End({ room, me }: { room: Room; me: string }) {
 // ───────── Chat ─────────
 const REMATCH = /→ ([A-Z2-9]{6})$/;
 
-function systemLine(m: GameMessage, names: Map<string, string>): string {
+function systemLine(m: GameMessage, names: Map<string, string>, me: string): string {
   const n = (id?: string) => (id ? (names.get(id) ?? tx('A member')) : tx('A member'));
   // Ludo system lines carry member ids (strings).
   const d = (m.data ?? {}) as Record<string, string | undefined>;
@@ -447,6 +461,8 @@ function systemLine(m: GameMessage, names: Map<string, string>): string {
       return tx('{name} joined', { name: n(d.user) });
     case 'left':
       return tx('{name} left', { name: n(d.user) });
+    case 'host':
+      return d.user === me ? tx('You are now the host') : tx('{name} is now the host', { name: n(d.user) });
     case 'start':
       return tx('The game starts. Roll a 6 to bring a token out!');
     case 'captured':
@@ -462,7 +478,8 @@ function systemLine(m: GameMessage, names: Map<string, string>): string {
   }
 }
 
-function Chat({ room, me, messages }: { room: Room; me: string; messages: GameMessage[] }) {
+/** `dark`: on Loup-Garou's own dark ground, the game's light colours whatever the app's theme. */
+function Chat({ room, me, messages, dark }: { room: Room; me: string; messages: GameMessage[]; dark?: boolean }) {
   const t = useTheme();
   const router = useRouter();
   const [text, setText] = useState('');
@@ -482,20 +499,20 @@ function Chat({ room, me, messages }: { room: Room; me: string; messages: GameMe
       .then((id) => router.replace(`/games/${id}`))
       .catch(fail);
   return (
-    <View style={[styles.chat, { borderColor: t.c.line }]}>
-      <Text variant="label" tone="secondary">
+    <View style={[styles.chat, { borderColor: dark ? 'rgba(226,182,83,0.35)' : t.c.line }]}>
+      <Text variant="label" tone="secondary" color={dark ? DX.gold : undefined}>
         Table chat
       </Text>
       {messages.length === 0 ? (
-        <Text variant="caption" tone="tertiary">
+        <Text variant="caption" tone="tertiary" color={dark ? DX.muted : undefined}>
           Say hello 👋
         </Text>
       ) : null}
       {messages.slice(-60).map((m) => {
         if (m.kind === 'system') {
-          const line = systemLine(m, names);
+          const line = systemLine(m, names, me);
           return line ? (
-            <Text key={m.id} variant="caption" tone="tertiary" raw style={styles.system}>
+            <Text key={m.id} variant="caption" tone="tertiary" color={dark ? DX.muted : undefined} raw style={styles.system}>
               {line}
             </Text>
           ) : null;
@@ -503,27 +520,29 @@ function Chat({ room, me, messages }: { room: Room; me: string; messages: GameMe
         const code = m.body.match(REMATCH)?.[1];
         return (
           <View key={m.id} style={styles.msg}>
-            <Text variant="caption" tone="secondary" raw>
+            <Text variant="caption" tone="secondary" color={dark ? DX.gold : undefined} raw>
               {names.get(m.user_id ?? '') ?? tx('A member')}
             </Text>
-            <Text raw>{m.body}</Text>
+            <Text color={dark ? DX.ivory : undefined} raw>
+              {m.body}
+            </Text>
             {code && m.user_id !== me ? <Button label="Join the rematch" size="sm" variant="secondary" onPress={() => join(code)} /> : null}
           </View>
         );
       })}
       {inRoom ? (
-        <View style={[styles.inputRow, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}>
+        <View style={[styles.inputRow, dark ? { borderColor: DX.goldDark, backgroundColor: DX.black } : { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}>
           <TextInput
             value={text}
             onChangeText={(v) => setText(v.slice(0, 300))}
             placeholder={tx('Message the table')}
-            placeholderTextColor={t.c.textTertiary}
-            style={[styles.input, { color: t.c.text }]}
+            placeholderTextColor={dark ? DX.muted : t.c.textTertiary}
+            style={[styles.input, { color: dark ? DX.ivory : t.c.text }]}
             onSubmitEditing={send}
             returnKeyType="send"
             maxLength={300}
           />
-          <IconButton icon="send" label="Send" onPress={send} />
+          <IconButton icon="send" label="Send" onPress={send} variant={dark ? 'plain' : 'surface'} color={dark ? DX.goldLight : undefined} />
         </View>
       ) : null}
     </View>

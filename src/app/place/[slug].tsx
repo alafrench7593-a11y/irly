@@ -12,6 +12,7 @@ import { IconButton } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/navigation/Headers';
 import { Text } from '@/components/ui/Text';
+import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
@@ -28,6 +29,10 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { SpaceFlavor } from '@/theme/space';
 
 const price = (n: number | null) => (n == null ? null : n === 0 ? 'Free' : '$'.repeat(n));
+/** A provider's link as given, with https:// when it came without a scheme (« example.com »). */
+const webUrl = (url: string) => (/^([a-z][a-z0-9+.-]*:\/\/|(mailto|tel|sms):)/i.test(url.trim()) ? url.trim() : `https://${url.trim()}`);
+/** Nothing on the phone can open it (no browser, no phone app): said, never a silent tap. */
+const openLink = (url: string) => void Linking.openURL(url).catch(() => toast(tx('Could not open'), 'x', 'live'));
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 
 /**
@@ -119,12 +124,12 @@ function PlaceScreen() {
           </View>
 
           <View style={styles.links}>
-            {p.bookingUrl ? <Button label="Book" icon="calendar" size="sm" onPress={() => Linking.openURL(p.bookingUrl as string)} /> : null}
-            {p.website ? <Button label="Website" icon="globe" size="sm" variant="secondary" onPress={() => Linking.openURL(p.website as string)} /> : null}
-            {p.menuUrl ? <Button label="Menu" icon="file" size="sm" variant="secondary" onPress={() => Linking.openURL(p.menuUrl as string)} /> : null}
-            {p.phone ? <Button label="Call" icon="message" size="sm" variant="secondary" onPress={() => Linking.openURL(`tel:${p.phone}`)} /> : null}
+            {p.bookingUrl ? <Button label="Book" icon="calendar" size="sm" onPress={() => openLink(webUrl(p.bookingUrl as string))} /> : null}
+            {p.website ? <Button label="Website" icon="globe" size="sm" variant="secondary" onPress={() => openLink(webUrl(p.website as string))} /> : null}
+            {p.menuUrl ? <Button label="Menu" icon="file" size="sm" variant="secondary" onPress={() => openLink(webUrl(p.menuUrl as string))} /> : null}
+            {p.phone ? <Button label="Call" icon="message" size="sm" variant="secondary" onPress={() => openLink(`tel:${p.phone}`)} /> : null}
             {p.lat != null && p.lng != null ? (
-              <Button label="Directions" icon="navigation" size="sm" variant="secondary" onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`)} />
+              <Button label="Directions" icon="navigation" size="sm" variant="secondary" onPress={() => openLink(`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`)} />
             ) : null}
           </View>
 

@@ -218,7 +218,7 @@ export function SettingsSections() {
       <Section index={6} title="Help & support">
         <SettingLink icon="message" label="Help center & FAQ" onPress={() => router.push('/support')} />
         <Divider inset={16} />
-        <SettingLink icon="send" label="Contact support" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`)} />
+        <SettingLink icon="send" label="Contact support" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`).catch(() => toast(tx('No email app found. Write to {email}', { email: APP.supportEmail }), 'x', 'live'))} />
         <Divider inset={16} />
         <SettingLink icon="wrench" label="Report a problem" onPress={() => router.push('/support?kind=problem' as never)} />
         <Divider inset={16} />
@@ -246,9 +246,9 @@ export function SettingsSections() {
       </Section>
 
       <Section index={8} title="Follow IRLY">
-        <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram)} />
+        <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram).catch(() => toast(tx('Could not open'), 'x', 'live'))} />
         <Divider inset={16} />
-        <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok)} />
+        <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok).catch(() => toast(tx('Could not open'), 'x', 'live'))} />
       </Section>
 
       <Sheet visible={langSheet} onClose={() => setLangSheet(false)} title="Language">

@@ -13,6 +13,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
   - no statistics, testimonials, named venues, prices or facts that were not checked;
   - general, verifiable advice only;
   - IRLY is presented as one option among others.
+- **Pages that already answer a search** (never write a post on the same question; link to them instead): the guides of `site/guides/articles.mjs` and the pages of `site/guides/strategic.mjs` (meeting French people, choosing an app to make friends, female friends, running clubs, expat communities, free social activities, activities by interest).
 - **Paths:** `blog/<english-slug>/` and `fr/blog/<french-slug>/`, with the same `pair`.
 
 ## Topics (in order)
@@ -32,10 +33,8 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] Feeling lonely even with people around you
 - [ ] Working from home in Dubai and feeling isolated
 - [ ] Summer in Dubai: keeping a social life when many people travel
-- [ ] Making friends who speak your language in Dubai
 - [ ] When your friends in Dubai leave: starting again
 - [ ] Single in Dubai and looking for friends, not dates
-- [ ] Making friends as a woman new to Dubai
 - [ ] Social anxiety in a new city: small steps that help
 - [ ] Saying yes to invitations without burning out
 - [ ] Following up after meeting someone: a simple message that works

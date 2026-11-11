@@ -165,7 +165,12 @@ export function useMemberProfile(userId: string) {
           })),
         });
       })
-      .catch((e) => n === seq.current && setState((s) => ({ ...s, for: key, error: /fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load' })));
+      .catch((e) => {
+        if (n !== seq.current) return;
+        const error = /fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load';
+        // What is kept under the error is this person's own (a refresh that failed), never the previous person's.
+        setState((s) => (s.for === key ? { ...s, error } : { for: key, profile: null, communities: [], posts: [], error }));
+      });
   }, [uid, userId, key, space]);
 
   useEffect(() => {

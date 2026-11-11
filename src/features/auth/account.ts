@@ -54,12 +54,33 @@ useStore.subscribe((st, prev) => {
   }
 });
 
+/** The member of the session kept on this phone (read as stored, no request); null when there is none to read. */
+async function storedUser(): Promise<{ id: string; email?: string } | null> {
+  try {
+    const auth = supabase?.auth as unknown as { storage?: { getItem: (key: string) => Promise<string | null> | string | null }; storageKey?: string } | undefined;
+    if (!auth?.storage || !auth.storageKey) return null;
+    const raw = await auth.storage.getItem(auth.storageKey);
+    const user = raw ? (JSON.parse(raw) as { user?: { id?: unknown; email?: unknown } } | null)?.user : null;
+    return user && typeof user.id === 'string' ? { id: user.id, email: typeof user.email === 'string' ? user.email : undefined } : null;
+  } catch {
+    return null;
+  }
+}
+
 // One session reader and one auth listener for the whole app (every screen
 // used to start "signed out" and resolve on its own, flashing Sign in).
 if (supabase) {
   supabase.auth
     .getSession()
-    .then(({ data }) => {
+    .then(async ({ data, error }) => {
+      // Offline at launch with an expired token: the refresh could not be sent, the session is
+      // still stored and comes back with the next refresh. That is not "signed out".
+      if (!data.session && (error as { name?: string } | null)?.name === 'AuthRetryableFetchError') {
+        const kept = await storedUser();
+        // The person the phone knows; unreadable: still unknown, the next auth event says.
+        if (kept) setSession(kept);
+        return;
+      }
       setSession(data.session?.user);
       // Still signed in but this device never finished signup (or was reset).
       if (data.session?.user) {
@@ -75,6 +96,9 @@ if (supabase) {
   supabase.auth.onAuthStateChange((event, session) => {
     // Already signed out here (Log out finished, a late answer of its server call): nothing more to say.
     const wasIn = useAuthStore.getState().status !== 'out';
+    // No session at launch is said by the reader above, which knows why: offline with an expired
+    // token is announced here the same way as nobody signed in, and must not sign the member out.
+    if (event === 'INITIAL_SESSION' && !session) return;
     setSession(session?.user);
     // Signed out in another tab, or the session ended elsewhere (signed out on the server, account
     // deleted on another phone, refresh token revoked): forget this person here too, and leave
