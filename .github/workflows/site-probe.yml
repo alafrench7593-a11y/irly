@@ -1,0 +1,21 @@
+name: Website probe
+
+# Reads the live getirly.com as a search engine does: which address answers and which redirects, the status of
+# the main pages, and whether the host answers search crawlers. It only reads; run it by hand.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read the live site
+        run: node scripts/site-probe.mjs

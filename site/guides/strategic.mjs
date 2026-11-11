@@ -18,7 +18,7 @@ export const STRATEGIC = [
     cover: 'dubaiMarina',
     city: 'Dubai',
     published: '2026-11-11',
-    title: 'How to Meet French People in Dubai | IRLY',
+    title: 'How to Meet French People in Dubai: Groups and Events | IRLY',
     description: 'Where the French-speaking community gathers in Dubai, how to join its associations and events, and how to mix French and international circles.',
     h1: 'How to meet French people in Dubai',
     lead: 'French speakers in Dubai gather around a few well-known associations, the Alliance Française, the French chamber of commerce, the French-curriculum schools and many online groups. The quickest way in is to join one association, go to one of its regular events, and come back. Then add one international group, so your circle is not only French.',
@@ -89,6 +89,8 @@ export const STRATEGIC = [
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
       { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' },
       { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' },
+      { label: 'Lonely during the holidays far from home', path: 'blog/lonely-holidays-far-from-home/' },
+      { label: 'Moved to Dubai for your partner’s job', path: 'blog/moved-for-partner-job-dubai-own-circle/' },
     ],
   },
   {
@@ -98,7 +100,7 @@ export const STRATEGIC = [
     cover: 'dubaiMarina',
     city: 'Dubaï',
     published: '2026-11-11',
-    title: 'Comment rencontrer des Français à Dubaï ? | IRLY',
+    title: 'Rencontrer des Français à Dubaï, communauté francophone | IRLY',
     description: 'Où se retrouve la communauté francophone à Dubaï, comment rejoindre ses associations et événements, et comment mêler cercles francophones et internationaux.',
     h1: 'Comment rencontrer des Français à Dubaï ?',
     lead: 'À Dubaï, les francophones se retrouvent autour de quelques associations bien connues, de l’Alliance Française, de la chambre de commerce française, des écoles françaises et de nombreux groupes en ligne. Le plus rapide : adhère à une association, va à l’un de ses rendez-vous réguliers, et reviens. Ajoute ensuite un groupe international, pour que ton cercle ne soit pas uniquement français.',
@@ -169,6 +171,8 @@ export const STRATEGIC = [
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
       { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' },
       { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' },
+      { label: 'Seul pendant les fêtes loin de chez toi', path: 'fr/blog/seul-pendant-les-fetes-loin-de-chez-soi/' },
+      { label: 'Suivre ton ou ta partenaire à Dubaï', path: 'fr/blog/suivre-partenaire-dubai-ton-propre-cercle/' },
     ],
   },
   {
@@ -178,7 +182,7 @@ export const STRATEGIC = [
     cover: 'dubaiCreek',
     city: 'Dubai',
     published: '2026-11-11',
-    title: 'Apps to Make Friends in Dubai: How to Choose | IRLY',
+    title: 'Best Apps to Make Friends in Dubai: How to Choose | IRLY',
     description: 'The types of apps people use to make friends in Dubai, what each is good for, how a friendship app differs from a dating app, and how to stay safe.',
     h1: 'Best apps to make friends in Dubai: how to choose',
     lead: 'No single app is best for everyone: the right one depends on how you like to meet people. Five types are used in Dubai: friendship and community apps, event platforms, messaging-group communities, dating apps with a friends mode, and sport-booking apps. Choose the one that gets you to a real, repeated activity fastest, because friendships are made in person, not in the app.',
@@ -233,7 +237,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY belongs to the first type: a friendship and community app, and not a dating app. You join communities around your interests, join an activity or create your own, and talk in the group chat before you meet in real life. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings. The app starts in Dubai and covers the other emirates, in English and French. It is free and works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the types above. Try it alongside whatever else suits you, and keep the one that gets you out of the house.</p>`,
+        html: `<p>IRLY belongs to the first type: a friendship and community app, and not a dating app. You join communities around your interests, join an activity or create your own, and talk in the group chat before you meet in real life. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings. The app is in English and French; it starts in Dubai, with the other emirates opening in early access. It is free and works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the types above. Try it alongside whatever else suits you, and keep the one that gets you out of the house.</p>`,
       },
     ],
     faq: [
@@ -250,6 +254,8 @@ export const STRATEGIC = [
       { label: 'Activities in Dubai to meet people, by interest', path: 'dubai/activities/' },
       { label: 'Expat communities in Dubai: how to find yours', path: 'dubai/expat-communities/' },
       { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
+      { label: 'Making friends in Dubai as an introvert', path: 'blog/introvert-make-friends-dubai/' },
+      { label: 'Making friends in Dubai in your 30s', path: 'blog/make-friends-dubai-30s/' },
     ],
   },
   {
@@ -259,8 +265,8 @@ export const STRATEGIC = [
     cover: 'dubaiCreek',
     city: 'Dubaï',
     published: '2026-11-11',
-    title: 'Quelle application pour se faire des amis à Dubaï ? | IRLY',
-    description: 'Les types d’applications pour se faire des amis à Dubaï, ce que chacune apporte, la différence avec une appli de rencontres et les réflexes de sécurité.',
+    title: 'Application de rencontre amicale à Dubaï : bien choisir | IRLY',
+    description: 'Quelle application pour se faire des amis à Dubaï ? Les types d’applis de rencontre amicale, la différence avec une appli de rencontres amoureuses, la sécurité.',
     h1: 'Quelle application pour se faire des amis à Dubaï ?',
     lead: 'Aucune application n’est la meilleure pour tout le monde : la bonne dépend de ta façon de rencontrer les gens. À Dubaï, cinq types sont utilisés : les applications d’amitié et de communautés, les plateformes d’événements, les communautés sur messagerie, les applications de rencontres avec un mode amis et les applications de réservation de sport. Choisis celle qui t’amène le plus vite à une activité réelle et régulière : une amitié se construit en vrai, pas dans l’appli.',
     sections: [
@@ -314,7 +320,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY fait partie du premier type : une application d’amitié et de communautés, et non une application de rencontres amoureuses. Tu rejoins des communautés autour de tes centres d’intérêt, tu participes à une activité ou tu crées la tienne, et tu discutes dans le chat du groupe avant de vous voir en vrai. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles. L’application commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle est gratuite et fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types décrits plus haut. Essaie-la à côté de ce qui te convient déjà, et garde ce qui te fait sortir de chez toi.</p>`,
+        html: `<p>IRLY fait partie du premier type : une application d’amitié et de communautés, et non une application de rencontres amoureuses. Tu rejoins des communautés autour de tes centres d’intérêt, tu participes à une activité ou tu crées la tienne, et tu discutes dans le chat du groupe avant de vous voir en vrai. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles. L’application est en français et en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle est gratuite et fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types décrits plus haut. Essaie-la à côté de ce qui te convient déjà, et garde ce qui te fait sortir de chez toi.</p>`,
       },
     ],
     faq: [
@@ -331,6 +337,8 @@ export const STRATEGIC = [
       { label: 'Activités à Dubaï pour rencontrer du monde, par centre d’intérêt', path: 'fr/dubai/activites/' },
       { label: 'Comment rejoindre une communauté d’expatriés à Dubaï', path: 'fr/dubai/communautes-expatries/' },
       { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
+      { label: 'Se faire des amis à Dubaï quand on est introverti', path: 'fr/blog/introverti-se-faire-des-amis-dubai/' },
+      { label: 'Se faire des amis à Dubaï dans la trentaine', path: 'fr/blog/se-faire-des-amis-dubai-trentaine/' },
     ],
   },
   {
@@ -340,7 +348,7 @@ export const STRATEGIC = [
     cover: 'brunch',
     city: 'Dubai',
     published: '2026-11-11',
-    title: 'How to Find Female Friends in Dubai | IRLY',
+    title: 'How to Find Female Friends in Dubai, Step by Step | IRLY',
     description: 'How to find female friends in Dubai: where friendships between women start, women-only spaces, and the steps that turn a nice chat into a real friend.',
     h1: 'How to find female friends in Dubai',
     lead: 'Finding female friends in Dubai comes down to two things: putting yourself where other women come back every week, and making the small second move that most people skip, a message the same day and a plan within the week. Many women here are new too and hoping someone will ask. Below: where to start, how to go from acquaintance to friend, and how to feel safe doing it.',
@@ -417,6 +425,7 @@ export const STRATEGIC = [
       { label: 'How often to see someone before they become a friend', path: 'blog/how-often-see-someone-become-friend/' },
       { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
       { label: 'Making friends in Dubai as an introvert', path: 'blog/introvert-make-friends-dubai/' },
+      { label: 'Expat communities in Dubai', path: 'dubai/expat-communities/' },
     ],
   },
   {
@@ -426,7 +435,7 @@ export const STRATEGIC = [
     cover: 'brunch',
     city: 'Dubaï',
     published: '2026-11-11',
-    title: 'Comment trouver des copines à Dubaï ? | IRLY',
+    title: 'Trouver des copines à Dubaï : se faire des amies | IRLY',
     description: 'Comment trouver des copines à Dubaï : où naissent les amitiés entre femmes, les espaces réservés aux femmes et comment passer d’une rencontre à une amie.',
     h1: 'Comment trouver des copines à Dubaï ?',
     lead: 'Trouver des copines à Dubaï tient à deux choses : te placer là où d’autres femmes reviennent chaque semaine, et faire le petit deuxième pas que presque tout le monde oublie, un message le jour même et une proposition dans la semaine. Beaucoup de femmes ici sont nouvelles elles aussi et espèrent qu’on leur propose. Ci-dessous : par où commencer, comment passer de connaissance à amie, et comment le faire en te sentant en sécurité.',
@@ -503,6 +512,7 @@ export const STRATEGIC = [
       { label: 'Combien de fois se voir avant de devenir amis ?', path: 'fr/blog/combien-de-fois-se-voir-pour-devenir-amis/' },
       { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
       { label: 'Se faire des amis à Dubaï quand on est introverti', path: 'fr/blog/introverti-se-faire-des-amis-dubai/' },
+      { label: 'Communautés d’expatriés à Dubaï', path: 'fr/dubai/communautes-expatries/' },
     ],
   },
   {
@@ -512,7 +522,7 @@ export const STRATEGIC = [
     cover: 'running',
     city: 'Dubai',
     published: '2026-11-11',
-    title: 'How to Join a Social Running Club in Dubai | IRLY',
+    title: 'Dubai Running Clubs: How to Join a Social Run Club | IRLY',
     description: 'How social running clubs work in Dubai: when they run because of the heat, levels, what to bring, how to pick one and how a run club becomes friends.',
     h1: 'How to join a social running club in Dubai',
     lead: 'Joining a social running club in Dubai is simple: find a group that runs near you at a time you can keep, tell the organiser it is your first time, and turn up. Most groups run early in the morning or after sunset because of the heat, welcome several paces, and end with a coffee. That coffee, week after week, is what turns a run club into a circle of friends.',
@@ -601,6 +611,8 @@ export const STRATEGIC = [
       { label: 'Free social activities in Dubai to meet people', path: 'dubai/free-social-activities/' },
       { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'From gym or class acquaintance to friend', path: 'blog/gym-class-acquaintance-to-friend/' },
+      { label: 'What to say to start a conversation', path: 'blog/what-to-say-start-conversation-activity/' },
     ],
   },
   {
@@ -610,8 +622,8 @@ export const STRATEGIC = [
     cover: 'running',
     city: 'Dubaï',
     published: '2026-11-11',
-    title: 'Comment rejoindre un club de running à Dubaï ? | IRLY',
-    description: 'Comment fonctionnent les clubs de running à Dubaï : horaires liés à la chaleur, niveaux, quoi apporter, comment choisir et comment s’y faire des amis.',
+    title: 'Running club à Dubaï : comment en rejoindre un | IRLY',
+    description: 'Running club à Dubaï : comment fonctionnent les clubs, horaires liés à la chaleur, niveaux, quoi apporter, comment choisir et comment s’y faire des amis.',
     h1: 'Comment rejoindre un club de running à Dubaï ?',
     lead: 'Rejoindre un club de running à Dubaï est simple : trouve un groupe qui court près de chez toi à un horaire que tu peux tenir, préviens l’organisateur que c’est ta première fois, et viens. La plupart des groupes courent tôt le matin ou après le coucher du soleil à cause de la chaleur, accueillent plusieurs allures et finissent par un café. C’est ce café, semaine après semaine, qui transforme un club en cercle d’amis.',
     sections: [
@@ -699,6 +711,8 @@ export const STRATEGIC = [
       { label: 'Activités gratuites à Dubaï pour rencontrer du monde', path: 'fr/dubai/activites-gratuites/' },
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Salle de sport ou cours : d’une connaissance à un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
+      { label: 'Quoi dire pour lancer une conversation', path: 'fr/blog/quoi-dire-pour-lancer-une-conversation-activite/' },
     ],
   },
   {
@@ -763,7 +777,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It is organised around communities: you join the ones that match your interests, take part in their activities or create your own, and talk in the group chat. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings between entrepreneurs, freelancers and professionals. The app starts in Dubai and covers the other emirates, in English and French. It is free, it is not a dating app, and it works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the kinds of communities described above.</p>`,
+        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It is organised around communities: you join the ones that match your interests, take part in their activities or create your own, and talk in the group chat. IRLY Girl is a space reserved for women, and IRLY Network is the part for professional meetings between entrepreneurs, freelancers and professionals. The app is in English and French; it starts in Dubai, with the other emirates opening in early access. It is free, it is not a dating app, and it works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among the kinds of communities described above.</p>`,
       },
     ],
     faq: [
@@ -780,6 +794,7 @@ export const STRATEGIC = [
       { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' },
       { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' },
       { label: 'Apps to make friends in Dubai: how to choose', path: 'dubai/app-to-make-friends/' },
+      { label: 'Making friends in Dubai in your 40s and 50s', path: 'blog/make-friends-dubai-40s-50s/' },
     ],
   },
   {
@@ -844,7 +859,7 @@ export const STRATEGIC = [
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle est organisée autour de communautés : tu rejoins celles qui correspondent à tes centres d’intérêt, tu participes à leurs activités ou tu crées la tienne, et tu discutes dans le chat du groupe. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles entre entrepreneurs, indépendants et professionnels. L’application commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle est gratuite, ce n’est pas une application de rencontres amoureuses, et elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types de communautés décrits plus haut.</p>`,
+        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle est organisée autour de communautés : tu rejoins celles qui correspondent à tes centres d’intérêt, tu participes à leurs activités ou tu crées la tienne, et tu discutes dans le chat du groupe. IRLY Girl est un espace réservé aux femmes, et IRLY Network est la partie consacrée aux rencontres professionnelles entre entrepreneurs, indépendants et professionnels. L’application est en français et en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle est gratuite, ce n’est pas une application de rencontres amoureuses, et elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi les types de communautés décrits plus haut.</p>`,
       },
     ],
     faq: [
@@ -861,6 +876,7 @@ export const STRATEGIC = [
       { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' },
       { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' },
       { label: 'Quelle application pour se faire des amis à Dubaï ?', path: 'fr/dubai/application-pour-se-faire-des-amis/' },
+      { label: 'Se faire des amis à Dubaï après 40 ans', path: 'fr/blog/se-faire-des-amis-dubai-40-50-ans/' },
     ],
   },
   {
@@ -942,6 +958,7 @@ export const STRATEGIC = [
       { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
       { label: 'How to start a small group yourself', path: 'blog/start-small-group-weekly-walk-book-club/' },
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
     ],
   },
   {
@@ -1023,6 +1040,7 @@ export const STRATEGIC = [
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
       { label: 'Lancer ton propre petit groupe', path: 'fr/blog/creer-un-petit-groupe-balade-club-lecture/' },
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
     ],
   },
   {
@@ -1032,8 +1050,8 @@ export const STRATEGIC = [
     cover: 'volleyball',
     city: 'Dubai',
     published: '2026-11-11',
-    title: 'Activities in Dubai to Meet People, by Interest | IRLY',
-    description: 'Activities in Dubai to meet people, by interest: running, fitness, padel, brunch, beach days, nights out, networking and trips, and how to find a group.',
+    title: 'Dubai Social Activities by Interest: Find Your Group | IRLY',
+    description: 'Social activities in Dubai to meet people, by interest: running, fitness, padel, brunch, beach days, nights out, networking and trips, and how to find a group.',
     h1: 'Activities in Dubai to meet people, by interest',
     lead: 'The best activity for meeting people in Dubai is the one you would do anyway, done with a group that meets regularly. This page sorts the options by interest: running, fitness, padel, restaurants and brunch, beach days, nights out, networking and trips. For each one you will find who it suits, how a first session goes and how to find a group.',
     sections: [
@@ -1075,11 +1093,11 @@ export const STRATEGIC = [
         html: `<p><strong>Who it suits:</strong> people who would rather spend a whole day with a small group than an hour with a large one. A day out builds familiarity faster than weeks of short meetings.</p>
 <p><strong>A first session:</strong> a hike in the mountains or a desert outing in the cooler months, a day in another emirate, a boat trip. The organiser gives a meeting point, the level required and what to bring; transport is often shared by car. Ask what the costs are and how they are split.</p>
 <p><strong>Finding a group:</strong> hiking and outdoor communities, and groups of friends of friends. For anything outdoors, choose organisers with experience of the route, take more water than you think you need, and tell someone where you are going.</p>
-<p>Still undecided? Our list of <a href="../group-activities/">15 group activities to meet people in Dubai</a> gives more ideas, and <a href="../make-friends/">how to make friends in Dubai</a> explains how to turn any of them into friendships.</p>`,
+<p>Still undecided? Our list of <a href="../group-activities/">15 group activities to meet people in Dubai</a> gives more ideas, and <a href="../make-friends/">how to make friends in Dubai</a> explains how to turn any of them into friendships. If you are new in the city, <a href="../expat-communities/">expat communities in Dubai</a> are often where these activities are announced.</p>`,
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It follows the same logic as this page: you choose communities by interest, join an activity or create your own, a run, a padel game or a brunch for example, and talk in the group chat before you meet. IRLY Girl is a space reserved for women, IRLY Network is the part for professional meetings, and IRLY Games lets members play a Werewolf-style party game together in the app. IRLY is free, starts in Dubai and covers the other emirates, in English and French. It works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among others.</p>`,
+        html: `<p>IRLY is an app to meet people who share your interests and do things together in real life. It follows the same logic as this page: you choose communities by interest, join an activity or create your own, a run, a padel game or a brunch for example, and talk in the group chat before you meet. IRLY Girl is a space reserved for women, IRLY Network is the part for professional meetings, and IRLY Games lets members play a Werewolf-style party game together in the app. IRLY is free, in English and French; it starts in Dubai, with the other emirates opening in early access. It works today in the browser as a web app; iOS and Android apps are coming soon. It is one option among others.</p>`,
       },
     ],
     faq: [
@@ -1097,6 +1115,7 @@ export const STRATEGIC = [
       { label: 'Free social activities in Dubai to meet people', path: 'dubai/free-social-activities/' },
       { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' },
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'New in Dubai as a couple', path: 'blog/new-dubai-couple-social-life/' },
     ],
   },
   {
@@ -1106,8 +1125,8 @@ export const STRATEGIC = [
     cover: 'volleyball',
     city: 'Dubaï',
     published: '2026-11-11',
-    title: 'Activités à Dubaï : rencontrer du monde selon tes goûts | IRLY',
-    description: 'Activités à Dubaï pour rencontrer du monde, par centre d’intérêt : running, fitness, padel, brunch, plage, soirées, networking, excursions. Trouver un groupe.',
+    title: 'Activités entre expatriés à Dubaï, par centre d’intérêt | IRLY',
+    description: 'Activités entre expatriés à Dubaï, par centre d’intérêt : running, fitness, padel, brunch, plage, soirées, networking, excursions, et comment trouver un groupe.',
     h1: 'Activités à Dubaï pour rencontrer du monde, par centre d’intérêt',
     lead: 'La meilleure activité pour rencontrer du monde à Dubaï, c’est celle que tu ferais de toute façon, pratiquée avec un groupe qui se retrouve régulièrement. Cette page classe les possibilités par centre d’intérêt : running, fitness, padel, restaurants et brunch, journées plage, soirées, networking et excursions. Pour chacune : à qui elle convient, comment se passe une première fois et comment trouver un groupe.',
     sections: [
@@ -1149,11 +1168,11 @@ export const STRATEGIC = [
         html: `<p><strong>Pour qui :</strong> ceux qui préfèrent passer une journée entière avec un petit groupe plutôt qu’une heure avec un grand. Une journée dehors crée plus de familiarité que des semaines de rencontres courtes.</p>
 <p><strong>Une première fois :</strong> une randonnée en montagne ou une sortie dans le désert pendant les mois frais, une journée dans un autre émirat, une sortie en bateau. L’organisateur indique le point de rendez-vous, le niveau requis et ce qu’il faut apporter ; le trajet se fait souvent en covoiturage. Demande quels sont les frais et comment ils sont partagés.</p>
 <p><strong>Trouver un groupe :</strong> les communautés de randonnée et d’activités de plein air, et les groupes d’amis d’amis. Pour tout ce qui se passe en pleine nature, choisis des organisateurs qui connaissent le parcours, emporte plus d’eau que nécessaire et préviens quelqu’un de l’endroit où tu vas.</p>
-<p>Tu hésites encore ? Notre liste de <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées, et <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> explique comment transformer n’importe laquelle en amitiés.</p>`,
+<p>Tu hésites encore ? Notre liste de <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées, et <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> explique comment transformer n’importe laquelle en amitiés. Si tu viens d’arriver, les <a href="../communautes-expatries/">communautés d’expatriés à Dubaï</a> sont souvent l’endroit où s’annoncent ces activités entre expatriés.</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça ?',
-        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle suit la même logique que cette page : tu choisis des communautés par centre d’intérêt, tu rejoins une activité ou tu crées la tienne, un footing, une partie de padel ou un brunch par exemple, et tu discutes dans le chat du groupe avant de vous voir. IRLY Girl est un espace réservé aux femmes, IRLY Network est la partie consacrée aux rencontres professionnelles, et IRLY Games permet aux membres de jouer ensemble, dans l’application, à un jeu d’ambiance de type Loup-Garou. IRLY est gratuite, commence à Dubaï et couvre les autres émirats, en français et en anglais. Elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi d’autres.</p>`,
+        html: `<p>IRLY est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble, en vrai. Elle suit la même logique que cette page : tu choisis des communautés par centre d’intérêt, tu rejoins une activité ou tu crées la tienne, un footing, une partie de padel ou un brunch par exemple, et tu discutes dans le chat du groupe avant de vous voir. IRLY Girl est un espace réservé aux femmes, IRLY Network est la partie consacrée aux rencontres professionnelles, et IRLY Games permet aux membres de jouer ensemble, dans l’application, à un jeu d’ambiance de type Loup-Garou. IRLY est gratuite et en français comme en anglais ; elle commence à Dubaï, et les autres émirats ouvrent en accès anticipé. Elle fonctionne dès aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt. C’est une option parmi d’autres.</p>`,
       },
     ],
     faq: [
@@ -1171,6 +1190,7 @@ export const STRATEGIC = [
       { label: 'Activités gratuites à Dubaï pour rencontrer du monde', path: 'fr/dubai/activites-gratuites/' },
       { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' },
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'En couple à Dubaï : une vie sociale à deux', path: 'fr/blog/arriver-dubai-en-couple-vie-sociale/' },
     ],
   },
 ];
