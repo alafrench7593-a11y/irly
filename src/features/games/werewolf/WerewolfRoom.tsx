@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +35,8 @@ import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, type WwOption, ty
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 const JOIN_URL = 'https://getirly.com/app/games/join?code=';
 const modeOf = toMode;
+/** What ww_view answers to a member who has no seat in a game that is running. */
+const NOT_PLAYING = 'you are not playing in this game';
 
 /**
  * A Loup-Garou table, in every mode (Classic, Dubaï, Chaos): the waiting room
@@ -43,7 +46,14 @@ const modeOf = toMode;
  * revealed. The server decides everything.
  */
 export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: { room: Room; me: string; messages: GameMessage[]; onBack: () => void; onLeave: () => void; children?: ReactNode }) {
-  const { view, failed, reload, skew } = useWwView(room.id, room);
+  const router = useRouter();
+  // A game already running that I am not in: said once, then nothing more is read for that room.
+  const [shutFor, setShutFor] = useState<string | null>(null);
+  const shut = shutFor === room.id;
+  const { view: read, failed, reload, skew } = useWwView(shut ? undefined : room.id, room);
+  const outsider = failed === NOT_PLAYING && room.status !== 'waiting';
+  if (outsider && !shut) setShutFor(room.id);
+  const view = outsider ? null : read;
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const playing = Boolean(view && view.phase !== 'lobby' && view.phase !== 'ended');
@@ -51,7 +61,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
   // While the keyboard is up the dock steps aside: the field being typed in and its send button keep the room.
   const typing = useKeyboardHeight() > 0;
   // Voice games: my rights are read again when the table changes (lobby) or when the phase, the living or my camp do.
-  const voiceSig = !view || view.phase === 'lobby' ? room : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
+  const voiceSig = outsider ? 'outsider' : !view || view.phase === 'lobby' ? room : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
   const voice = useVoice(room.id, voiceSig);
   const people = useMemo(() => room.people.map((p) => ({ id: p.id, name: p.name ?? tx('A member') })), [room.people]);
   // My card, the chat and the log open over the game, one at a time. The card opens by itself when the roles are dealt.
@@ -63,7 +73,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
     setPanel(null);
     setCardSeen(true);
   };
-  const { act, busy } = useAct(room.id, reload);
+  const { act, run, busy } = useAct(room.id, reload);
   const [inviting, setInviting] = useState(false);
   const present = room.people.filter((p) => !p.left);
   const seated = present.some((p) => p.id === me);
@@ -73,12 +83,17 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
     <View style={styles.screen}>
       <TopBar room={room} view={view} skew={skew} seated={seated} onBack={onBack} onLeave={onLeave} />
       <ScrollView style={styles.screen} contentContainerStyle={[styles.scroll, { paddingBottom: playing || lobby ? 16 : insets.bottom + 16 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
-        {!view ? (
+        {outsider ? (
+          <View style={styles.block} testID="ww-outsider">
+            <Text style={styles.waitText}>{tx('This game has already started')}</Text>
+            <GoldButton label={tx('IRLY Games')} icon="home" onPress={() => router.replace('/games')} />
+          </View>
+        ) : !view ? (
           <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>
         ) : view.phase === 'lobby' ? (
           <Lobby room={room} me={me} view={view} onChanged={reload} voice={voice} people={people} onInvite={() => setInviting(true)} />
         ) : (
-          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} voice={voice} people={people} panel={open} onClosePanel={closePanel} act={act} busy={busy} />
+          <Game room={room} me={me} view={view} messages={messages} skew={skew} voice={voice} people={people} panel={open} onClosePanel={closePanel} act={act} run={run} busy={busy} />
         )}
         {children}
       </ScrollView>
@@ -94,7 +109,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
                   {missing === 1 ? tx('1 more player is needed to start.') : tx('{n} more players are needed to start.', { n: missing })}
                 </Text>
               ) : null}
-              <GoldButton label={tx('Start the game')} icon="play" disabled={missing > 0} onPress={() => startRoom(room.id).then(reload).catch(fail)} />
+              <GoldButton label={tx('Start the game')} icon="play" disabled={missing > 0 || busy} onPress={() => run(() => startRoom(room.id))} />
             </>
           ) : (
             <View style={styles.waiting} accessibilityRole="text" testID="ww-waiting-host">
@@ -127,20 +142,22 @@ type GamePanel = 'card' | 'chat' | 'log';
 /** What the server answers when the screen was a moment late: the phase moved on, nothing is wrong. */
 const LATE = new Set(['you cannot do that now', 'nothing to do now', 'not a valid target', 'this game is not running']);
 type Act = (kind: string, a?: number | null, b?: number | null) => void;
+type Run = (fn: () => Promise<unknown>) => void;
 
 /**
  * One action at a time. While it is sent, and until the game is read again, nothing else can be sent: a second
  * tap never reaches the server from a screen that is out of date. If the phase had already moved on, the game is
  * simply read again and the player is told so, without an error.
  */
-function useAct(roomId: string, reload: () => Promise<void>): { act: Act; busy: boolean } {
+function useAct(roomId: string, reload: () => Promise<void>): { act: Act; run: Run; busy: boolean } {
   const [busy, setBusy] = useState(false);
   const sending = useRef(false);
-  const act: Act = (kind, a, b) => {
+  // Every request of the table goes through here: a card's action, the host's start, the end of the debate in person.
+  const run: Run = (fn) => {
     if (sending.current) return;
     sending.current = true;
     setBusy(true);
-    wwAct(roomId, kind, a, b)
+    fn()
       .catch((e: unknown) => {
         if (e instanceof Error && LATE.has(e.message)) toast(tx('The game has moved on. Here is where it stands.'), 'clock');
         else fail(e);
@@ -151,7 +168,8 @@ function useAct(roomId: string, reload: () => Promise<void>): { act: Act; busy: 
         setBusy(false);
       });
   };
-  return { act, busy };
+  const act: Act = (kind, a, b) => run(() => wwAct(roomId, kind, a, b));
+  return { act, run, busy };
 }
 
 const PHASE_ICON = { night: '🌙', witch: '🌙', day: '☀️', vote: '🗳️', revote: '🗳️', ended: '🏁', lobby: '' } as const;
@@ -186,7 +204,7 @@ function TopBar({ room, view, skew, seated, onBack, onLeave }: { room: Room; vie
         </Text>
         {lobby ? (
           <Text style={styles.topSub} numberOfLines={1}>
-            {[tx('Waiting room'), room.title].filter(Boolean).join(' · ')}
+            {[tx(room.status === 'waiting' ? 'Waiting room' : room.status === 'playing' ? 'In progress' : 'Game over'), room.title].filter(Boolean).join(' · ')}
           </Text>
         ) : (
           <View style={styles.topPhase}>
@@ -370,7 +388,9 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
     const wolves = next.werewolf ?? 1;
     const villagers = players + (next.thief ? 2 : 0) - specials - wolves;
     if (villagers < 0) return toast(tx('Not enough players for these cards'), 'x', 'live');
-    void wwSetComposition(roomId, { ...next, villager: villagers }).then(onChanged).catch(fail);
+    // A card taken out is left out of the deck sent (never « thief: 0 »).
+    const deck = Object.fromEntries(Object.entries({ ...next, villager: villagers }).filter(([, n]) => n > 0));
+    void wwSetComposition(roomId, deck).then(onChanged).catch(fail);
   };
   return (
     <Panel title={tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}>
@@ -416,7 +436,7 @@ function CardChip({ id, count }: { id: CardId; count: number }) {
 }
 
 // ───────── The game ─────────
-function Game({ room, me, view, messages, skew, onChanged, voice, people, panel, onClosePanel, act, busy }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void; voice: Voice; people: { id: string; name: string }[]; panel: GamePanel | null; onClosePanel: () => void; act: Act; busy: boolean }) {
+function Game({ room, me, view, messages, skew, voice, people, panel, onClosePanel, act, run, busy }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; voice: Voice; people: { id: string; name: string }[]; panel: GamePanel | null; onClosePanel: () => void; act: Act; run: Run; busy: boolean }) {
   const night = view.phase === 'night' || view.phase === 'witch';
   const ended = view.phase === 'ended';
   const mode = modeOf(view.mode);
@@ -494,7 +514,7 @@ function Game({ room, me, view, messages, skew, onChanged, voice, people, panel,
         <>
           <DubaiResult view={view} me={me} room={room} />
           <Log view={view} name={name} />
-          <Chat room={room} view={view} messages={messages} me={me} name={name} />
+          <Chat room={room} view={view} messages={messages} me={me} name={name} skew={skew} />
         </>
       ) : (
         <>
@@ -516,12 +536,12 @@ function Game({ room, me, view, messages, skew, onChanged, voice, people, panel,
           </Sheet>
           <Sheet visible={panel === 'chat'} onClose={onClosePanel} scroll title={tx('Chat')}>
             <View style={styles.sheetBody} testID="ww-panel-chat">
-              <Chat room={room} view={view} messages={messages} me={me} name={name} bare />
+              <Chat room={room} view={view} messages={messages} me={me} name={name} skew={skew} bare />
             </View>
           </Sheet>
         </>
       )}
-      {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? <GoldButton label={tx('Everyone has talked: vote')} icon="arrowRight" onPress={() => wwSkipDay(room.id).then(onChanged).catch(fail)} /> : null}
+      {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? <GoldButton label={tx('Everyone has talked: vote')} icon="arrowRight" disabled={busy} onPress={() => run(() => wwSkipDay(room.id))} /> : null}
     </View>
   );
 }
@@ -565,6 +585,9 @@ function Actions({ view, name, act, busy }: { view: WwView; name: (s?: number) =
     return <Text style={styles.waitText}>{view.phase === 'night' || view.phase === 'witch' ? tx('You sleep. The night goes on…') : tx('Wait for the others…')}</Text>;
   }
   const waiting = options.every((o) => mine.some((m) => m.kind === o.kind)) || mine.some((m) => m.kind === 'pass');
+  // At the vote, `mine` also carries the day's powers already played: only a ballot or an abstention counts as having chosen.
+  const voting = view.phase === 'vote' || view.phase === 'revote';
+  const chose = voting ? mine.some((m) => m.kind === 'vote' || m.kind === 'pass') : mine.length > 0;
   return (
     <View style={styles.actions}>
       <Text style={[styles.panelTitle, serif(fonts, '700')]}>{waiting ? tx('Done. Waiting for the others…') : tx('Your turn')}</Text>
@@ -574,7 +597,7 @@ function Actions({ view, name, act, busy }: { view: WwView; name: (s?: number) =
       {options.map((o) => (
         <Option key={o.kind} view={view} option={o} done={mine.filter((m) => m.kind === o.kind)} name={name} act={act} busy={busy} />
       ))}
-      {view.phase !== 'day' && !mine.length ? <GoldButton label={tx(view.phase === 'vote' || view.phase === 'revote' ? 'Abstain' : 'Do nothing')} ghost disabled={busy} onPress={() => act('pass')} /> : null}
+      {view.phase !== 'day' && !chose ? <GoldButton label={tx(voting ? 'Abstain' : 'Do nothing')} ghost disabled={busy} onPress={() => act('pass')} /> : null}
       {mine.some((m) => m.kind === 'pass') ? <Text style={styles.small}>{tx('You chose to do nothing')}</Text> : null}
     </View>
   );
@@ -693,7 +716,23 @@ function Log({ view, name, latest, bare }: { view: WwView; name: (s?: number) =>
 }
 
 // ───────── Chat (the table by day, the pack at night, the dead) ─────────
-function Chat({ room, view, messages, me, name, bare }: { room: Room; view: WwView; messages: GameMessage[]; me: string; name: (s?: number) => string; bare?: boolean }) {
+/** A line the table itself wrote (someone joined, left, the table has a new host): no author, never a bubble. */
+function systemLine(m: GameMessage, room: Room, me: string): string | null {
+  const id = typeof m.data?.user === 'string' ? m.data.user : undefined;
+  const who = id === me ? tx('You') : (room.people.find((p) => p.id === id)?.name ?? tx('A member'));
+  switch (m.body) {
+    case 'joined':
+      return tx('{name} joined', { name: who });
+    case 'left':
+      return tx('{name} left', { name: who });
+    case 'host':
+      return id === me ? tx('You are now the host') : tx('{name} is now the host', { name: who });
+    default:
+      return null;
+  }
+}
+
+function Chat({ room, view, messages, me, name, skew, bare }: { room: Room; view: WwView; messages: GameMessage[]; me: string; name: (s?: number) => string; skew: number; bare?: boolean }) {
   const [text, setText] = useState('');
   const alive = view.me?.alive ?? false;
   const night = view.phase === 'night' || view.phase === 'witch';
@@ -703,13 +742,18 @@ function Chat({ room, view, messages, me, name, bare }: { room: Room; view: WwVi
   // What I just sent shows at once, until the server's copy arrives (the live feed can be a moment late).
   const [sent, setSent] = useState<GameMessage[]>([]);
   const arrived = (o: GameMessage) => messages.some((m) => m.user_id === me && m.body === o.body && Date.parse(m.created_at) >= Date.parse(o.created_at) - 5000);
-  const shown = [...messages, ...sent.filter((o) => !arrived(o))].filter((m) => (m.channel ?? 'all') === channel).slice(-40);
+  const shown = [...messages, ...sent.filter((o) => !arrived(o))]
+    .filter((m) => (m.channel ?? 'all') === channel)
+    .map((m) => ({ m, system: m.kind === 'system' ? systemLine(m, room, me) : null }))
+    .filter((x) => x.m.kind !== 'system' || x.system)
+    .slice(-40);
   const send = () => {
     const body = text.trim();
     if (!body) return;
     setText('');
     wwSay(room.id, body, channel)
-      .then(() => setSent((list) => [...list.slice(-5), { id: -Date.now(), room_id: room.id, user_id: me, kind: 'chat', body, data: null, created_at: new Date().toISOString(), channel, seat: view.me?.seat ?? null }]))
+      // Stamped with the server's clock (the phone's may be ahead): the server's copy, when it arrives, replaces this one.
+      .then(() => setSent((list) => [...list.slice(-5), { id: -Date.now(), room_id: room.id, user_id: me, kind: 'chat', body, data: null, created_at: new Date(Date.now() + skew).toISOString(), channel, seat: view.me?.seat ?? null }]))
       .catch((e) => {
         setText(body);
         fail(e);
@@ -727,24 +771,30 @@ function Chat({ room, view, messages, me, name, bare }: { room: Room; view: WwVi
   const rows = (
     <>
       {shown.length === 0 ? <Text style={styles.small}>{tx('No message yet.')}</Text> : null}
-      {shown.map((m) => (
-        <View key={m.id} style={styles.msgRow}>
-          {m.user_id ? (
-            <Avatar name={nameOf(m)} hue={0} userId={m.user_id} size={28} />
-          ) : (
-            <View style={styles.msgBot}>
-              <Text style={styles.msgBotText}>{nameOf(m).slice(0, 1).toUpperCase()}</Text>
+      {shown.map(({ m, system }) =>
+        m.kind === 'system' ? (
+          <Text key={m.id} style={styles.msgSystem}>
+            {system}
+          </Text>
+        ) : (
+          <View key={m.id} style={styles.msgRow}>
+            {m.user_id ? (
+              <Avatar name={nameOf(m)} hue={0} userId={m.user_id} size={28} />
+            ) : (
+              <View style={styles.msgBot}>
+                <Text style={styles.msgBotText}>{nameOf(m).slice(0, 1).toUpperCase()}</Text>
+              </View>
+            )}
+            <View style={styles.msg}>
+              <Text style={styles.msgName}>
+                {(m.kind === 'bot' ? `${tx('AI')} · ` : '') + nameOf(m) + (m.user_id === me ? ` (${tx('you')})` : '')}
+                <Text style={styles.msgTime}>{`  ${clockOf(m.created_at)}`}</Text>
+              </Text>
+              <Text style={styles.body}>{m.kind === 'bot' ? botLine(m.body, m.id, m.data, name) : m.body}</Text>
             </View>
-          )}
-          <View style={styles.msg}>
-            <Text style={styles.msgName}>
-              {(m.kind === 'bot' ? `${tx('AI')} · ` : '') + nameOf(m) + (m.user_id === me ? ` (${tx('you')})` : '')}
-              <Text style={styles.msgTime}>{`  ${clockOf(m.created_at)}`}</Text>
-            </Text>
-            <Text style={styles.body}>{m.kind === 'bot' ? botLine(m.body, m.id, m.data, name) : m.body}</Text>
           </View>
-        </View>
-      ))}
+        ),
+      )}
       {canWrite ? (
         <View style={styles.inputRow}>
           <TextInput
@@ -828,6 +878,7 @@ const styles = StyleSheet.create({
   msgBot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2A1F14', borderWidth: 1, borderColor: DX.goldDark },
   msgBotText: { color: DX.goldLight, fontSize: 12, fontWeight: '800' },
   msgTime: { color: DX.muted, fontSize: 11, fontWeight: '400' },
+  msgSystem: { color: DX.muted, fontSize: 12, textAlign: 'center' },
   scroll: { padding: 16, gap: 14 },
   dock: { borderTopWidth: 1.5, borderColor: DX.gold, backgroundColor: '#15100C', shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: -4 } },
   dockInner: { paddingHorizontal: 16, paddingTop: 12 },

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { memo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
+import { Text as ThemedText } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
@@ -23,15 +24,22 @@ const STATUS: Record<GameShareStatus, { label: string; color: string }> = {
 /**
  * A shared game inside a post (a community's page, the Live): the mode's
  * scene, who created it, the real number of players, text or voice, the
- * status, and one button that enters that very room. Nothing is shown when
- * the post shares no game the reader may see.
+ * status, and one button that enters that very room. Nothing is shown while
+ * the game is being read; one quiet line when the post's game is no longer
+ * there for the reader.
  */
 export const GameShareCard = memo(function GameShareCard({ postId }: { postId: string }) {
   const router = useRouter();
   const reduced = useReducedMotion();
-  const { card, reload } = useGameShare(postId);
+  const { card, loaded, reload } = useGameShare(postId);
   const [busy, setBusy] = useState(false);
-  if (!card) return null;
+  if (!card) {
+    return loaded ? (
+      <ThemedText variant="caption" tone="tertiary" testID="game-share-gone">
+        {tx('This game is no longer available')}
+      </ThemedText>
+    ) : null;
+  }
   const mode = toMode(card.mode);
   const st = STATUS[card.status];
   const open = () => router.push(`/games/${card.room_id}`);

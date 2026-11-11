@@ -41,9 +41,10 @@ export const shareGame = (room: string, community: string, live: boolean) => rpc
 export const joinSharedGame = (post: string) => rpc<string>('game_join_shared', { p_post: post });
 
 // Every card on screen asks in the same request.
-const waiting = new Map<string, ((card: GameShare | null) => void)[]>();
+// `undefined`: the request failed, nothing is known (the card shown stays as it is).
+const waiting = new Map<string, ((card: GameShare | null | undefined) => void)[]>();
 let timer: ReturnType<typeof setTimeout> | null = null;
-function ask(post: string): Promise<GameShare | null> {
+function ask(post: string): Promise<GameShare | null | undefined> {
   return new Promise((resolve) => {
     waiting.set(post, [...(waiting.get(post) ?? []), resolve]);
     timer ??= setTimeout(() => {
@@ -52,7 +53,7 @@ function ask(post: string): Promise<GameShare | null> {
       waiting.clear();
       rpc<Record<string, GameShare>>('game_share_cards', { p_posts: [...batch.keys()] })
         .then((cards) => batch.forEach((fns, id) => fns.forEach((fn) => fn(cards?.[id] ?? null))))
-        .catch(() => batch.forEach((fns) => fns.forEach((fn) => fn(null))));
+        .catch(() => batch.forEach((fns) => fns.forEach((fn) => fn(undefined))));
     }, 30);
   });
 }
@@ -68,7 +69,8 @@ export function useGameShare(post: string | null): { card: GameShare | null; loa
     if (!post) return;
     let live = true;
     ask(post).then((c) => {
-      if (!live) return;
+      // A failed read keeps the last card; the next refresh asks again.
+      if (!live || c === undefined) return;
       setCard(c);
       setLoaded(true);
     });
@@ -79,9 +81,10 @@ export function useGameShare(post: string | null): { card: GameShare | null; loa
   // A game that is over or cancelled no longer changes.
   const moving = card ? card.status === 'waiting' || card.status === 'full' || card.status === 'playing' : false;
   useEffect(() => {
-    if (!post || !moving) return;
+    // Not read yet (the first request failed): keep asking.
+    if (!post || (loaded && !moving)) return;
     const t = setInterval(() => setTick((n) => n + 1), REFRESH_MS);
     return () => clearInterval(t);
-  }, [post, moving]);
+  }, [post, moving, loaded]);
   return { card, loaded, reload: () => setTick((n) => n + 1) };
 }

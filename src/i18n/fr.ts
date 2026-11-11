@@ -7155,4 +7155,10 @@ export const fr: Record<string, string> = {
   'No community matches.': 'Aucune communauté ne correspond.',
   'Return to the game': 'Retourner à la partie',
   'The game has moved on. Here is where it stands.': 'La partie a avancé. Voici où elle en est.',
+  // IRLY Games: what the audit of 11 November 2026 fixed on the phone.
+  '{name} is now the host': "{name} est maintenant l'hôte",
+  'You are now the host': "Tu es maintenant l'hôte",
+  'This game is no longer available': "Cette partie n'est plus disponible",
+  'The tables could not be loaded. Check your connection.': 'Impossible de charger les tables. Vérifie ta connexion.',
+  'Nobody has played for twenty minutes: the game ends as a draw.': "Personne n'a joué depuis vingt minutes : la partie se termine sur un match nul.",
 };

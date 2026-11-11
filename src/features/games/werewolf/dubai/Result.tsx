@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
@@ -69,10 +69,15 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
   const bannerStyle = useAnimatedStyle(() => ({ opacity: enter.get(), transform: [{ scale: 0.85 + enter.get() * 0.15 }] }));
   const w = Math.min(width - 32, 560);
   const thumb = Math.floor((w - 32 - 3 * 8) / 4);
-  const again = () =>
+  const [busy, setBusy] = useState(false);
+  const again = () => {
+    if (busy) return;
+    setBusy(true);
     wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', mode)
       .then((id) => router.replace(`/games/${id}`))
-      .catch(fail);
+      .catch(fail)
+      .finally(() => setBusy(false));
+  };
   const share = () => {
     void Share.share({ message: `${banner} · IRLY Loup-Garou ${tx(MODE_LABEL[mode])}\nhttps://getirly.com` }).catch(() => undefined);
   };
@@ -171,7 +176,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
       ) : null}
 
       <View style={styles.actions}>
-        {view.kind === 'training' ? <Action icon="repeat" label={tx('Play again')} primary onPress={again} fonts={fonts} /> : null}
+        {view.kind === 'training' ? <Action icon="repeat" label={tx('Play again')} primary disabled={busy} onPress={again} fonts={fonts} /> : null}
         <Action icon="home" label={tx('IRLY Games')} onPress={() => router.replace(`/games?mode=${mode}`)} fonts={fonts} />
         <Action icon="drama" label={tx('See the cards')} onPress={() => router.push(`/games/cards?mode=${mode}`)} fonts={fonts} />
         <Action icon="share" label={tx('Share')} onPress={share} fonts={fonts} />
@@ -213,10 +218,10 @@ function Stat({ icon, label }: { icon: IconName; label: string }) {
   );
 }
 
-function Action({ icon, label, onPress, primary, fonts }: { icon: IconName; label: string; onPress: () => void; primary?: boolean; fonts: boolean }) {
+function Action({ icon, label, onPress, primary, disabled, fonts }: { icon: IconName; label: string; onPress: () => void; primary?: boolean; disabled?: boolean; fonts: boolean }) {
   return (
-    <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ flexBasis: '47%', flexGrow: 1 }}>
-      <LinearGradient colors={primary ? ['#B3262F', DX.red] : ['rgba(30,22,16,0.95)', 'rgba(11,9,7,0.95)']} style={[styles.action, { borderColor: primary ? DX.gold : DX.goldDark }]}>
+    <PressableScale onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: Boolean(disabled) }} style={{ flexBasis: '47%', flexGrow: 1 }}>
+      <LinearGradient colors={primary ? ['#B3262F', DX.red] : ['rgba(30,22,16,0.95)', 'rgba(11,9,7,0.95)']} style={[styles.action, { borderColor: primary ? DX.gold : DX.goldDark }, disabled ? { opacity: 0.55 } : null]}>
         <Icon name={icon} size={18} color={DX.goldLight} />
         <Text style={[styles.actionText, serif(fonts, '700')]}>{label}</Text>
       </LinearGradient>
