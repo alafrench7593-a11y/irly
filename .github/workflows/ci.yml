@@ -31,10 +31,12 @@ jobs:
       - name: Crash reports carry nothing personal
         run: npm run -s test:crash
       - name: Ludo board matches the server's rules
-        run: npm run -s test:ludo
+        run: node --experimental-strip-types --no-warnings scripts/check-ludo.mts
       - name: Voice tokens (claims, signature)
         run: node --experimental-strip-types --no-warnings scripts/test-voice-token.mts
       - name: Website (titles, canonical, language versions, structured data, links, sitemap)
         run: node scripts/test-site.mjs
+      - name: Native fingerprint (over-the-air updates still reach the installed apps)
+        run: node scripts/check-fingerprint.mjs
       - name: Web build
         run: npx expo export --platform web
