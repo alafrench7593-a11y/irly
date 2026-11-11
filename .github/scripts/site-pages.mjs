@@ -14,11 +14,13 @@ import path from 'node:path';
 import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
 import { POSTS } from '../../site/guides/blog.mjs';
 import { STRATEGIC } from '../../site/guides/strategic.mjs';
+import { PRODUCT } from '../../site/guides/product.mjs';
 
 // Guides and blog posts share one page template; posts are marked `blog` and listed newest first.
 const BLOG = POSTS.map((p) => ({ ...p, blog: true })).sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''));
-// The guides index lists the long guides and the pages written for one precise search (site/guides/strategic.mjs).
-const GUIDES = [...ARTICLES, ...STRATEGIC];
+// The guides index lists the long guides, the pages written for one precise search (site/guides/strategic.mjs)
+// and the pages that say what IRLY is and how it works (site/guides/product.mjs).
+const GUIDES = [...ARTICLES, ...STRATEGIC, ...PRODUCT];
 const PAGES = [...GUIDES, ...BLOG];
 
 const OUT = process.argv[2] || 'dist/site';
@@ -477,6 +479,7 @@ fs.writeFileSync(
 - Web app: ${APP_URL}
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
 - Blog: ${SITE}blog/ and ${SITE}fr/blog/
+- What IRLY is: ${SITE}irly/what-is-irly/ (English), ${SITE}fr/irly/c-est-quoi/ (French) · How it works: ${SITE}irly/how-it-works/
 - Privacy: ${SITE}privacy · Terms: ${SITE}terms · Community guidelines: ${SITE}guidelines · Support: ${SITE}support
 
 ## Guides

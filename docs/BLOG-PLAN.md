@@ -13,7 +13,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
   - no statistics, testimonials, named venues, prices or facts that were not checked;
   - general, verifiable advice only;
   - IRLY is presented as one option among others.
-- **Pages that already answer a search** (never write a post on the same question; link to them instead): the guides of `site/guides/articles.mjs` and the pages of `site/guides/strategic.mjs` (meeting French people, choosing an app to make friends, female friends, running clubs, expat communities, free social activities, activities by interest).
+- **Pages that already answer a search** (never write a post on the same question; link to them instead): the guides of `site/guides/articles.mjs`, the pages of `site/guides/strategic.mjs` and of `site/guides/product.mjs` (what IRLY is, how it works, things to do with friends); the page that owns each search is in `seo/keyword-map.csv` (meeting French people, choosing an app to make friends, female friends, running clubs, expat communities, free social activities, activities by interest).
 - **Paths:** `blog/<english-slug>/` and `fr/blog/<french-slug>/`, with the same `pair`.
 
 ## Topics (in order)
