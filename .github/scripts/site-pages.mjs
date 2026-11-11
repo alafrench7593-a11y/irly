@@ -3,7 +3,8 @@
  * them without running JavaScript:
  *  - the home page in French (/fr/) and Arabic (/ar/), translated from the
  *    page's own dictionary (no second copy of the texts to keep in sync);
- *  - the guides (site/guides/articles.mjs), in English and French;
+ *  - the guides (site/guides/articles.mjs) and the pages answering one precise search (site/guides/strategic.mjs),
+ *    in English and French, with their questions and answers as FAQPage data when they have some;
  *  - the blog (site/guides/blog.mjs): short articles, newest first, at /blog/ and /fr/blog/;
  *  - sitemap.xml listing every page with its language versions.
  * Usage: node .github/scripts/site-pages.mjs <out dir>  (after site-build)
@@ -12,10 +13,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
 import { POSTS } from '../../site/guides/blog.mjs';
+import { STRATEGIC } from '../../site/guides/strategic.mjs';
 
 // Guides and blog posts share one page template; posts are marked `blog` and listed newest first.
 const BLOG = POSTS.map((p) => ({ ...p, blog: true })).sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''));
-const PAGES = [...ARTICLES, ...BLOG];
+// The guides index lists the long guides and the pages written for one precise search (site/guides/strategic.mjs).
+const GUIDES = [...ARTICLES, ...STRATEGIC];
+const PAGES = [...GUIDES, ...BLOG];
+
+// The older guides point to the pages written since on a neighbouring question (same language), under « Read also ».
+const ALSO = {
+  'dubai/make-friends/': ['dubai/app-to-make-friends/', 'dubai/expat-communities/', 'dubai/meet-french-people/'],
+  'fr/dubai/se-faire-des-amis/': ['fr/dubai/rencontrer-des-francais/', 'fr/dubai/application-pour-se-faire-des-amis/', 'fr/dubai/communautes-expatries/'],
+  'dubai/group-activities/': ['dubai/activities/', 'dubai/free-social-activities/', 'dubai/running-clubs/'],
+  'fr/dubai/activites-de-groupe/': ['fr/dubai/activites/', 'fr/dubai/activites-gratuites/', 'fr/dubai/clubs-de-running/'],
+  'dubai/activities-for-women/': ['dubai/make-female-friends/'],
+  'fr/dubai/activites-entre-femmes/': ['fr/dubai/trouver-des-copines/'],
+  'dubai/networking/': ['dubai/expat-communities/', 'dubai/activities/'],
+  'fr/dubai/networking/': ['fr/dubai/communautes-expatries/', 'fr/dubai/activites/'],
+  'dubai/lonely/': ['dubai/free-social-activities/'],
+  'fr/dubai/solitude/': ['fr/dubai/activites-gratuites/'],
+  'dubai/moving-to-dubai/': ['dubai/expat-communities/', 'dubai/app-to-make-friends/'],
+  'fr/dubai/s-installer/': ['fr/dubai/communautes-expatries/', 'fr/dubai/rencontrer-des-francais/'],
+};
+const lower = (h) => h.replace(/\s*\?$/, '');
+for (const a of PAGES) {
+  const more = (ALSO[a.path] ?? []).map((path) => PAGES.find((x) => x.path === path)).filter((x) => x && !a.related.some((r) => r.path === x.path));
+  if (more.length) a.related = [...a.related, ...more.map((x) => ({ label: lower(x.h1), path: x.path }))];
+}
 
 const OUT = process.argv[2] || 'dist/site';
 const SITE = 'https://getirly.com/';
@@ -107,7 +132,7 @@ for (const l of ['fr', 'ar']) {
   const d = T[l];
   // What Google shows for "IRLY": the brand first, then what it is for, in each language.
   const META = {
-    fr: ['IRLY — Tes gens. Ta ville. Tes moments. Rencontrer du monde à Dubaï', 'IRLY transforme les rencontres en ligne en vrais moments : rencontre des gens qui partagent tes passions, rejoins des communautés et des activités, et fais-toi des amis à Dubaï. Gratuit, dans ton navigateur dès aujourd’hui.'],
+    fr: ['IRLY — Se faire des amis à Dubaï : activités et communautés', 'Se faire des amis à Dubaï, dans la vraie vie : rencontre des gens qui partagent tes passions, rejoins des communautés et des activités. Gratuit, dans ton navigateur.'],
     ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
   };
   const [title, desc] = META[l];
@@ -166,7 +191,7 @@ footer{max-width:760px;margin:0 auto;padding:0 20px 40px;font-size:13px;color:va
 @keyframes rise{from{opacity:0;transform:translateY(14px)}}`;
 
 const L = {
-  en: { home: 'Home', guides: 'Guides', updated: 'Updated', by: 'By the IRLY team', read: 'Read also', other: 'Français', locale: 'en_US',
+  en: { home: 'Home', guides: 'Guides', updated: 'Updated', published: 'Published', faq: 'Questions and answers', by: 'By the IRLY team', read: 'Read also', other: 'Français', locale: 'en_US',
     hubTitle: 'Guides: making friends and settling in, in Dubai and Bali | IRLY',
     hubDesc: 'Practical guides for newcomers to Dubai and Bali: how to meet people, make friends and build a social life in a new city.',
     hubLead: 'Practical guides for newcomers: how to meet people, make friends and feel at home in a new city. No statistics, no sponsored lists: advice that works.',
@@ -175,7 +200,7 @@ const L = {
     blogDesc: 'Short articles on feeling lonely, making friends and building a social life in Dubai: one idea you can use this week.',
     blogLead: 'Short articles on loneliness, friendship and social life in Dubai. One idea per article, something you can try this week.',
     readPost: 'Read' },
-  fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR',
+  fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', published: 'Publié le', faq: 'Questions et réponses', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR',
     hubTitle: 'Guides : se faire des amis et s’installer à Dubaï et à Bali | IRLY',
     hubDesc: 'Des guides pratiques pour les nouveaux arrivants à Dubaï et à Bali : rencontrer du monde, se faire des amis et construire sa vie sociale dans une nouvelle ville.',
     hubLead: 'Des guides pratiques pour les nouveaux arrivants : rencontrer du monde, se faire des amis et se sentir chez soi dans une nouvelle ville. Pas de statistiques, pas de listes sponsorisées : des conseils qui marchent.',
@@ -203,8 +228,10 @@ function figure(key, lang, up, first) {
 const imageLd = (key, lang) => ({ '@type': 'ImageObject', url: photoUrl(key), contentUrl: photoUrl(key), width: 1200, height: 630, caption: PHOTOS[key][lang], creditText: PHOTOS[key].by });
 
 for (const a of PAGES) {
-  // Each guide carries its own date when it has one (only the guides really changed move).
-  const updated = a.updated ?? UPDATED;
+  // A page says when it was published; a later date shows only when it was really changed since.
+  const published = a.published ?? a.updated ?? UPDATED;
+  const updated = a.updated ?? a.published ?? UPDATED;
+  const changed = Boolean(a.updated) || !a.published;
   const depth = a.path.split('/').filter(Boolean).length;
   const up = '../'.repeat(depth);
   const url = SITE + a.path;
@@ -221,12 +248,14 @@ for (const a of PAGES) {
         headline: a.h1,
         description: a.description,
         inLanguage: a.lang,
-        datePublished: a.published ?? updated,
+        datePublished: published,
         dateModified: updated,
         mainEntityOfPage: url,
-        image: [a.cover, a.figure?.photo].filter(Boolean).map((k) => imageLd(k, a.lang)),
-        author: { '@type': 'Organization', name: 'IRLY', url: SITE },
-        publisher: { '@type': 'Organization', name: 'IRLY', url: SITE, logo: { '@type': 'ImageObject', url: `${SITE}apple-touch-icon.png` } },
+        // A page without its own photo is shown with the site's share picture, as its share card is.
+        image: a.cover ? [a.cover, a.figure?.photo].filter(Boolean).map((k) => imageLd(k, a.lang)) : [{ '@type': 'ImageObject', url: `${SITE}og.jpg`, width: 1200, height: 630 }],
+        author: { '@type': 'Organization', '@id': `${SITE}#org`, name: 'IRLY', url: SITE },
+        publisher: { '@type': 'Organization', '@id': `${SITE}#org`, name: 'IRLY', url: SITE, logo: { '@type': 'ImageObject', url: `${SITE}logo-512.png`, width: 512, height: 512 } },
+        isPartOf: { '@id': `${SITE}#website` },
       },
       {
         '@type': 'BreadcrumbList',
@@ -238,6 +267,11 @@ for (const a of PAGES) {
       },
     ],
   };
+  // Questions and answers shown on the page, in the same words, as FAQPage data.
+  if (a.faq?.length) {
+    ld['@graph'].push({ '@type': 'FAQPage', inLanguage: a.lang, mainEntity: a.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) });
+  }
+  const faq = a.faq?.length ? `\n<section class="faq"><h2>${t.faq}</h2>\n${a.faq.map((f) => `<h3>${esc(f.q)}</h3>\n<p>${esc(f.a)}</p>`).join('\n')}</section>` : '';
   const alternates = [a, twin].filter(Boolean).map((x) => `<link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}">`);
   alternates.push(`<link rel="alternate" hreflang="x-default" href="${SITE + (a.lang === 'en' ? a.path : twin?.path ?? a.path)}">`);
   const body = a.sections.map((s, i) => `<section><h2>${s.h2}</h2>\n${s.html}</section>${a.figure && a.figure.after === i ? `\n${figure(a.figure.photo, a.lang, up, false)}` : ''}`).join('\n');
@@ -266,8 +300,12 @@ ${alternates.join('\n')}
 <meta property="og:image:height" content="630">
 ${a.cover ? `<meta property="og:image:alt" content="${esc(PHOTOS[a.cover][a.lang])}">` : ''}
 <meta property="og:locale" content="${t.locale}">
+<meta property="og:locale:alternate" content="${a.lang === 'fr' ? 'en_US' : 'fr_FR'}">
+<meta property="article:published_time" content="${published}">
 <meta property="article:modified_time" content="${updated}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(a.h1)}">
+<meta name="twitter:description" content="${esc(a.description)}">
 <meta name="twitter:image" content="${share}">
 ${a.cover ? `<link rel="preload" as="image" href="${up}img/guides/${a.cover}-800.webp" type="image/webp">` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -284,10 +322,10 @@ ${a.cover ? `<link rel="preload" as="image" href="${up}img/guides/${a.cover}-800
 <main>
   <nav class="crumbs" aria-label="${a.lang === 'fr' ? 'Fil d’Ariane' : 'Breadcrumb'}"><a href="${homeRel}">${t.home}</a> › <a href="${up + parent.path}">${parent.name}</a> › ${a.city}</nav>
   <h1>${a.h1}</h1>
-  <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
+  <p class="meta">${t.by} · ${changed ? t.updated : t.published} <time datetime="${changed ? updated : published}">${dateFmt(a.lang, changed ? updated : published)}</time></p>
   <p class="lead">${a.lead}</p>
 ${a.cover ? figure(a.cover, a.lang, up, true) : ''}
-${body}
+${body}${faq}
   <aside class="cta">
     <h2>${a.cta.title}</h2>
     <p>${a.cta.body}</p>
@@ -305,7 +343,7 @@ ${body}
 
 /* ───────── Guides index and blog index, one per language ───────── */
 const HUBS = [
-  { pages: ARTICLES, at: hubPath, name: (t) => t.guides, title: (t) => t.hubTitle, desc: (t) => t.hubDesc, lead: (t) => t.hubLead, read: (t) => t.readGuide },
+  { pages: GUIDES, at: hubPath, name: (t) => t.guides, title: (t) => t.hubTitle, desc: (t) => t.hubDesc, lead: (t) => t.hubLead, read: (t) => t.readGuide },
   { pages: BLOG, at: blogPath, name: (t) => t.blog, title: (t) => t.blogTitle, desc: (t) => t.blogDesc, lead: (t) => t.blogLead, read: (t) => t.readPost },
 ];
 for (const hub of HUBS) for (const l of ['en', 'fr']) {
@@ -398,22 +436,44 @@ for (const l of LANGS) {
 }
 
 /* ───────── llms.txt: what IRLY is and where to read more, for AI assistants ───────── */
-const guideLines = PAGES.map((a) => `- [${a.h1}](${SITE + a.path}) (${a.lang}): ${a.description}`).join('\n');
+const lines = (list) => list.map((a) => `- [${a.h1}](${SITE + a.path}) (${a.lang}): ${a.description}`).join('\n');
 fs.writeFileSync(
   `${OUT}/llms.txt`,
   `# IRLY
 
-> IRLY is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai and covers the other emirates of the UAE; Bali is announced and coming soon. It is in English and French. It is not a dating app. IRLY Girl is a space reserved for women.
+> IRLY (app name: IRLY — Make Friends IRL) is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai and covers the other emirates of the UAE; Bali is announced and coming soon. It is in English and French. It is not a dating app. IRLY Girl is a space reserved for women.
+
+## Facts
+
+- Official website: ${SITE}
+- Main city: Dubai, United Arab Emirates
+- What it does: discover activities, create an activity, join communities built around an interest, a language or a neighbourhood, and talk in group chats before meeting in person
+- Who it is for: newcomers and expatriates, French speakers in Dubai, the international community, women looking for women-only communities, people who do sport, entrepreneurs and professionals, anyone who wants a wider circle of friends
+- IRLY Girl: communities and activities reserved for women
+- IRLY Network: meeting other professionals and entrepreneurs around activities and communities
+- IRLY Games: a social game members play together in the app
+- Price: free
+- Availability: in the browser today at ${APP_URL} ; iOS and Android apps are coming soon
+- Languages: English and French
+- Not a dating app: IRLY is for friendship and group activities
+- Publisher: ALF FASHION BRAND FZCO · Contact: getirly@gmail.com
+
+## Links
 
 - Website: ${SITE} (English), ${SITE}fr/ (French)
 - IRLY Girl (women only): ${SITE}girl (English), ${SITE}fr/girl (French)
-- Web app: ${APP_URL} (iOS and Android apps coming soon)
+- Web app: ${APP_URL}
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
 - Blog: ${SITE}blog/ and ${SITE}fr/blog/
+- Privacy: ${SITE}privacy · Terms: ${SITE}terms · Community guidelines: ${SITE}guidelines · Support: ${SITE}support
 
 ## Guides
 
-${guideLines}
+${lines(GUIDES)}
+
+## Blog
+
+${lines(BLOG)}
 `,
 );
 
@@ -429,10 +489,10 @@ for (const a of PAGES) {
   const pair = PAGES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');
   const imgs = [a.cover, a.figure?.photo].filter(Boolean).map((k) => `    <image:image><image:loc>${photoUrl(k)}</image:loc></image:image>`).join('\n');
-  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}${imgs ? `\n${imgs}` : ''}\n  </url>`);
+  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? a.published ?? UPDATED}</lastmod>\n${alts}${imgs ? `\n${imgs}` : ''}\n  </url>`);
 }
 const hubAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + hubPath(l)}"/>`).join('\n');
-for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + hubPath(l)}</loc>\n    <lastmod>${ARTICLES.map((a) => a.updated ?? UPDATED).sort().at(-1)}</lastmod>\n${hubAlts}\n  </url>`);
+for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + hubPath(l)}</loc>\n    <lastmod>${GUIDES.map((a) => a.updated ?? a.published ?? UPDATED).sort().at(-1)}</lastmod>\n${hubAlts}\n  </url>`);
 if (BLOG.length) {
   const blogAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + blogPath(l)}"/>`).join('\n');
   for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + blogPath(l)}</loc>\n    <lastmod>${BLOG.map((a) => a.updated ?? a.published).sort().at(-1)}</lastmod>\n${blogAlts}\n  </url>`);

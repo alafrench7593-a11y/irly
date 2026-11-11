@@ -61,8 +61,8 @@ export const POSTS = [
     path: 'fr/blog/week-end-seul-dubai/',
     city: 'Dubaï',
     published: '2026-11-05',
-    title: 'Seul le week-end à Dubaï ? Prévois une chose avant qu’il commence | IRLY',
-    description: 'Le week-end est souvent le moment le plus solitaire pour les nouveaux arrivants à Dubaï. Une solution simple : un plan décidé avant le week-end, avec du monde, à heure fixe.',
+    title: 'Seul le week-end à Dubaï ? Prévois une chose avant | IRLY',
+    description: 'Le week-end est souvent le moment le plus solitaire quand on arrive à Dubaï. Une solution simple : un plan décidé avant, avec du monde, à heure fixe.',
     h1: 'Seul le week-end à Dubaï ? Prévois une chose avant qu’il commence',
     lead: 'Pour beaucoup de nouveaux arrivants, la semaine se passe bien : le travail remplit les journées. C’est le week-end que la solitude se voit, parce que rien n’est prévu et que tout le monde semble occupé. La solution est simple : décider d’un plan avec d’autres personnes, à heure fixe, avant que le week-end commence.',
     sections: [
@@ -153,8 +153,8 @@ export const POSTS = [
     path: 'fr/blog/introverti-se-faire-des-amis-dubai/',
     city: 'Dubaï',
     published: '2026-11-05',
-    title: 'Se faire des amis à Dubaï quand on est introverti : une approche plus calme | IRLY',
-    description: 'Pas besoin de grandes soirées pour se faire des amis à Dubaï. Quand on est introverti, les petits groupes, les activités partagées et les rencontres répétées marchent mieux, et fatiguent moins.',
+    title: 'Se faire des amis à Dubaï quand on est introverti | IRLY',
+    description: 'Pas besoin de grandes soirées pour se faire des amis à Dubaï. Introverti, les petits groupes et les rencontres répétées marchent mieux, et fatiguent moins.',
     h1: 'Se faire des amis à Dubaï quand on est introverti : une approche plus calme',
     lead: 'Si les soirées bondées t’épuisent, tu peux quand même construire de vraies amitiés à Dubaï. L’approche plus calme : des petits groupes, une activité qui parle à ta place, et revoir les mêmes personnes plutôt que d’en rencontrer beaucoup une seule fois.',
     sections: [

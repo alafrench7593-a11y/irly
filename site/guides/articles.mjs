@@ -122,7 +122,7 @@ export const ARTICLES = [
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
     updated: '2026-10-30',
-    title: 'Se faire des amis à Dubaï : le guide pour les nouveaux arrivants | IRLY',
+    title: 'Se faire des amis à Dubaï : le guide des nouveaux arrivants | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
     h1: 'Comment se faire des amis à Dubaï',
     lead: 'Se faire des amis à Dubaï, c’est tout à fait possible, mais ça arrive rarement par hasard : ici, la plupart des amitiés naissent autour d’une activité où l’on revient chaque semaine. Choisis deux ou trois choses que tu aimes, rejoins les groupes qui les pratiquent et reviens régulièrement. Voici pourquoi c’est parfois difficile au début, et ce qui marche.',
@@ -306,8 +306,8 @@ export const ARTICLES = [
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
     updated: '2026-11-01',
-    title: 'Se faire des amis à Bali : voyageurs, nomades et nouveaux arrivants | IRLY',
-    description: 'Tu arrives seul à Bali ? Comment fonctionnent les amitiés sur une île où les gens vont et viennent, et des façons concrètes de rencontrer du monde à Canggu, Ubud et ailleurs.',
+    title: 'Se faire des amis à Bali : voyageurs et nouveaux arrivants | IRLY',
+    description: 'Tu arrives seul à Bali ? Comment naissent les amitiés sur une île où tout le monde bouge, et des façons concrètes de rencontrer du monde à Canggu ou Ubud.',
     h1: 'Comment se faire des amis à Bali',
     lead: 'Rencontrer des gens à Bali est facile ; garder des amis, c’est le vrai défi, parce que beaucoup ne font que passer. L’astuce : mélanger les deux. Profite de l’ambiance ouverte pour les rencontres rapides, et construis quelques habitudes régulières avec des personnes qui restent aussi longtemps que toi.',
     sections: [
@@ -494,7 +494,7 @@ export const ARTICLES = [
     city: 'Bali',
     updated: '2026-11-03',
     title: 'Bali pour les digital nomads : communauté et coworking | IRLY',
-    description: 'Tu travailles à distance depuis Bali ? Comment trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier tes journées de travail.',
+    description: 'Tu travailles à distance depuis Bali ? Trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier ton travail.',
     h1: 'Bali pour les digital nomads : communauté et coworking',
     lead: 'À Bali, il est facile de rencontrer d’autres travailleurs à distance, mais un bon séjour dépend de trois choix à faire tôt : le quartier où tu vis, l’endroit où tu travailles et les quelques activités régulières auxquelles tu t’engages. Si tu fais bien ces choix, la communauté suit en général. Ci-dessous : comment choisir chacun, et comment rester sociable sans perdre tes journées de travail.',
     sections: [
@@ -655,7 +655,7 @@ export const ARTICLES = [
     city: 'Dubaï',
     updated: '2026-11-02',
     title: 'Se sentir seul à Dubaï : ce qui aide vraiment | IRLY',
-    description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident cette semaine, et quand en parler à un professionnel.',
+    description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident, et quand en parler à un professionnel.',
     h1: 'Se sentir seul à Dubaï : ce qui aide vraiment',
     lead: 'Se sentir seul à Dubaï est fréquent, et ça ne veut pas dire que quelque chose ne va pas chez toi. La solitude recule surtout avec une routine, pas avec un grand événement : une activité régulière, une personne que tu revois, un plan que tu proposes toi-même. Ci-dessous : pourquoi ça arrive ici, ce qui aide cette semaine, et quand demander plus d’aide.',
     sections: [
@@ -974,7 +974,7 @@ export const ARTICLES = [
     city: 'Dubai',
     updated: '2026-10-31',
     title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
-    description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
+    description: 'Quinze activités de groupe pour rencontrer du monde à Dubaï, des clubs de course au padel, des cours au bénévolat, et comment choisir les tiennes.',
     h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
     lead: 'Les activités de groupe qui marchent le mieux pour rencontrer du monde à Dubaï sont celles qui se retrouvent chaque semaine avec les mêmes visages : clubs de course, padel, sports d’équipe, cours, bénévolat et groupes de loisirs. Choisis-en deux dans la liste ci-dessous que tu aimerais même sans rencontrer personne, reviens chaque semaine, et propose un café après la troisième séance.',
     sections: [
@@ -1065,7 +1065,7 @@ export const ARTICLES = [
     city: 'Dubai',
     updated: '2026-10-29',
     title: 'Networking in Dubai: Where to Meet Entrepreneurs | IRLY',
-    description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups and coworking events to business groups, and how to turn a first conversation into a real contact.',
+    description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups to coworking events and business groups, and how to turn a first chat into a real contact.',
     h1: 'Networking in Dubai: where to meet entrepreneurs',
     lead: 'The best places to meet entrepreneurs in Dubai are small, regular gatherings: industry meetups, coworking community events, business groups and startup evenings. Big conferences help you discover a sector, but contacts are built in rooms where you see the same people again. Pick one or two recurring events in your field, go back several times, and follow up within two days.',
     sections: [
@@ -1158,7 +1158,7 @@ export const ARTICLES = [
     city: 'Dubai',
     updated: '2026-10-29',
     title: 'Networking à Dubaï : où rencontrer des entrepreneurs | IRLY',
-    description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï, des meetups aux événements de coworking et aux groupes d’affaires, et comment transformer une première conversation en vrai contact.',
+    description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï : meetups, coworkings, groupes d’affaires, et comment faire d’une première conversation un vrai contact.',
     h1: 'Networking à Dubaï : où rencontrer des entrepreneurs',
     lead: 'Les meilleurs endroits pour rencontrer des entrepreneurs à Dubaï sont les rendez-vous petits et réguliers : meetups de secteur, événements de coworking, groupes d’affaires et soirées startup. Les grandes conférences aident à découvrir un secteur, mais les contacts se construisent dans des salles où l’on revoit les mêmes personnes. Choisis un ou deux événements récurrents dans ton domaine, retournes-y plusieurs fois, et relance dans les deux jours.',
     sections: [
@@ -1324,7 +1324,7 @@ export const ARTICLES = [
     city: 'Dubaï',
     updated: '2026-10-27',
     title: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes | IRLY',
-    description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture et communautés, options réservées aux femmes, et réflexes simples pour être à l’aise.',
+    description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture, communautés réservées aux femmes, et réflexes simples pour être à l’aise.',
     h1: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes',
     lead: 'Le plus simple pour rencontrer d’autres femmes à Dubaï : une activité régulière en petit groupe, comme un cours, une séance de sport, un club de lecture ou une communauté qui se retrouve chaque semaine. Des options réservées aux femmes existent pour celles qui les préfèrent, et beaucoup d’activités mixtes sont tout aussi accueillantes. Ci-dessous : les activités qui marchent, comment choisir, et comment transformer une première rencontre en amitié.',
     sections: [
@@ -1474,7 +1474,7 @@ export const ARTICLES = [
     city: 'Dubaï',
     updated: '2026-10-28',
     title: 'S’installer à Dubaï : la checklist des premiers mois | IRLY',
-    description: 'Tu t’installes à Dubaï ? Une checklist concrète pour les premiers mois : ce qu’il faut régler d’abord, le logement, les déplacements, l’assurance santé et la vie sociale dès la première semaine.',
+    description: 'Tu t’installes à Dubaï ? La checklist des premiers mois : ce qu’il faut régler d’abord, le logement, les déplacements, l’assurance santé et la vie sociale.',
     h1: 'S’installer à Dubaï : la checklist des premiers mois',
     lead: 'Les premiers mois à Dubaï se passent mieux dans un ordre clair : ton statut de résident et ton Emirates ID d’abord, parce que plusieurs autres démarches les demandent, puis le logement, les déplacements et l’assurance santé. Garde aussi de la place pour les gens dès la première semaine : les habitudes prises au début sont souvent celles qui restent. Voici une checklist concrète, avec les liens vers les pages officielles à vérifier avant chaque étape.',
     sections: [
@@ -1551,7 +1551,7 @@ export const ARTICLES = [
     city: 'Life abroad',
     updated: '2026-11-05',
     title: 'Rebuilding Your Social Life After Moving Abroad | IRLY',
-    description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for the first three months, and how to turn new faces into real friends.',
+    description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for your first three months, and how to make real friends.',
     h1: 'Rebuilding your social life after moving abroad',
     lead: 'Rebuilding a social life after a move abroad takes time, and that is normal: at home your circle grew over years, often without effort. Abroad, it grows faster when you give it structure: one regular activity, people you see again, and plans you suggest yourself. Below: why it feels hard, a plan for your first three months, and how to keep going when friends leave.',
     sections: [
@@ -1647,7 +1647,7 @@ export const ARTICLES = [
     city: 'Vie à l’étranger',
     updated: '2026-11-05',
     title: 'Reconstruire sa vie sociale après une expatriation | IRLY',
-    description: 'Tu t’es expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment transformer des connaissances en vrais amis.',
+    description: 'Expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment se faire de vrais amis.',
     h1: 'Reconstruire sa vie sociale après une expatriation',
     lead: 'Reconstruire sa vie sociale après une expatriation prend du temps, et c’est normal : chez toi, ton cercle s’est construit sur des années, souvent sans effort. À l’étranger, il se construit plus vite quand tu lui donnes un cadre : une activité régulière, des gens que tu revois, et des plans que tu proposes toi-même. Voici pourquoi c’est difficile, un plan pour tes trois premiers mois, et comment tenir quand des amis partent.',
     sections: [
