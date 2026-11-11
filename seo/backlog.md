@@ -5,10 +5,10 @@ Ordered by expected effect for the effort. « Owner » means it cannot be done f
 ## Now
 | # | What | Effect | Effort | Who |
 | --- | --- | --- | --- | --- |
-| 1 | Say which address is the real one, `getirly.com` or `www.getirly.com`. Every canonical, hreflang and sitemap line says `https://getirly.com/`. If Vercel redirects that to `www`, every page names an address that redirects, and search engines must guess. One of the two must redirect to the other, and the site must name the one that answers. | high | 5 min to check in Vercel → Domains; 1 line to change (`SITE` in `.github/scripts/site-pages.mjs`, `site-legal.mjs`, `site-girl.mjs`, `site/head.html`) | owner, then repo |
+| 1 | Done on 12 November 2026: the probe showed `getirly.com` redirects (308) to `www.getirly.com`, which serves the pages; every canonical, hreflang, sitemap and robots line now names `https://www.getirly.com/`. | high | done | repo |
 | 2 | Google Search Console and Bing Webmaster Tools: verify the domain, submit `/sitemap.xml`. Nothing is measured until this is done. | high | 15 min | owner |
 | 3 | Audience measurement on the website (not in the app). Today nothing counts visits, so « sign-ups from search » cannot be known. The guide buttons now carry `utm_` marks, ready for any tool. Choosing a tool changes the privacy policy: owner's decision. | high | 1 h once chosen | owner decides |
-| 4 | Check that Vercel's firewall and bot protection let `Googlebot`, `Bingbot`, `OAI-SearchBot` and `PerplexityBot` through (Vercel → Firewall). Not checkable from the build machine. | high if blocked | 10 min | owner |
+| 4 | Done on 12 November 2026: from GitHub's network, the host answers `Googlebot`, `Bingbot`, `OAI-SearchBot` and `PerplexityBot` with the same page as a browser (200, full HTML). Re-run the « Website probe » workflow after any change of firewall settings. | high | done | repo |
 | 5 | Send the five drafts in `seo/outreach/`, each to a named person. External mentions are what the site lacks most. | high | 2 h | owner |
 
 ## Next

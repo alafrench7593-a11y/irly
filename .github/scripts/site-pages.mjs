@@ -24,7 +24,7 @@ const GUIDES = [...ARTICLES, ...STRATEGIC, ...PRODUCT];
 const PAGES = [...GUIDES, ...BLOG];
 
 const OUT = process.argv[2] || 'dist/site';
-const SITE = 'https://getirly.com/';
+const SITE = 'https://www.getirly.com/';
 const LANGS = ['en', 'fr', 'ar'];
 // The app speaks English and French: only those two are offered to search engines and in the language switch.
 // The Arabic home stays reachable at /ar/ (older links) but is not indexed.

@@ -9,7 +9,7 @@
 /** Site-wide last update; each guide may carry its own `updated` date. */
 export const UPDATED = '2026-10-11';
 
-const app = 'https://getirly.com/app/';
+const app = 'https://www.getirly.com/app/';
 
 /**
  * Photos of the guides (free stock libraries or IRLY's own), in

@@ -36,13 +36,16 @@ console.log(`serves pages itself: ${serving.join(', ') || 'none'}`);
 const base = serving[0] ?? HOSTS[0];
 
 console.log(`\n== Pages on ${base}`);
+let elsewhere = 0;
 for (const p of PATHS) {
   const r = await head(base + p, AGENTS.browser);
   const canonical = one(r.text, /<link rel="canonical" href="([^"]+)"/);
+  if (canonical && !canonical.startsWith(base)) elsewhere += 1;
   const noindex = /<meta name="robots" content="[^"]*noindex/.test(r.text) || /noindex/.test(r.robots);
   console.log(`${p.padEnd(34)} ${r.status}${r.location ? ` to ${r.location}` : ''}${canonical ? `  canonical ${canonical}` : ''}${noindex ? '  noindex' : ''}`);
 }
 
+console.log(elsewhere ? `${elsewhere} page(s) name a canonical address on another host than the one that serves them` : 'every canonical address is on the host that serves the page');
 console.log('\n== The same page, asked by each crawler');
 for (const [name, agent] of Object.entries(AGENTS)) {
   const r = await head(`${base}/dubai/make-friends/`, agent);

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://getirly.com/sitemap.xml
+Sitemap: https://www.getirly.com/sitemap.xml
