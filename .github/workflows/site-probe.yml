@@ -1,9 +1,13 @@
 name: Website probe
 
 # Reads the live getirly.com as a search engine does: which address answers and which redirects, the status of
-# the main pages, and whether the host answers search crawlers. It only reads; run it by hand.
+# the main pages, whether the host answers search crawlers, and every page of the sitemap (it answers, names
+# itself as canonical, may be indexed, has its h1). It only reads. Every morning, and by hand; a problem fails
+# the run, and GitHub tells the owner.
 
 on:
+  schedule:
+    - cron: '17 5 * * *'
   workflow_dispatch:
 
 permissions:

@@ -56,3 +56,22 @@ console.log('\n== robots.txt');
 console.log((await head(`${base}/robots.txt`, AGENTS.browser)).text.trim() || '(none)');
 const sm = (await head(`${base}/sitemap.xml`, AGENTS.browser)).text;
 console.log(`\n== sitemap.xml: ${(sm.match(/<loc>/g) ?? []).length} entries (pages and pictures); first page address: ${one(sm, /<loc>([^<]+)<\/loc>/)}`);
+
+// Every page of the sitemap: it answers, names itself as its canonical address, may be indexed, and has its h1.
+console.log('\n== Every page of the sitemap');
+const pagesListed = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => !/\.(webp|jpg|png)$/.test(u));
+const problems = [];
+const same = (a, b) => a.replace(/\/$/, '') === b.replace(/\/$/, '');
+for (const u of pagesListed) {
+  const r = await head(u, AGENTS.Googlebot);
+  const canonical = one(r.text, /<link rel="canonical" href="([^"]+)"/);
+  if (r.status !== 200) problems.push(`${u}: answers ${r.status}${r.location ? ` to ${r.location}` : ''}${r.error ? ` (${r.error})` : ''}`);
+  else if (!same(canonical, u)) problems.push(`${u}: canonical is ${canonical || 'missing'}`);
+  else if (/<meta name="robots" content="[^"]*noindex/.test(r.text) || /noindex/.test(r.robots)) problems.push(`${u}: kept out of search engines`);
+  else if (!/<h1[\s>]/.test(r.text)) problems.push(`${u}: no h1 in the HTML`);
+}
+if (elsewhere) problems.push(`${elsewhere} page(s) name a canonical address on another host`);
+if (!/Sitemap: https:\/\/www\.getirly\.com\/sitemap\.xml/.test((await head(`${base}/robots.txt`, AGENTS.browser)).text)) problems.push('robots.txt does not name the sitemap');
+console.log(`${pagesListed.length} pages read as Googlebot, ${problems.length} problem(s)`);
+for (const p of problems) console.log(`✗ ${p}`);
+if (problems.length) process.exit(1);

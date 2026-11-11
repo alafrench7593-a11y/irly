@@ -1,8 +1,18 @@
 # Questions asked to AI assistants
 
-**Method.** Each question is asked in a new conversation, signed out where the assistant allows it, with no mention of IRLY unless the question names it. For each: is IRLY named (yes/no), what is said, which sources are cited, anything wrong. Assistants: ChatGPT (with search), Perplexity, Gemini, Copilot. One check per month is enough at this stage.
+## Protocol (the same each time, so that two checks can be compared)
 
-**No check has been made yet** (this session cannot reach the assistants). The table below is empty on purpose: fill it with the date of each check.
+1. **Assistants:** ChatGPT (with search on), Perplexity, Gemini, Copilot.
+2. **Clean state:** signed out or in a private window where the assistant allows it; otherwise a new conversation with memory and personalisation switched off. Note which it was: an answer given to a signed-in account that has visited getirly.com is **personalised** and does not count.
+3. **One question per conversation**, typed exactly as written below, in its language, from a connection in the UAE when possible (note the country).
+4. **Three kinds of answer, never mixed:**
+   - **spontaneous**: the question does not name IRLY (questions 1 to 11 and 14 to 23). Only these measure discovery;
+   - **named**: the question names IRLY (12, 13, 24, 25). These measure whether IRLY is described correctly, not whether it is recommended;
+   - **led**: any follow-up such as « and IRLY? ». Never recorded as a mention.
+5. **Record** in the table: date, assistant, question number, kind, IRLY named (yes/no), the sentence about IRLY word for word, the sources cited, anything wrong. Keep a screenshot.
+6. **Frequency:** once a month. Answers vary from one run to the next: one mention is an observation, not a ranking. Say « named in 2 of 4 assistants on 3 December », never « recommended by ChatGPT ».
+
+**No check has been made yet** (the build machine cannot reach the assistants). The table below is empty on purpose.
 
 ## Questions
 French
@@ -35,9 +45,9 @@ English
 25. Is IRLY a dating app?
 
 ## Checks
-| Date | Assistant | Question | IRLY named | What was said | Sources cited | Wrong facts |
-| --- | --- | --- | --- | --- | --- | --- |
-| (none yet) | | | | | | |
+| Date | Assistant | State (signed out / private / signed in) | Question | Kind | IRLY named | What was said, word for word | Sources cited | Wrong facts |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| (none yet) | | | | | | | | |
 
 ## What to do with a result
 - A wrong fact about IRLY: the page that owns the fact is unclear. State it in plain words there (`seo/context.md` says which page).

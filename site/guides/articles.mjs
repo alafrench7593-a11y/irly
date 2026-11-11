@@ -1060,7 +1060,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu cherches un plan cette semaine ?', body: 'Trouve une activité de groupe autour de ce que tu aimes, ou crée la tienne, et retrouvez-vous en vrai.', label: 'Trouver une activité' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'IRLY Network: a networking app for Dubai', path: 'irly/irly-network/' }],
   },
   {
     lang: 'en',
@@ -1153,7 +1153,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Building your network in Dubai?', body: 'Create your professional profile and meet people whose goals match yours.', label: 'Create my pro profile' },
-    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'IRLY Network : application de networking à Dubaï', path: 'fr/irly/irly-network/' }],
   },
   {
     lang: 'fr',

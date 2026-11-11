@@ -15,12 +15,13 @@ import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.m
 import { POSTS } from '../../site/guides/blog.mjs';
 import { STRATEGIC } from '../../site/guides/strategic.mjs';
 import { PRODUCT } from '../../site/guides/product.mjs';
+import { REFERENCE } from '../../site/guides/reference.mjs';
 
 // Guides and blog posts share one page template; posts are marked `blog` and listed newest first.
 const BLOG = POSTS.map((p) => ({ ...p, blog: true })).sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''));
 // The guides index lists the long guides, the pages written for one precise search (site/guides/strategic.mjs)
 // and the pages that say what IRLY is and how it works (site/guides/product.mjs).
-const GUIDES = [...ARTICLES, ...STRATEGIC, ...PRODUCT];
+const GUIDES = [...ARTICLES, ...STRATEGIC, ...PRODUCT, ...REFERENCE];
 const PAGES = [...GUIDES, ...BLOG];
 
 const OUT = process.argv[2] || 'dist/site';
@@ -164,6 +165,7 @@ h3{font-size:19px;margin:24px 0 6px;font-weight:700}
 p,li{color:var(--g1)}strong{color:var(--paper)}
 ul,ol{padding-left:22px}li{margin:6px 0}
 table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px;line-height:1.5}th,td{text-align:left;padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--paper);font-weight:700}td{color:var(--g1)}.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.shots img{display:block;width:100%;height:auto;border-radius:14px;background:#141414}
 .cta{margin:52px 0 0;padding:28px;border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.04)}
 .cta h2{margin:0 0 8px}.cta p{margin:0 0 18px}
 .btn{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 22px;border-radius:999px;background:var(--paper);color:var(--ink);font-weight:800;text-decoration:none}
@@ -480,6 +482,7 @@ fs.writeFileSync(
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
 - Blog: ${SITE}blog/ and ${SITE}fr/blog/
 - What IRLY is: ${SITE}irly/what-is-irly/ (English), ${SITE}fr/irly/c-est-quoi/ (French) · How it works: ${SITE}irly/how-it-works/
+- IRLY Network: ${SITE}irly/irly-network/ · Press kit (facts, logo, screenshots, contact): ${SITE}irly/press/ (English), ${SITE}fr/irly/presse/ (French)
 - Privacy: ${SITE}privacy · Terms: ${SITE}terms · Community guidelines: ${SITE}guidelines · Support: ${SITE}support
 
 ## Guides
