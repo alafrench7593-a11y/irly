@@ -6,6 +6,7 @@ Rien n'a été soumis. Chaque ligne est à vérifier puis à faire par le propri
 | --- | --- | --- | --- |
 | Google Search Console | indexation, mesure | à faire | propriété « Domaine » `getirly.com`, puis soumettre `/sitemap.xml` |
 | Bing Webmaster Tools | Bing alimente ChatGPT et Copilot | à faire | import depuis Search Console |
+| IndexNow (Bing et moteurs associés) | annonce les pages sans compte | fait le 12 novembre 2026 | le workflow « Announce pages » envoie les adresses du sitemap après chaque déploiement ; cela ne remplace pas Bing Webmaster Tools pour lire les chiffres |
 | Fiche d'établissement Google | recherche locale | à décider | seulement si l'entreprise a une adresse qu'elle veut publier ; les règles de Google excluent les activités sans accueil du public ni zone desservie |
 | App Store / Google Play | la fiche d'app est la première source des assistants pour une application | à la sortie des apps | même nom, même description que le site |
 | LinkedIn (page entreprise), Instagram, TikTok | cohérence du nom, lien vers le site | existant pour Instagram et TikTok (liés depuis le site) | même phrase de présentation partout |

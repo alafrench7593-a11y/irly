@@ -19,6 +19,8 @@ fs.writeFileSync(`${OUT}/index.html`, `<!doctype html>\n<html lang="en" dir="ltr
 for (const d of ['shots', 'img', 'video']) if (fs.existsSync(`site/${d}`)) fs.cpSync(`site/${d}`, `${OUT}/${d}`, { recursive: true });
 fs.copyFileSync('assets/favicon.png', `${OUT}/favicon.png`);
 for (const f of ['sitemap.xml', 'robots.txt', 'apple-touch-icon.png', 'og.jpg', 'lenis.min.js', 'logo-512.png', 'favicon.ico']) if (fs.existsSync(`site/${f}`)) fs.copyFileSync(`site/${f}`, `${OUT}/${f}`);
+// The IndexNow key (public by design): the file search engines read to accept the addresses we announce.
+for (const f of fs.readdirSync('site')) if (/^[a-f0-9]{32}\.txt$/.test(f)) fs.copyFileSync(`site/${f}`, `${OUT}/${f}`);
 if (fs.existsSync('public-photos/faces')) {
   fs.mkdirSync(`${OUT}/faces`, { recursive: true });
   for (const f of fs.readdirSync('public-photos/faces')) if (f.endsWith('.jpg')) fs.copyFileSync(`public-photos/faces/${f}`, `${OUT}/faces/${f}`);

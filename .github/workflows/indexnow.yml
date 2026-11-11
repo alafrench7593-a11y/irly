@@ -1,0 +1,31 @@
+name: Announce pages
+
+# After each deployment of the website, tells the IndexNow search engines (Bing and others) which pages exist,
+# so they are read without waiting for the next crawl. It sends addresses only; it can also be run by hand.
+
+on:
+  workflow_dispatch:
+  status:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: true
+
+jobs:
+  announce:
+    # The deployment of main by Vercel is reported as a commit status named « Vercel ».
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.context == 'Vercel' && github.event.state == 'success' &&
+       contains(github.event.branches.*.name, 'main'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Announce the pages of the sitemap
+        run: node scripts/indexnow.mjs
