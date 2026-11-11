@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-const SITE = 'https://getirly.com/';
+const SITE = 'https://www.getirly.com/';
 const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'irly-site-'));
 execFileSync('node', ['.github/scripts/site-build.mjs', OUT], { stdio: 'ignore' });
 
@@ -113,7 +113,7 @@ for (const p of all) {
   for (const href of one(body, /<a\b[^>]*\shref="([^"]+)"/g)) {
     if (/^(https?:|mailto:|tel:|#|javascript:)/.test(href) && !href.startsWith(SITE)) continue;
     const target = new URL(href.split('#')[0].split('?')[0] || '.', urlOf(p)).href;
-    if (!target.startsWith(SITE) || /^https:\/\/getirly\.com\/(app|demo)(\/|$)/.test(target)) continue;
+    if (!target.startsWith(SITE) || /^https:\/\/www\.getirly\.com\/(app|demo)(\/|$)/.test(target)) continue;
     const file = target.slice(SITE.length);
     ok(pageAt(target) !== null || (file !== '' && fs.existsSync(path.join(OUT, file))), where, `link to ${href} opens nothing`);
   }
@@ -126,10 +126,10 @@ for (const u of listed) {
 ok(new Set(listed).size === listed.length, 'sitemap', 'an address is listed twice');
 // robots.txt and llms.txt.
 const robots = fs.readFileSync(path.join(OUT, 'robots.txt'), 'utf8');
-ok(/Sitemap: https:\/\/getirly\.com\/sitemap\.xml/.test(robots), 'robots.txt', 'does not name the sitemap');
+ok(/Sitemap: https:\/\/www\.getirly\.com\/sitemap\.xml/.test(robots), 'robots.txt', 'does not name the sitemap');
 ok(!/^Disallow: \/\s*$/m.test(robots), 'robots.txt', 'closes the whole site');
 const llms = fs.readFileSync(path.join(OUT, 'llms.txt'), 'utf8');
-for (const u of one(llms, /\((https:\/\/getirly\.com\/[^)\s]*)\)/g)) ok(pageAt(u) !== null, 'llms.txt', `${u} is not a page of the site`);
+for (const u of one(llms, /\((https:\/\/www\.getirly\.com\/[^)\s]*)\)/g)) ok(pageAt(u) !== null, 'llms.txt', `${u} is not a page of the site`);
 
 fs.rmSync(OUT, { recursive: true, force: true });
 for (const w of warnings) console.log(`warning  ${w}`);

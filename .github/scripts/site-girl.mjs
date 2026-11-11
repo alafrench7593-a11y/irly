@@ -27,7 +27,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const OUT = process.argv[2] || "dist/site";
-const SITE = "https://getirly.com";
+const SITE = "https://www.getirly.com";
 const APP_GIRL = "/app/girl";
 const href = (lang) => (lang === "fr" ? "/fr/girl" : "/girl");
 const home = (lang) => (lang === "fr" ? "/fr/" : "/");

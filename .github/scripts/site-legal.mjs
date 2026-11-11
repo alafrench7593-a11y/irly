@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const OUT = process.argv[2] || 'dist/site';
-const SITE = 'https://getirly.com';
+const SITE = 'https://www.getirly.com';
 const API = 'https://yqutcmgslwxcmnsqmhvy.supabase.co/rest/v1/rpc/contact_support';
 // Publishable key: the server only lets a visitor call contact_support() and join_waitlist().
 const KEY = 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
@@ -499,7 +499,7 @@ const NOTICE = {
   en: {
     title: 'Legal notice | IRLY', h1: 'Legal notice',
     description: 'Who publishes the IRLY website and app: operating company, licence, representative, contact, hosting and intellectual property.',
-    rows: [['Operator', APP.legalEntity], ['Trade licence', APP.licence], ['Represented by', APP.representative], ['Address', APP.legalAddress], ['Email', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Website', '<a href="https://getirly.com">https://getirly.com</a>'], ['App development', APP.developer]],
+    rows: [['Operator', APP.legalEntity], ['Trade licence', APP.licence], ['Represented by', APP.representative], ['Address', APP.legalAddress], ['Email', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Website', '<a href="https://www.getirly.com">https://www.getirly.com</a>'], ['App development', APP.developer]],
     hosting: 'Hosting', hostingP: 'The website and the web app are served by Vercel. Accounts, profiles, messages and photos are stored by Supabase, in ' + APP.hosting + '.',
     ip: 'Intellectual property', ipP: 'The IRLY name and logo, its visual identity, interface, texts and other protected elements of the service are subject to the applicable intellectual property rights. Any reproduction, modification or use without permission is prohibited, except where the law allows it. Content posted by members remains subject to the rights of its authors.',
     more: 'See also', missing: 'The legal form shown on the licence, the issuing free zone and the full registered address are being completed from the company documents.',
@@ -507,7 +507,7 @@ const NOTICE = {
   fr: {
     title: 'Mentions légales | IRLY', h1: 'Mentions légales',
     description: 'Qui édite le site et l’application IRLY : société exploitante, licence, représentant, contact, hébergement et propriété intellectuelle.',
-    rows: [['Exploitant', APP.legalEntity], ['Licence', APP.licence], ['Représentée par', APP.representative], ['Adresse', APP.legalAddressFr], ['E-mail', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Site', '<a href="https://getirly.com">https://getirly.com</a>'], ['Développement de l’application', APP.developer]],
+    rows: [['Exploitant', APP.legalEntity], ['Licence', APP.licence], ['Représentée par', APP.representative], ['Adresse', APP.legalAddressFr], ['E-mail', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Site', '<a href="https://www.getirly.com">https://www.getirly.com</a>'], ['Développement de l’application', APP.developer]],
     hosting: 'Hébergement', hostingP: 'Le site et l’application web sont servis par Vercel. Les comptes, profils, messages et photos sont stockés par Supabase, dans l’Union européenne (Irlande), sur Amazon Web Services.',
     ip: 'Propriété intellectuelle', ipP: 'Le nom et le logo IRLY, son identité visuelle, son interface, ses textes et les autres éléments protégés du service sont soumis aux droits de propriété intellectuelle applicables. Toute reproduction, modification ou exploitation non autorisée est interdite, sous réserve des exceptions prévues par la loi. Les contenus publiés par les membres restent soumis aux droits de leurs auteurs.',
     more: 'Voir aussi', missing: 'La forme juridique figurant sur la licence, la zone franche émettrice et l’adresse complète du siège sont en cours de complément à partir des documents de la société.',
