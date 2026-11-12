@@ -15,8 +15,9 @@ export const POSTS = [
     path: 'blog/lonely-weekends-dubai/',
     city: 'Dubai',
     published: '2026-11-05',
+    updated: '2026-11-12',
     title: 'Lonely on Weekends in Dubai? Plan One Thing Ahead | IRLY',
-    description: 'Weekends are often the loneliest part of the week for newcomers in Dubai. A simple way to fix it: one plan decided before the weekend, with people, at a set time.',
+    description: 'Weekends are often the loneliest part of the week for newcomers in Dubai. A simple fix: one plan decided before the weekend, with people, at a set time.',
     h1: 'Lonely on weekends in Dubai? Plan one thing before it starts',
     lead: 'For many newcomers, the week is fine: work fills the days. The weekend is where loneliness shows, because nothing is planned and everyone else seems busy. The fix is small: decide one plan with other people, at a set time, before the weekend begins.',
     sections: [
@@ -38,15 +39,47 @@ export const POSTS = [
         h2: 'Make it easy to go',
         html: `<ul>
 <li><strong>Decide early in the week.</strong> Plans made on the day rarely happen.</li>
-<li><strong>Choose something regular.</strong> A weekly session turns strangers into familiar faces by the third time.</li>
+<li><strong>Choose something regular.</strong> A weekly session turns strangers into familiar faces after a few weeks.</li>
 <li><strong>Tell someone you are going.</strong> A short message to the organiser or a group chat makes it harder to cancel.</li>
 <li><strong>Keep the rest of the weekend free.</strong> Rest is fine once one plan is in.</li>
 </ul>`,
       },
       {
-        h2: 'If the weekend still feels heavy',
-        html: `<p>Loneliness that lasts weeks and weighs on most days is worth talking about with a doctor or a mental health professional; it is a normal step. For more ideas, read our guide on <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>, and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>`,
+        h2: 'What counts as a plan, and what does not',
+        html: `<p>The rule only works if the plan is real. Three tests help:</p>
+<ul>
+<li><strong>It has a time and a place.</strong> “Maybe the beach on Saturday” is an intention. “The run at seven, at the usual track” is a plan.</li>
+<li><strong>Someone expects you.</strong> A booking, a reply to the organiser, a friend who is meeting you there. If nobody would notice your absence, it is too easy to stay home.</li>
+<li><strong>You will speak to people.</strong> A film on your own is a nice evening, and it does not count here. A class, a team sport or a shared table does.</li>
+</ul>
+<p>A plan does not need to be long or expensive: an hour is enough, and a regular hour is worth more than a rare full day. Our page on <a href="../../dubai/free-social-activities/">free social activities in Dubai</a> lists options if budget is what holds you back.</p>
+<p>If the plan is one you propose yourself, make it easy to say yes to: name a day, a time and a place in the same message, and keep it short, such as a coffee or a walk of an hour. “Coffee on Saturday at ten, near your office?” is easy to answer; “we should meet up some time” is not. For a first meeting with someone you barely know, choose a public place in daylight and make your own way there and back. If the person says no, the reply is about their weekend, not about you: suggest another date once, then go back to a group activity.</p>`,
       },
+      {
+        h2: 'Where to put it in the weekend',
+        html: `<p>Timing changes how the whole weekend feels:</p>
+<ul>
+<li><strong>The first evening:</strong> good if the empty days ahead are what you dread. You start the weekend having already seen people.</li>
+<li><strong>A morning:</strong> the easiest slot in Dubai for anything outdoors, because of the heat for much of the year, and it leaves the afternoon free without guilt.</li>
+<li><strong>The last afternoon:</strong> good if the low point is the evening before the working week. It gives the weekend an ending.</li>
+</ul>
+<p>Pick the slot that covers your hardest moment, not the most convenient one. If you cannot tell which moment that is, think back to last weekend: when did you reach for your phone without wanting anything from it? Put the plan there.</p>`,
+      },
+      {
+        h2: 'When the plan falls through',
+        html: `<p>Plans get cancelled: an organiser is ill, a friend has to work, it is too hot. Keep one fallback you can do without booking, such as a walk in a place where people gather or a drop-in class, and send one message to someone you met recently. Our guide to <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> has ideas for a day you did not plan to spend alone.</p>
+<p>After three or four weekends, look at which plan you went back to. That one is becoming a routine, and routines are where acquaintances turn into friends: the post on <a href="../how-often-see-someone-become-friend/">how often to see someone before they become a friend</a> explains why the repetition matters.</p>`,
+      },
+      {
+        h2: 'If the weekend still feels heavy',
+        html: `<p>Loneliness that lasts weeks and weighs on most days is worth talking about with a doctor or a mental health professional; it is a normal step. If you are in danger or think about harming yourself, call the emergency services: <strong>999</strong> (police) or <strong>998</strong> (ambulance) in the UAE. For more ideas, read our guide on <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>, and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Why do I feel lonelier on weekends than during the week?', a: 'Because the week comes with built-in company and the weekend does not. With no meetings or colleagues, two unplanned days show how few local friends you have so far, which is normal when you have just moved.' },
+      { q: 'How many plans do I need for a weekend?', a: 'One is enough, as long as it has a time, a place and other people. The rest of the weekend can stay free.' },
+      { q: 'What if I do not know anyone to make a plan with?', a: 'Choose a group activity with a start time, such as a run club, a class or a volunteering morning. You do not need to know anyone to join.' },
+      { q: 'When should I talk to a professional about loneliness?', a: 'When it lasts for weeks and weighs on most days, or when it affects your sleep, appetite or work. Talking to a doctor or a mental health professional is a normal step.' },
     ],
     cta: { title: 'Nothing planned this weekend?', body: 'Find an activity with people who want to meet, at a set time, in real life.', label: 'Find an activity' },
     related: [
@@ -64,6 +97,7 @@ export const POSTS = [
     path: 'fr/blog/week-end-seul-dubai/',
     city: 'Dubaï',
     published: '2026-11-05',
+    updated: '2026-11-12',
     title: 'Seul le week-end à Dubaï ? Prévois une chose avant | IRLY',
     description: 'Le week-end est souvent le moment le plus solitaire quand on arrive à Dubaï. Une solution simple : un plan décidé avant, avec du monde, à heure fixe.',
     h1: 'Seul le week-end à Dubaï ? Prévois une chose avant qu’il commence',
@@ -84,18 +118,50 @@ export const POSTS = [
 <p>Un seul plan suffit. Il donne une forme au week-end, te fait sortir, et te remet devant les mêmes visages la semaine suivante.</p>`,
       },
       {
-        h2: 'Rends-le facile',
+        h2: 'Mets toutes les chances de ton côté',
         html: `<ul>
 <li><strong>Décide tôt dans la semaine.</strong> Les plans décidés le jour même se font rarement.</li>
-<li><strong>Choisis quelque chose de régulier.</strong> Une séance chaque semaine transforme des inconnus en visages familiers dès la troisième fois.</li>
+<li><strong>Choisis quelque chose de régulier.</strong> Une séance chaque semaine transforme des inconnus en visages familiers en quelques semaines.</li>
 <li><strong>Dis à quelqu’un que tu viens.</strong> Un petit message à l’organisateur ou dans un groupe rend l’annulation plus difficile.</li>
 <li><strong>Garde le reste du week-end libre.</strong> Se reposer, c’est bien, une fois le plan calé.</li>
 </ul>`,
       },
       {
-        h2: 'Si le week-end reste pesant',
-        html: `<p>Une solitude qui dure des semaines et pèse la plupart des jours mérite d’en parler à un médecin ou à un professionnel de santé mentale : c’est une démarche normale. Pour plus d’idées, lis notre guide <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>`,
+        h2: 'Ce qui compte comme un plan, et ce qui n’en est pas un',
+        html: `<p>La règle ne marche que si le plan est réel. Trois critères aident à trancher :</p>
+<ul>
+<li><strong>Il a une heure et un lieu.</strong> « Peut-être la plage samedi » est une intention. « Le footing de sept heures, sur la piste habituelle » est un plan.</li>
+<li><strong>Quelqu’un t’attend.</strong> Une réservation, une réponse à l’organisateur, un ami qui te retrouve sur place. Si personne ne remarque ton absence, rester chez soi devient trop facile.</li>
+<li><strong>Tu vas parler à des gens.</strong> Un film en solo fait une bonne soirée, mais ne compte pas ici. Un cours, un sport d’équipe ou une table partagée, si.</li>
+</ul>
+<p>Un plan n’a pas besoin d’être long ni cher : une heure suffit, et une heure régulière vaut mieux qu’une journée entière de temps en temps. Notre page sur les <a href="../../dubai/activites-gratuites/">activités gratuites à Dubaï</a> en propose si c’est le budget qui te freine.</p>
+<p>Si c’est toi qui proposes le plan, rends le oui facile : donne un jour, une heure et un lieu dans le même message, et vise court, un café ou une balade d’une heure. « Un café samedi à dix heures, près de ton bureau ? » appelle une réponse ; « il faudrait qu’on se voie un de ces jours » n’en appelle aucune. Pour une première rencontre avec quelqu’un que tu connais à peine, choisis un lieu public, en journée, et garde ton propre moyen de transport à l’aller comme au retour. Si la personne dit non, sa réponse parle de son week-end, pas de toi : propose une autre date une fois, puis reviens à une activité de groupe.</p>`,
       },
+      {
+        h2: 'Où le placer dans le week-end',
+        html: `<p>Le moment choisi change la couleur de tout le week-end :</p>
+<ul>
+<li><strong>Le premier soir :</strong> utile si ce sont les jours vides à venir que tu redoutes. Tu commences le week-end en ayant déjà vu du monde.</li>
+<li><strong>Un matin :</strong> le créneau le plus simple à Dubaï pour tout ce qui se passe dehors, à cause de la chaleur une bonne partie de l’année, et il laisse l’après-midi libre sans culpabilité.</li>
+<li><strong>Le dernier après-midi :</strong> utile si ton creux, c’est la veille de la reprise. Il donne une fin au week-end.</li>
+</ul>
+<p>Choisis le créneau qui couvre ton moment le plus difficile, pas le plus pratique. Si tu ne sais pas lequel c’est, repense au week-end dernier : à quel moment as-tu pris ton téléphone sans rien en attendre ? Mets le plan là.</p>`,
+      },
+      {
+        h2: 'Quand le plan tombe à l’eau',
+        html: `<p>Un plan s’annule : l’organisateur est malade, un ami doit travailler, il fait trop chaud. Garde une solution de repli sans réservation, comme une balade dans un endroit fréquenté ou un cours ouvert sans inscription, et envoie un message à une personne rencontrée récemment. Notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> donne des idées pour une journée que tu ne pensais pas passer en solo.</p>
+<p>Au bout de trois ou quatre week-ends, regarde quel plan tu as refait. Celui-là devient une habitude, et c’est dans les habitudes que les connaissances deviennent des amis : l’article <a href="../combien-de-fois-se-voir-pour-devenir-amis/">combien de fois se voir avant de devenir amis</a> explique pourquoi la répétition compte.</p>`,
+      },
+      {
+        h2: 'Si le week-end reste pesant',
+        html: `<p>Si la solitude dure depuis des semaines et pèse presque tous les jours, parles-en à un médecin ou à un professionnel de santé mentale : c’est une démarche normale. Si tu es en danger ou si tu penses à te faire du mal, appelle les secours : le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance) aux Émirats. Pour plus d’idées, lis notre guide <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Pourquoi se sent-on plus seul le week-end qu’en semaine ?', a: 'Parce que la semaine fournit de la compagnie d’office, et pas le week-end. Sans réunions ni collègues, deux jours sans programme montrent que tu as encore peu d’amis sur place, ce qui est normal après une installation récente.' },
+      { q: 'Combien de plans faut-il pour un week-end ?', a: 'Un seul suffit, à condition qu’il ait une heure, un lieu et d’autres personnes. Le reste du week-end peut rester libre.' },
+      { q: 'Et si je ne connais personne avec qui prévoir quelque chose ?', a: 'Choisis une activité de groupe avec une heure de début : un club de course, un cours ou une matinée de bénévolat. Pas besoin de connaître quelqu’un pour y aller.' },
+      { q: 'Quand parler de sa solitude à un professionnel ?', a: 'Quand elle dure des semaines et pèse presque tous les jours, ou qu’elle touche ton sommeil, ton appétit ou ton travail. En parler à un médecin ou à un professionnel de santé mentale est une démarche normale.' },
     ],
     cta: { title: 'Rien de prévu ce week-end ?', body: 'Trouve une activité avec des gens qui veulent se rencontrer, à heure fixe, en vrai.', label: 'Trouver une activité' },
     related: [
