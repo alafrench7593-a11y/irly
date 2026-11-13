@@ -1391,4 +1391,160 @@ export const POSTS = [
       { label: 'Seul après une rupture loin de chez toi', path: 'fr/blog/seul-apres-rupture-nouvelle-ville/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-working-from-home-dubai',
+    path: 'blog/working-from-home-dubai-isolated/',
+    city: 'Dubai',
+    published: '2026-11-13',
+    title: 'Working From Home in Dubai and Feeling Isolated | IRLY',
+    description: 'Working from home in Dubai can get lonely. How to put people back into the week: a place to work from, fixed slots and one regular group to see.',
+    h1: 'Working from home in Dubai and feeling isolated',
+    lead: 'If you work from home in Dubai, the isolation usually comes from the shape of your week, not from you: no office means no built-in company. The fix is to put people back into the week on purpose: one or two days working around others, one fixed activity with a group, and a reason to leave the flat every day.',
+    sections: [
+      {
+        h2: 'Why remote work can feel more isolating in Dubai',
+        html: `<p>Remote work removes the people you would have met without trying. In Dubai, three things make that gap wider:</p>
+<ul>
+<li><strong>You may have arrived without a local team.</strong> Many remote workers and freelancers moved here with a job that lives in another country. There is no office to walk into, even occasionally.</li>
+<li><strong>Much of the city is built around the car.</strong> In a walkable city you pass neighbours and shopkeepers on foot. Here a day can go from flat to car park to flat.</li>
+<li><strong>Time zones stretch the day.</strong> If your colleagues are several hours behind, your calls can fall in the evening, when many local groups meet.</li>
+</ul>
+<p>The heat adds to it for several months of the year: staying in is the easy option. None of this is a personal failing. It is a week with no people built into it.</p>`,
+      },
+      {
+        h2: 'Work somewhere with people in it',
+        html: `<p>You do not need a full-time desk. Two days a week somewhere else changes the feel of the whole week:</p>
+<ul>
+<li><strong>A coworking space.</strong> Many offer day passes or part-time plans, and some run lunches or talks for members. Check the terms with the space itself. Go on the same days each week, so the same faces see you.</li>
+<li><strong>A café you return to.</strong> Less sociable than a coworking space, and still better than the sofa: staff and regulars start to recognise you.</li>
+<li><strong>A shared work session.</strong> Two or three people working side by side on their own projects, at a set time. If you know one other remote worker, propose it. If you have only met the person online, hold the first session in a public place such as a café or a coworking space, not at home.</li>
+</ul>
+<p>The point is not to network. It is to be around people often enough that a nod becomes a hello, then a conversation.</p>`,
+      },
+      {
+        h2: 'Give the week fixed points',
+        html: `<p>An office gives a week its shape. Without one, you set it yourself:</p>
+<ul>
+<li><strong>One activity with a start time, every week.</strong> A run, a padel session, a class. Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has formats that work, and <a href="../../dubai/running-clubs/">how to join a running club</a> explains a first session.</li>
+<li><strong>A hard stop.</strong> Decide when work ends and put something after it. If evening calls are the problem, protect two evenings a week and tell your team which ones.</li>
+<li><strong>A daily reason to go out.</strong> A walk early or after sunset, the gym, a coffee you do not make yourself. Small, and every day.</li>
+<li><strong>One plan before the weekend.</strong> After five days alone at a desk, an empty weekend is heavy. See <a href="../lonely-weekends-dubai/">lonely on weekends in Dubai: plan one thing</a>.</li>
+</ul>`,
+      },
+      {
+        h2: 'What a week can look like',
+        html: `<p>An example, to adapt rather than copy:</p>
+<ul>
+<li><strong>Monday and Thursday:</strong> work from a coworking space or the same café, and have lunch away from your screen.</li>
+<li><strong>Tuesday:</strong> a morning session with a sport group before work.</li>
+<li><strong>Wednesday:</strong> home all day, with a walk at the end of it and one message sent to someone you met recently.</li>
+<li><strong>Friday:</strong> home, a hard stop, and the weekend plan confirmed.</li>
+</ul>
+<p>That is three days out of five with people in them, without giving up the quiet of working at home. Start with one change, keep it for three weeks, then add the next: a whole new week at once rarely lasts. If going somewhere alone the first time is what holds you back, <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> is written for that.</p>`,
+      },
+      {
+        h2: 'Meet people who work the way you do',
+        html: `<p>Other remote workers and freelancers have the same empty weekdays, which makes them the easiest people to meet at eleven on a Tuesday. Look for freelancer and founder meetups, groups around your trade, and coworking events open to non-members. Our guide to <a href="../../dubai/networking/">networking in Dubai</a> covers where these happen and how to follow up without it feeling like a sales call.</p>
+<p>Keep one group that has nothing to do with work as well. If every person you meet is a contact, you will still have no one to call on a bad day.</p>`,
+      },
+      {
+        h2: 'When it is more than the setup',
+        html: `<p>Changing where and when you work often helps within a few weeks. If the low mood stays, if you sleep badly or stop wanting to see anyone, talk to a doctor or a mental health professional; it is a normal step, and an easy one to put off when nobody sees you day to day. Our guide <a href="../../dubai/lonely/">lonely in Dubai: what actually helps</a> goes further on this.</p>
+<p>If you are in danger or think about harming yourself, call the emergency services: <strong>999</strong> (police) or <strong>998</strong> (ambulance) in the UAE.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is it normal to feel lonely when working from home in Dubai?', a: 'Yes. Without an office, nobody is built into your day, and in a city where most people drive, you can go a full day without a conversation. It is a common experience for remote workers and freelancers.' },
+      { q: 'Do I need a coworking membership to meet people?', a: 'No. A day or two a week in a coworking space or a regular café helps, and so does one weekly group activity. What matters is seeing the same people repeatedly.' },
+      { q: 'My calls are in the evening because of time zones. When can I see people?', a: 'Use mornings: many sport groups in Dubai meet early. Protect two evenings a week as well, and tell your team in advance which ones.' },
+      { q: 'How long before a new routine makes a difference?', a: 'Give it a few weeks of going to the same place and the same activity. Familiar faces come first; conversations and friendships follow from repetition.' },
+    ],
+    cta: { title: 'Put people back into your week', body: 'Looking to meet new people in Dubai? Discover IRLY and connect through activities and communities.', label: 'Find an activity' },
+    related: [
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' },
+      { label: 'Meet new people in Dubai: 15 group activities', path: 'dubai/group-activities/' },
+      { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
+      { label: 'Making friends at work in Dubai', path: 'blog/make-friends-at-work-dubai/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-working-from-home-dubai',
+    path: 'fr/blog/teletravail-dubai-isolement/',
+    city: 'Dubaï',
+    published: '2026-11-13',
+    title: 'Télétravail à Dubaï : sortir de l’isolement | IRLY',
+    description: 'En télétravail à Dubaï, on peut passer des journées sans parler à personne. Comment remettre du monde dans ta semaine : un lieu, des horaires, un groupe.',
+    h1: 'Télétravail à Dubaï : quand on se sent isolé',
+    lead: 'Si tu travailles de chez toi à Dubaï, l’isolement vient en général de la forme de ta semaine, pas de toi : sans bureau, personne n’est prévu dans tes journées. La solution consiste à y remettre du monde exprès : un ou deux jours de travail entouré, une activité de groupe à heure fixe, et une raison de sortir chaque jour.',
+    sections: [
+      {
+        h2: 'Pourquoi le télétravail peut isoler davantage à Dubaï',
+        html: `<p>Le télétravail supprime les gens que tu aurais croisés sans effort. À Dubaï, trois choses creusent cet écart :</p>
+<ul>
+<li><strong>Tu es peut-être arrivé sans équipe sur place.</strong> Beaucoup de télétravailleurs et d’indépendants s’installent ici avec un emploi basé dans un autre pays. Il n’y a aucun bureau où passer, même de temps en temps.</li>
+<li><strong>La ville est en grande partie pensée pour la voiture.</strong> Dans une ville où l’on marche, on croise ses voisins et ses commerçants. Ici, une journée peut se résumer à appartement, parking, appartement.</li>
+<li><strong>Les fuseaux horaires étirent la journée.</strong> Si tes collègues ont plusieurs heures de retard sur toi, tes réunions peuvent tomber le soir, au moment où beaucoup de groupes locaux se retrouvent.</li>
+</ul>
+<p>La chaleur s’y ajoute plusieurs mois par an : rester chez soi est la solution de facilité. Rien de tout cela ne vient de toi. C’est une semaine dans laquelle personne n’est prévu.</p>`,
+      },
+      {
+        h2: 'Travaille dans un lieu où il y a du monde',
+        html: `<p>Pas besoin d’un poste à plein temps. Deux jours par semaine ailleurs changent la couleur de toute la semaine :</p>
+<ul>
+<li><strong>Un espace de coworking.</strong> Beaucoup proposent des accès à la journée ou des formules à temps partiel, et certains organisent des déjeuners ou des conférences pour leurs membres. Vérifie les conditions auprès du lieu. Viens les mêmes jours chaque semaine, pour que les mêmes personnes te voient.</li>
+<li><strong>Un café où tu reviens.</strong> Moins propice aux échanges qu’un coworking, mais mieux que le canapé : l’équipe et les habitués finissent par te reconnaître.</li>
+<li><strong>Une séance de travail à plusieurs.</strong> Deux ou trois personnes qui avancent côte à côte sur leurs projets, à heure fixe. Si tu connais un autre télétravailleur, propose-le. Si tu ne connais la personne qu’en ligne, faites la première séance dans un lieu public, un café ou un coworking, pas à domicile.</li>
+</ul>
+<p>Le but n’est pas de réseauter, mais de côtoyer des gens assez souvent pour qu’un signe de tête devienne un bonjour, puis une conversation.</p>`,
+      },
+      {
+        h2: 'Donne des points fixes à ta semaine',
+        html: `<p>Un bureau donne sa forme à une semaine. Sans bureau, c’est à toi de la dessiner :</p>
+<ul>
+<li><strong>Une activité à heure fixe, chaque semaine.</strong> Un footing, une séance de padel, un cours. Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne des formats qui marchent, et <a href="../../dubai/clubs-de-running/">comment rejoindre un running club</a> décrit une première séance.</li>
+<li><strong>Une heure de fin.</strong> Décide quand le travail s’arrête et place quelque chose juste après. Si ce sont les réunions du soir qui bloquent, protège deux soirs par semaine et dis à ton équipe lesquels.</li>
+<li><strong>Une raison de sortir chaque jour.</strong> Une marche tôt le matin ou après le coucher du soleil, la salle de sport, un café que tu ne prépares pas toi-même. Peu de chose, mais tous les jours.</li>
+<li><strong>Un plan avant le week-end.</strong> Après cinq jours seul devant un écran, un week-end vide pèse lourd. Lis <a href="../week-end-seul-dubai/">seul le week-end à Dubaï : prévois une chose</a>.</li>
+</ul>`,
+      },
+      {
+        h2: 'À quoi peut ressembler une semaine',
+        html: `<p>Un exemple, à adapter plutôt qu’à recopier :</p>
+<ul>
+<li><strong>Lundi et jeudi :</strong> travail dans un coworking ou toujours dans le même café, et déjeuner loin de l’écran.</li>
+<li><strong>Mardi :</strong> une séance matinale avec un groupe sportif, avant le travail.</li>
+<li><strong>Mercredi :</strong> journée à la maison, une marche pour la clore, et un message envoyé à une personne rencontrée récemment.</li>
+<li><strong>Vendredi :</strong> à la maison, une heure de fin tenue, et le plan du week-end confirmé.</li>
+</ul>
+<p>Cela fait trois jours sur cinq avec du monde, sans renoncer au calme du travail à la maison. Commence par un seul changement, tiens-le trois semaines, puis ajoute le suivant : une semaine entièrement refaite d’un coup tient rarement. Si c’est d’y aller seul la première fois qui te retient, <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> est écrit pour ça.</p>`,
+      },
+      {
+        h2: 'Rencontre des gens qui travaillent comme toi',
+        html: `<p>Les autres télétravailleurs et indépendants ont les mêmes journées vides en semaine : ce sont les personnes les plus faciles à voir un mardi à onze heures. Cherche les rencontres d’indépendants et de fondateurs, les groupes autour de ton métier, et les événements de coworking ouverts aux non-membres. Notre guide du <a href="../../dubai/networking/">networking à Dubaï</a> indique où cela se passe et comment relancer sans avoir l’air de vendre quelque chose.</p>
+<p>Garde aussi un groupe qui n’a rien à voir avec le travail. Si chaque personne que tu rencontres est un contact professionnel, tu n’auras toujours personne à appeler un jour sans.</p>`,
+      },
+      {
+        h2: 'Quand ce n’est plus une question d’organisation',
+        html: `<p>Changer de lieu et d’horaires aide souvent en quelques semaines. Si le moral reste bas, si tu dors mal ou si tu n’as plus envie de voir qui que ce soit, parles-en à un médecin ou à un professionnel de santé mentale ; c’est une démarche normale, facile à repousser quand personne ne te voit au quotidien. Notre guide <a href="../../dubai/solitude/">se sentir seul à Dubaï : ce qui aide vraiment</a> va plus loin.</p>
+<p>Si tu es en danger ou si tu penses à te faire du mal, appelle les secours : <strong>999</strong> (police) ou <strong>998</strong> (ambulance) aux Émirats.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Est-il normal de se sentir seul en télétravail à Dubaï ?', a: 'Oui. Sans bureau, personne n’est prévu dans ta journée, et dans une ville où l’on se déplace surtout en voiture, on peut passer une journée entière sans conversation. C’est une situation courante chez les télétravailleurs et les indépendants.' },
+      { q: 'Faut-il un abonnement de coworking pour rencontrer du monde ?', a: 'Non. Un ou deux jours par semaine dans un coworking ou un café où tu as tes habitudes aident, tout comme une activité de groupe hebdomadaire. Ce qui compte, c’est de revoir les mêmes personnes.' },
+      { q: 'Mes réunions sont le soir à cause du décalage horaire. Quand voir du monde ?', a: 'Utilise les matins : beaucoup de groupes sportifs se retrouvent tôt à Dubaï. Protège aussi deux soirs par semaine, et préviens ton équipe à l’avance.' },
+      { q: 'Au bout de combien de temps une nouvelle routine change-t-elle quelque chose ?', a: 'Laisse-lui quelques semaines, en allant au même endroit et à la même activité. Les visages familiers viennent d’abord ; les conversations et les amitiés naissent de la répétition.' },
+    ],
+    cta: { title: 'Remets du monde dans ta semaine', body: 'Envie de rencontrer de nouvelles personnes à Dubaï ? Découvrez IRLY et rejoignez des communautés autour de vos centres d’intérêt.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
+      { label: 'Se faire des amis au travail à Dubaï', path: 'fr/blog/amis-au-travail-dubai/' },
+    ],
+  },
 ];
