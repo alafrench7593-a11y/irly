@@ -31,7 +31,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] What to say to start a conversation at an activity
 - [x] How often to see someone before they become a friend
 - [x] Feeling lonely even with people around you
-- [ ] Working from home in Dubai and feeling isolated
+- [x] Working from home in Dubai and feeling isolated
 - [ ] Summer in Dubai: keeping a social life when many people travel
 - [ ] When your friends in Dubai leave: starting again
 - [ ] Single in Dubai and looking for friends, not dates
