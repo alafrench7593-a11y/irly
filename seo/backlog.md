@@ -30,7 +30,6 @@ Reading Search Console from the repo (so that the weekly and monthly steps run b
 | 8 | After three weeks of Search Console data: improve the pages in positions 8 to 20; merge or differentiate any two pages that receive impressions for the same query. | high | per page | repo |
 | 9 | A photo for each blog post (they share the site's picture today). Only real photos or free-licence ones, with credit. | low | 2 h | repo + owner |
 | 10 | App Store and Google Play listings, when the apps are out: same name and description as `seo/directories.md`; then add the store links to the site and to the app's structured data. | high | at launch | owner |
-
 | 11 | Add to `scripts/test-site.mjs` a check that a page never links to a page of the other language (four such links were found by hand on 14 November). The daily routine may not edit `scripts/`, so this needs the owner's go. | medium | 15 min | repo |
 
 ## Later
