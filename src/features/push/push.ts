@@ -48,6 +48,8 @@ let registered: string | null = null;
  * again, and so on for as long as the app was open (the server counted over a million such calls).
  */
 let sent: string | null = null;
+let sentAt = 0;
+const RESEND_AFTER_MS = 12 * 60 * 60 * 1000;
 /** The device token last announced by the system: the listener acts only when it really changes. */
 let lastDevice: string | null = null;
 const native = Platform.OS === 'ios' || Platform.OS === 'android';
@@ -108,9 +110,13 @@ export async function registerPush(lang: Lang, ask = true): Promise<PushState> {
     // this queue): the token is not bound to whoever holds the session now.
     if (gen !== generation || leaving || (await sessionUser()) !== uid) return;
     const key = `${uid}|${token}|${lang}`;
-    if (sent !== key) {
+    // Sent again after twelve hours: the server may have dropped a token the push service refused.
+    if (sent !== key || Date.now() - sentAt > RESEND_AFTER_MS) {
       await sendToken(token, lang);
+      // Signed out while it was on its way: the token is being removed, so nothing counts as sent.
+      if (gen !== generation || leaving) return;
       sent = key;
+      sentAt = Date.now();
     }
     registered = token;
   });
@@ -377,6 +383,13 @@ export function usePush() {
   useEffect(() => {
     if (!native || !uid) return;
     registerPush(lang, false).catch(() => undefined);
+    // A registration that failed (offline at sign-in) is tried again on each return to the app;
+    // once the server has the token, nothing is asked or sent.
+    const sub = AppState.addEventListener('change', (s) => {
+      const done = !!sent && sent.startsWith(`${uid}|`) && sent.endsWith(`|${lang}`) && Date.now() - sentAt <= RESEND_AFTER_MS;
+      if (s === 'active' && !done) registerPush(lang, false).catch(() => undefined);
+    });
+    return () => sub.remove();
   }, [uid, lang]);
 
   // A sign-out that could not reach the server: released at launch, on return to the app, and every minute.

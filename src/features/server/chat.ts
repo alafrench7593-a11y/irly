@@ -640,6 +640,8 @@ export function useServerThread(conversationId: string): ServerThread {
             },
             () => undefined,
           )
+          // Whatever happened above, the next read is not blocked.
+          .then(undefined, () => undefined)
           .then(() => {
             r.busy = false;
             if (!r.again) return;
@@ -667,6 +669,13 @@ export function useServerThread(conversationId: string): ServerThread {
       };
     }, [markRead]),
   );
+  // Leaving the app: same, the system may close it before the wait is over.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') markRead(true);
+    });
+    return () => sub.remove();
+  }, [markRead]);
 
   useEffect(() => {
     if (!supabase || !uid || gone) return;
