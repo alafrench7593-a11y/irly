@@ -308,7 +308,8 @@ export const POSTS = [
       },
       {
         h2: 'Widen your circle from there',
-        html: `<p>Colleagues often know other newcomers, clubs and groups. Ask what they do on weekends and whether you can come along once. For more ways to meet people outside the office, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>`,
+        html: `<p>Colleagues often know other newcomers, clubs and groups. Ask what they do on weekends and whether you can come along once. For more ways to meet people outside the office, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>
+<p>No office to make friends in? <a href="../working-from-home-dubai-isolated/">Working from home in Dubai and feeling isolated</a> covers that case.</p>`,
       },
     ],
     cta: { title: 'Want a circle outside work?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
@@ -358,7 +359,8 @@ export const POSTS = [
       },
       {
         h2: 'Élargis ton cercle à partir de là',
-        html: `<p>Les collègues connaissent souvent d’autres nouveaux arrivants, des clubs et des groupes. Demande-leur ce qu’ils font le week-end et si tu peux venir une fois. Pour d’autres façons de rencontrer du monde hors du bureau, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>`,
+        html: `<p>Les collègues connaissent souvent d’autres nouveaux arrivants, des clubs et des groupes. Demande-leur ce qu’ils font le week-end et si tu peux venir une fois. Pour d’autres façons de rencontrer du monde hors du bureau, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>
+<p>Pas de bureau où te faire des amis ? <a href="../teletravail-dubai-isolement/">Télétravail à Dubaï : quand on se sent isolé</a> traite ce cas.</p>`,
       },
     ],
     cta: { title: 'Envie d’un cercle hors du travail ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
@@ -1467,6 +1469,7 @@ export const POSTS = [
       { label: 'Meet new people in Dubai: 15 group activities', path: 'dubai/group-activities/' },
       { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
       { label: 'Making friends at work in Dubai', path: 'blog/make-friends-at-work-dubai/' },
+      { label: 'Bali for digital nomads: community and coworking', path: 'bali/digital-nomads/' },
     ],
   },
   {
@@ -1545,6 +1548,7 @@ export const POSTS = [
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
       { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
       { label: 'Se faire des amis au travail à Dubaï', path: 'fr/blog/amis-au-travail-dubai/' },
+      { label: 'Bali pour les digital nomads : communauté et coworking', path: 'fr/bali/digital-nomads/' },
     ],
   },
 ];

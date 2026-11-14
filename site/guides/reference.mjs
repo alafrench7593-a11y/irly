@@ -71,6 +71,8 @@ export const REFERENCE = [
       { label: 'What is IRLY?', path: 'irly/what-is-irly/' },
       { label: 'How to organise an activity on IRLY', path: 'irly/create-an-activity/' },
       { label: 'Expat communities in Dubai', path: 'dubai/expat-communities/' },
+      { label: 'Working from home in Dubai and feeling isolated', path: 'blog/working-from-home-dubai-isolated/' },
+      { label: 'IRLY press kit', path: 'irly/press/' },
     ],
   },
   {
@@ -138,6 +140,8 @@ export const REFERENCE = [
       { label: 'IRLY, c’est quoi ?', path: 'fr/irly/c-est-quoi/' },
       { label: 'Organiser une activité sur IRLY', path: 'fr/irly/organiser-une-activite/' },
       { label: 'Rejoindre une communauté d’expatriés à Dubaï', path: 'fr/dubai/communautes-expatries/' },
+      { label: 'Télétravail à Dubaï : quand on se sent isolé', path: 'fr/blog/teletravail-dubai-isolement/' },
+      { label: 'Espace presse d’IRLY', path: 'fr/irly/presse/' },
     ],
   },
   {
