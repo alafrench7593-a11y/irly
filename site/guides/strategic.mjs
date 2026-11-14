@@ -937,7 +937,8 @@ export const STRATEGIC = [
 <li><strong>Say clearly that it is free</strong> and what to bring.</li>
 <li><strong>Carry on even with two people.</strong> Regularity makes a group grow.</li>
 </ol>
-<p>Our article on <a href="../../blog/start-small-group-weekly-walk-book-club/">how to start a small group yourself</a> goes through it step by step, and <a href="../going-out-alone/">going out alone in Dubai</a> helps if the first visit to an existing group is what holds you back.</p>`,
+<p>Our article on <a href="../../blog/start-small-group-weekly-walk-book-club/">how to start a small group yourself</a> goes through it step by step, and <a href="../going-out-alone/">going out alone in Dubai</a> helps if the first visit to an existing group is what holds you back.</p>
+<p>Already have a friend or two? <a href="../things-to-do-with-friends/">Things to do in Dubai with friends</a> sorts ideas by moment: a weekday evening, a weekend morning, summer indoors.</p>`,
       },
       {
         h2: 'Where IRLY fits in',
@@ -1019,7 +1020,8 @@ export const STRATEGIC = [
 <li><strong>Précise que c’est gratuit</strong> et ce qu’il faut apporter.</li>
 <li><strong>Continue même à deux.</strong> C’est la régularité qui fait grandir un groupe.</li>
 </ol>
-<p>Notre article pour <a href="../../blog/creer-un-petit-groupe-balade-club-lecture/">lancer ton propre petit groupe</a> détaille chaque étape, et <a href="../sortir-seul/">sortir seul à Dubaï</a> t’aide si c’est la première visite dans un groupe existant qui te retient.</p>`,
+<p>Notre article pour <a href="../../blog/creer-un-petit-groupe-balade-club-lecture/">lancer ton propre petit groupe</a> détaille chaque étape, et <a href="../sortir-seul/">sortir seul à Dubaï</a> t’aide si c’est la première visite dans un groupe existant qui te retient.</p>
+<p>Tu as déjà un ou deux amis ? <a href="../sorties-entre-amis/">Que faire à Dubaï entre amis</a> classe des idées par moment : un soir de semaine, un matin de week-end, l’été en intérieur.</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça ?',
@@ -1093,7 +1095,8 @@ export const STRATEGIC = [
         html: `<p><strong>Who it suits:</strong> people who would rather spend a whole day with a small group than an hour with a large one. A day out builds familiarity faster than weeks of short meetings.</p>
 <p><strong>A first session:</strong> a hike in the mountains or a desert outing in the cooler months, a day in another emirate, a boat trip. The organiser gives a meeting point, the level required and what to bring; transport is often shared by car. Ask what the costs are and how they are split.</p>
 <p><strong>Finding a group:</strong> hiking and outdoor communities, and groups of friends of friends. For anything outdoors, choose organisers with experience of the route, take more water than you think you need, and tell someone where you are going.</p>
-<p>Still undecided? Our list of <a href="../group-activities/">15 group activities to meet people in Dubai</a> gives more ideas, and <a href="../make-friends/">how to make friends in Dubai</a> explains how to turn any of them into friendships. If you are new in the city, <a href="../expat-communities/">expat communities in Dubai</a> are often where these activities are announced.</p>`,
+<p>Still undecided? Our list of <a href="../group-activities/">15 group activities to meet people in Dubai</a> gives more ideas, and <a href="../make-friends/">how to make friends in Dubai</a> explains how to turn any of them into friendships. If you are new in the city, <a href="../expat-communities/">expat communities in Dubai</a> are often where these activities are announced.</p>
+<p>Already have a friend or two? <a href="../things-to-do-with-friends/">Things to do in Dubai with friends</a> sorts ideas by moment: a weekday evening, a weekend morning, summer indoors.</p>`,
       },
       {
         h2: 'Where IRLY fits in',
@@ -1168,7 +1171,8 @@ export const STRATEGIC = [
         html: `<p><strong>Pour qui :</strong> ceux qui préfèrent passer une journée entière avec un petit groupe plutôt qu’une heure avec un grand. Une journée dehors crée plus de familiarité que des semaines de rencontres courtes.</p>
 <p><strong>Une première fois :</strong> une randonnée en montagne ou une sortie dans le désert pendant les mois frais, une journée dans un autre émirat, une sortie en bateau. L’organisateur indique le point de rendez-vous, le niveau requis et ce qu’il faut apporter ; le trajet se fait souvent en covoiturage. Demande quels sont les frais et comment ils sont partagés.</p>
 <p><strong>Trouver un groupe :</strong> les communautés de randonnée et d’activités de plein air, et les groupes d’amis d’amis. Pour tout ce qui se passe en pleine nature, choisis des organisateurs qui connaissent le parcours, emporte plus d’eau que nécessaire et préviens quelqu’un de l’endroit où tu vas.</p>
-<p>Tu hésites encore ? Notre liste de <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées, et <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> explique comment transformer n’importe laquelle en amitiés. Si tu viens d’arriver, les <a href="../communautes-expatries/">communautés d’expatriés à Dubaï</a> sont souvent l’endroit où s’annoncent ces activités entre expatriés.</p>`,
+<p>Tu hésites encore ? Notre liste de <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées, et <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> explique comment transformer n’importe laquelle en amitiés. Si tu viens d’arriver, les <a href="../communautes-expatries/">communautés d’expatriés à Dubaï</a> sont souvent l’endroit où s’annoncent ces activités entre expatriés.</p>
+<p>Tu as déjà un ou deux amis ? <a href="../sorties-entre-amis/">Que faire à Dubaï entre amis</a> classe des idées par moment : un soir de semaine, un matin de week-end, l’été en intérieur.</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça ?',

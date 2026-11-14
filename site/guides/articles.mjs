@@ -969,7 +969,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Looking for a plan this week?', body: 'Find a group activity around what you like, or create your own, and meet in real life.', label: 'Find an activity' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }, { label: 'Things to do in Dubai with friends', path: 'dubai/things-to-do-with-friends/' }],
   },
   {
     lang: 'fr',
@@ -1041,7 +1041,8 @@ export const ARTICLES = [
 <li><strong>Reste pour l’après.</strong> Le café ou le verre après la séance, c’est là que les gens discutent vraiment. Même vingt minutes suffisent.</li>
 <li><strong>Juge le groupe à ta deuxième venue, pas à la première.</strong> La première fois, tu es nouveau pour tout le monde. La deuxième, quelqu’un se souvient en général de ton prénom.</li>
 </ul>
-<p>Si c’est le fait d’y aller seul qui te retient, <a href="../sortir-seul/">sortir seul à Dubaï</a> donne des réflexes simples pour être à l’aise. Les femmes qui préfèrent des groupes entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>, et <a href="../se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan sur quatre semaines pour passer d’une première séance à de vraies amitiés.</p>`,
+<p>Si c’est le fait d’y aller seul qui te retient, <a href="../sortir-seul/">sortir seul à Dubaï</a> donne des réflexes simples pour être à l’aise. Les femmes qui préfèrent des groupes entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>, et <a href="../se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan sur quatre semaines pour passer d’une première séance à de vraies amitiés.</p>
+<p>Tu as déjà un ou deux amis ? <a href="../sorties-entre-amis/">Que faire à Dubaï entre amis</a> classe des idées par moment : un soir de semaine, un matin de week-end, l’été en intérieur.</p>`,
       },
       {
         h2: 'Aucun groupe ne te convient ? Lance le tien',
@@ -1060,7 +1061,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu cherches un plan cette semaine ?', body: 'Trouve une activité de groupe autour de ce que tu aimes, ou crée la tienne, et retrouvez-vous en vrai.', label: 'Trouver une activité' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'IRLY Network: a networking app for Dubai', path: 'irly/irly-network/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'IRLY Network : le networking professionnel à Dubaï', path: 'fr/irly/irly-network/' }],
   },
   {
     lang: 'en',
@@ -1153,7 +1154,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Building your network in Dubai?', body: 'Create your professional profile and meet people whose goals match yours.', label: 'Create my pro profile' },
-    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'IRLY Network : application de networking à Dubaï', path: 'fr/irly/irly-network/' }],
+    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'IRLY Network: professional networking in Dubai', path: 'irly/irly-network/' }, { label: 'Working from home in Dubai and feeling isolated', path: 'blog/working-from-home-dubai-isolated/' }],
   },
   {
     lang: 'fr',
@@ -1246,7 +1247,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu construis ton réseau à Dubaï ?', body: 'Crée ton profil pro et rencontre des personnes dont les objectifs correspondent aux tiens.', label: 'Créer mon profil pro' },
-    related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Télétravail à Dubaï : quand on se sent isolé', path: 'fr/blog/teletravail-dubai-isolement/' }],
   },
   {
     lang: 'en',

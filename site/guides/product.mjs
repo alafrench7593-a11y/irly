@@ -175,7 +175,7 @@ export const PRODUCT = [
       { label: 'IRLY et les autres façons de rencontrer du monde à Dubaï', path: 'fr/irly/irly-et-les-autres-solutions/' },
       { label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
       { label: 'Espace presse', path: 'fr/irly/presse/' },
-      { label: 'IRLY Network', path: 'irly/irly-network/' }
+      { label: 'IRLY Network', path: 'fr/irly/irly-network/' }
     ],
   },
   {
@@ -253,7 +253,8 @@ export const PRODUCT = [
       { label: 'How to join a community on IRLY', path: 'irly/join-a-community/' },
       { label: 'How to organise an activity on IRLY', path: 'irly/create-an-activity/' },
       { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
-      { label: 'IRLY Network', path: 'fr/irly/irly-network/' }
+      { label: 'IRLY Network', path: 'irly/irly-network/' },
+      { label: 'IRLY vs other ways to meet people in Dubai', path: 'irly/irly-vs-other-ways-to-meet-people/' },
     ],
   },
   {
@@ -331,6 +332,7 @@ export const PRODUCT = [
       { label: 'Comment rejoindre une communauté sur IRLY ?', path: 'fr/irly/rejoindre-une-communaute/' },
       { label: 'Comment organiser une activité sur IRLY ?', path: 'fr/irly/organiser-une-activite/' },
       { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
+      { label: 'IRLY et les autres façons de rencontrer du monde à Dubaï', path: 'fr/irly/irly-et-les-autres-solutions/' },
     ],
   },
   {
@@ -797,6 +799,7 @@ export const PRODUCT = [
       { label: 'Apps to make friends in Dubai: how to choose', path: 'dubai/app-to-make-friends/' },
       { label: 'Expat communities in Dubai: how to find yours', path: 'dubai/expat-communities/' },
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'IRLY press kit', path: 'irly/press/' },
     ],
   },
   {
@@ -909,6 +912,7 @@ export const PRODUCT = [
       { label: 'Quelle appli pour se faire des amis à Dubaï ?', path: 'fr/dubai/application-pour-se-faire-des-amis/' },
       { label: 'Rejoindre une communauté d’expatriés à Dubaï', path: 'fr/dubai/communautes-expatries/' },
       { label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Espace presse d’IRLY', path: 'fr/irly/presse/' },
     ],
   },
   {
