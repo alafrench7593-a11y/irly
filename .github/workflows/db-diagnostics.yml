@@ -1,0 +1,27 @@
+name: Database diagnostics
+
+# Reads the health of the live Supabase project: plan, machine, connections, the queries that cost the most,
+# tables and indexes, scheduled jobs, Realtime, storage. Read only: nothing is written, no member data is
+# printed (counts, sizes, timings and query shapes only). Run it by hand.
+# Needs the SUPABASE_ACCESS_TOKEN secret (the database deploy's).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read the project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/db-diagnostics.mjs
