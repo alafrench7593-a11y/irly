@@ -206,18 +206,3 @@ AS $function$ begin return (select exists (
   )
  ); end $function$
 ;
-CREATE OR REPLACE FUNCTION private.girl_chat(conv uuid)
- RETURNS boolean
- LANGUAGE plpgsql
- STABLE SECURITY DEFINER
- SET search_path TO 'public'
- SET plan_cache_mode TO 'force_generic_plan'
-AS $function$ begin return (select exists (
-    select 1 from public.conversations v
-    left join public.communities c on c.id = v.community_id
-    left join public.activities a on a.id = v.activity_id
-    where v.id = conv
-      and (v.kind = 'match' or coalesce(c.girl_only, false) or coalesce(a.girl_only, false))
-  )
- ); end $function$
-;

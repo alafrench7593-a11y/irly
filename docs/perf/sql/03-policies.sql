@@ -2,6 +2,8 @@
 -- No policy is removed or widened; each is the old rule written so the per-row part is an index probe.
 -- Proven on 290 fingerprints across 10 member profiles: 0 differences, except messages_send (last statement),
 -- which was checked by logic and three inserts only.
+-- Before applying: compare production's functions and policies with the migrations (a hand-made change would be overwritten),
+-- and run with a short lock_timeout: each alter policy briefly locks its table.
 
 -- (b) the caller's conversations, once per statement (same table, same predicate as private.is_member(conv, auth.uid()))
 create or replace function private.my_conversation_ids() returns setof uuid language sql stable security definer set search_path to 'public' as $$

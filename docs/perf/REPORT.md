@@ -53,7 +53,7 @@ Trois fichiers dans `docs/perf/sql/`. Aucun n'est dans le dossier des migrations
 | Fichier | Contenu | Touche aux règles de sécurité |
 |---|---|---|
 | `01-indexes.sql` | 11 index | non |
-| `02-helper-plans.sql` | 19 fonctions de contrôle gardent un plan en mémoire au lieu d'être recalculées à chaque ligne | non (mêmes expressions) |
+| `02-helper-plans.sql` | 18 fonctions de contrôle gardent un plan en mémoire au lieu d'être recalculées à chaque ligne | non (mêmes expressions) |
 | `03-policies.sql` | 8 règles de lecture ou d'écriture réécrites à résultat identique | oui |
 
 Preuves d'équivalence : 290 empreintes des lignes visibles par 10 profils de membres (homme, femme, autre, bloqueur, bloqué, propriétaire de communauté, joueur), 0 différence. La suite de tests serveur passe à l'identique avec les trois fichiers appliqués (7 441 vérifications). Exception : la dernière règle de `03-policies.sql` (envoi de message) n'a été vérifiée que par raisonnement et trois insertions.

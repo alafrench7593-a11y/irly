@@ -1,6 +1,9 @@
 -- PROPOSAL, not applied anywhere. Indexes only: no rule, no data and no function changes.
 -- Measured on a local copy with 50,000 fictitious members (see docs/perf/REPORT.md).
 -- Each statement runs alone, outside a transaction, so writes are not blocked while it builds.
+-- Send each statement as its own request (the deploy script wraps files in a transaction, which these refuse).
+-- Afterwards check that none is left invalid: select indexrelid::regclass from pg_index where not indisvalid;
+-- Never set force_generic_plan on private.purge_notifications: the four payload indexes need its custom plans.
 -- 1. private.drop_push_copy(): "delete from push_outbox where notification_id = old.id" runs once per deleted notification.
 create index concurrently if not exists push_outbox_notification_idx on public.push_outbox (notification_id) where notification_id is not null;
 -- 2. private.purge_notifications(): removing a post / comment / activity deletes its notifications by payload key (was a seq scan of notifications each time).
