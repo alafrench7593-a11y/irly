@@ -50,7 +50,23 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
   // A game already running that I am not in: said once, then nothing more is read for that room.
   const [shutFor, setShutFor] = useState<string | null>(null);
   const shut = shutFor === room.id;
-  const { view: read, failed, reload, skew } = useWwView(shut ? undefined : room.id, room);
+  // `room` is a new object on every poll answer: what follows it reads again only when this changes
+  // (the game starts or ends, its deadline, the host, who is there, or anything else the server changed).
+  const roomSig = useMemo(
+    () =>
+      [
+        room.status,
+        room.deadline ?? '',
+        room.host_id ?? '',
+        room.updated_at ?? '',
+        room.people
+          .map((p) => `${p.id}:${p.left ? 1 : 0}`)
+          .sort()
+          .join(','),
+      ].join('|'),
+    [room.status, room.deadline, room.host_id, room.updated_at, room.people],
+  );
+  const { view: read, failed, reload, skew } = useWwView(shut ? undefined : room.id, roomSig);
   const outsider = failed === NOT_PLAYING && room.status !== 'waiting';
   if (outsider && !shut) setShutFor(room.id);
   const view = outsider ? null : read;
@@ -61,7 +77,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
   // While the keyboard is up the dock steps aside: the field being typed in and its send button keep the room.
   const typing = useKeyboardHeight() > 0;
   // Voice games: my rights are read again when the table changes (lobby) or when the phase, the living or my camp do.
-  const voiceSig = outsider ? 'outsider' : !view || view.phase === 'lobby' ? room : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
+  const voiceSig = outsider ? 'outsider' : !view || view.phase === 'lobby' ? roomSig : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
   const voice = useVoice(room.id, voiceSig);
   const people = useMemo(() => room.people.map((p) => ({ id: p.id, name: p.name ?? tx('A member') })), [room.people]);
   // My card, the chat and the log open over the game, one at a time. The card opens by itself when the roles are dealt.

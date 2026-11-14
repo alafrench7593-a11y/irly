@@ -27,6 +27,8 @@ export type RoomCard = {
   max: number;
   status: 'waiting' | 'playing' | 'finished' | 'abandoned';
   created_at: string;
+  /** Moved by the server on every change of the room (a seat, the deck, text or voice, a move). */
+  updated_at?: string;
   host: string | null;
   host_id: string | null;
   players: number;
@@ -87,9 +89,67 @@ const spaceArg = (space: string) => (space === 'girl' ? 'girl' : 'mixte');
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   if (!supabase) throw new Error('Sign in to play');
-  const { data, error } = await supabase.rpc(fn, args);
-  if (error) throw new Error(error.message);
+  const { data, error, status } = await supabase.rpc(fn, args);
+  // The HTTP status goes with the error: a poll tells a server in trouble from a refusal.
+  if (error) throw Object.assign(new Error(error.message), { status });
   return data as T;
+}
+
+// ───────── Polling ─────────
+
+/** A read that failed because the network or the server is struggling (no answer, 5xx, 429), not because it was refused. */
+export const struggling = (e: unknown): boolean => {
+  const status = (e as { status?: number } | null)?.status;
+  return !status || status >= 500 || status === 429;
+};
+/** After such a failure the poll waits twice as long (30 s at most); the first answer brings the normal period back. */
+export const slower = (slow: number) => Math.min(slow * 2, 16);
+const POLL_MAX_MS = 30_000;
+/** True while a request sent at `sentAt` (0: none) has not answered. After 30 s it is taken for lost, so a poll never stops for good. */
+export const unanswered = (sentAt: number) => sentAt > 0 && Date.now() - sentAt < POLL_MAX_MS;
+
+/**
+ * Calls `tick` every `ms` (times `slow.current`, 30 s at most) while `on`.
+ * Nothing is asked while the app is in the background: a phone left in a
+ * pocket costs the server nothing. One call at once when the app comes back
+ * in front, and when `on` comes back after a pause (the screen shown again).
+ */
+export function usePoll(on: boolean, ms: number, slow: { current: number }, tick: () => void) {
+  // The latest tick, without restarting the timer each time what it reads changes.
+  const fn = useRef(tick);
+  useEffect(() => {
+    fn.current = tick;
+  });
+  // Stopped after having run (not: never started yet).
+  const ran = useRef(false);
+  const paused = useRef(false);
+  useEffect(() => {
+    if (!on) {
+      paused.current = ran.current;
+      return;
+    }
+    if (paused.current) fn.current();
+    paused.current = false;
+    ran.current = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const next = () => {
+      timer = setTimeout(
+        () => {
+          if (AppState.currentState === 'active') fn.current();
+          next();
+        },
+        Math.min(ms * slow.current, POLL_MAX_MS),
+      );
+    };
+    next();
+    const app = AppState.addEventListener('change', (s) => {
+      if (s === 'active') fn.current();
+    });
+    return () => {
+      clearTimeout(timer);
+      app.remove();
+    };
+  }, [on, ms, slow]);
 }
 
 // ───────── Actions ─────────
@@ -211,13 +271,19 @@ export function useRoom(roomId: string | undefined) {
   // Server clock minus phone clock, measured on each read (deadlines are the server's).
   const [skew, setSkew] = useState(0);
   const seq = useRef(0);
+  // For the polls below: when the read on its way was sent (0: none), and how much they slowed down after errors.
+  const sentAt = useRef(0);
+  const slow = useRef(1);
 
   const load = useCallback(() => {
     if (!uid || !supabase || !roomId) return;
     const n = ++seq.current;
+    sentAt.current = Date.now();
     rpc<Room>('game_room', { p_room: roomId })
       .then((r) => {
+        slow.current = 1;
         if (n !== seq.current) return;
+        sentAt.current = 0;
         setRoom(r);
         setSkew(Date.parse(r.now) - Date.now());
         setMissing(false);
@@ -225,7 +291,9 @@ export function useRoom(roomId: string | undefined) {
         primeFaces(r.people.map((p) => ({ id: p.id, path: p.photo })));
       })
       .catch((e: Error) => {
+        if (struggling(e)) slow.current = slower(slow.current);
         if (n !== seq.current) return;
+        sentAt.current = 0;
         // An id that is not one (a mistyped link) is a game that does not exist.
         if (/no longer exists|invalid input syntax for type uuid/.test(e.message)) setMissing(true);
         else setFailed(e.message);
@@ -268,28 +336,27 @@ export function useRoom(roomId: string | undefined) {
   }, [uid, roomId, load, loadMessages]);
 
   // A running game: read again every 5 s, and past the deadline ask the server to play the late turn.
+  // A waiting room: every 6 s, in case a live update was missed (someone joined, the host started).
+  // One timer for both (usePoll): it no longer restarts on every answer, waits for the previous
+  // answer before asking again, and stops while the app is in the background.
   const status = room?.status;
   const deadline = room?.deadline;
-  useEffect(() => {
-    if (status !== 'playing' || !roomId) return;
-    const timer = setInterval(() => {
-      if (deadline && Date.now() + skew > Date.parse(deadline) + 500) {
-        void supabase?.rpc('game_tick', { p_room: roomId }).then(() => load());
-      } else {
-        load();
-      }
-      // AI players' lines show a few seconds after they are written, and a missed live message comes back.
-      loadMessages();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [status, deadline, skew, roomId, load, loadMessages]);
-
-  // A waiting room: read again every 6 s, in case a live update was missed (someone joined, the host started).
-  useEffect(() => {
-    if (status !== 'waiting' || !roomId) return;
-    const timer = setInterval(load, 6000);
-    return () => clearInterval(timer);
-  }, [status, roomId, load]);
+  usePoll(Boolean(roomId) && (status === 'playing' || status === 'waiting'), status === 'playing' ? 5000 : 6000, slow, () => {
+    if (!roomId || unanswered(sentAt.current)) return;
+    if (status !== 'playing') {
+      load();
+      return;
+    }
+    if (deadline && Date.now() + skew > Date.parse(deadline) + 500) {
+      // Counts as the read on its way until the room is read after it.
+      sentAt.current = Date.now();
+      void supabase?.rpc('game_tick', { p_room: roomId }).then(() => load());
+    } else {
+      load();
+    }
+    // AI players' lines show a few seconds after they are written, and a missed live message comes back.
+    loadMessages();
+  });
 
   return { room, missing, failed, messages, reload: load, skew };
 }

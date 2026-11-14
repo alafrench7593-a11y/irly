@@ -1,5 +1,7 @@
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { slower, struggling, unanswered, usePoll } from '../api';
 import type { WwMode } from './cards';
 
 /**
@@ -64,8 +66,9 @@ const spaceArg = (space: string) => (space === 'girl' ? 'girl' : 'mixte');
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   if (!supabase) throw new Error('Sign in to play');
-  const { data, error } = await supabase.rpc(fn, args);
-  if (error) throw new Error(error.message);
+  const { data, error, status } = await supabase.rpc(fn, args);
+  // The HTTP status goes with the error: the poll tells a server in trouble from a refusal.
+  if (error) throw Object.assign(new Error(error.message), { status });
   return data as T;
 }
 
@@ -93,34 +96,46 @@ export const wwSkipDay = (room: string) => rpc<void>('ww_skip_day', { p_room: ro
 /**
  * My player's view of a game: read again when the room changes (realtime),
  * every 3 s while it runs (the clock, AI players), and when its phase's time is up.
+ * `changed` must be a value that only differs when the room really changed (a
+ * string, not the room object, which is a new one on every answer).
  */
 export function useWwView(roomId: string | undefined, changed: unknown) {
   const [view, setView] = useState<WwView | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [skew, setSkew] = useState(0);
   const seq = useRef(0);
+  // For the poll: when the read on its way was sent (0: none), and how much it slowed down after errors.
+  const sentAt = useRef(0);
+  const slow = useRef(1);
   const load = useCallback((): Promise<void> => {
     if (!roomId || !supabase) return Promise.resolve();
     const n = ++seq.current;
+    sentAt.current = Date.now();
     return rpc<WwView>('ww_view', { p_room: roomId })
       .then((v) => {
+        slow.current = 1;
         if (n !== seq.current) return;
+        sentAt.current = 0;
         setView(v);
         if (v.now) setSkew(Date.parse(v.now) - Date.now());
         setFailed(null);
       })
       .catch((e: Error) => {
-        if (n === seq.current) setFailed(e.message);
+        if (struggling(e)) slow.current = slower(slow.current);
+        if (n !== seq.current) return;
+        sentAt.current = 0;
+        setFailed(e.message);
       });
   }, [roomId]);
   useEffect(() => {
     void load();
   }, [load, changed]);
   const running = view ? view.phase !== 'lobby' && view.phase !== 'ended' : false;
-  useEffect(() => {
-    if (!running) return;
-    const timer = setInterval(() => void load(), 2000);
-    return () => clearInterval(timer);
-  }, [running, load]);
+  // Only while the game's screen is the one shown and the app is in front (usePoll), and never
+  // two reads at once. The countdown does not wait for it: it is computed from the deadline.
+  const focused = useIsFocused();
+  usePoll(running && focused, 3000, slow, () => {
+    if (!unanswered(sentAt.current)) void load();
+  });
   return { view, failed, reload: load, skew };
 }

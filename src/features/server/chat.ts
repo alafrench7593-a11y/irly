@@ -168,6 +168,11 @@ function mayBeUnread(uid: string, conversationId: string): boolean {
   return !row || row.unread > 0;
 }
 
+/** On a busy chat, the least time between two inbox reads asked by incoming messages. */
+const INBOX_EVERY_MS = 4000;
+/** The least time between two mark_conversation_read calls for the chat on screen. */
+const READ_EVERY_MS = 2500;
+
 /** Every screen asking in the same moment (a sync bump reaches them all at once) is one read. */
 function refreshInbox(uid: string) {
   if (inboxSoon?.uid === uid) return;
@@ -193,7 +198,28 @@ function listenInbox(uid: string): () => void {
     const sb = supabase;
     // A burst of messages (busy group chat) is one inbox read, not one per message,
     // and none when a read sent after them (your own action's) already has them.
-    const gate = echoGate(() => refreshInbox(uid), 800, () => inboxReadAt);
+    // A chat that stays busy: the first burst is read as before, then at most one inbox read
+    // every 4 s, and always one after the last message (the inbox ends up current).
+    let rereadAt = -Infinity;
+    let owedSince = 0;
+    let later: ReturnType<typeof setTimeout> | null = null;
+    const reread = () => {
+      const wait = rereadAt + INBOX_EVERY_MS - Date.now();
+      if (wait <= 0) {
+        rereadAt = Date.now();
+        refreshInbox(uid);
+        return;
+      }
+      owedSince = syncNow();
+      later ??= setTimeout(() => {
+        later = null;
+        // An inbox read sent meanwhile (your own action's) already has these messages.
+        if (inboxReadAt >= owedSince) return;
+        rereadAt = Date.now();
+        refreshInbox(uid);
+      }, wait);
+    };
+    const gate = echoGate(reread, 800, () => inboxReadAt);
     // Joins, leaves, renames and deletions arrive through the app's sync channel.
     const channel = liveChannel(`inbox-${uid}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -216,6 +242,7 @@ function listenInbox(uid: string): () => void {
       users: 0,
       stop: () => {
         gate.cancel();
+        if (later) clearTimeout(later);
         void sb.removeChannel(channel);
         void sb.removeChannel(removals);
       },
@@ -565,32 +592,78 @@ export function useServerThread(conversationId: string): ServerThread {
   const owedRead = useRef(false);
   // A message from someone else since the last read (the inbox may not know it yet).
   const unseen = useRef(false);
-  const markRead = useCallback(() => {
-    if (!supabase || !uid) return;
-    if (!focused.current || AppState.currentState !== 'active') {
-      owedRead.current = true;
-      return;
-    }
-    owedRead.current = false;
-    const fresh = unseen.current || mayBeUnread(uid, conversationId);
-    unseen.current = false;
-    supabase.rpc('mark_conversation_read', { p_conversation: conversationId }).then(
-      ({ error: e }) => {
-        if (e) return;
-        // Read here: the inbox shows it at once, and the echo of my own membership row
-        // (which reloaded the inbox, this chat's photo, title and members) changes nothing more.
-        markedReadHere(uid, conversationId);
-        if (fresh) expectEcho('conversation_members', (row) => row.conversation_id === conversationId && row.user_id === uid);
-      },
-      () => undefined,
-    );
-  }, [conversationId, uid]);
+  // One call per incoming message was one request per message on a busy chat. Now at most one
+  // every 2.5 s and one at a time, and always a last one: the newest message ends up read
+  // (the unread badge may be up to 2.5 s late). `flush`: send now what is still waiting.
+  const reading = useRef({ chat: '', at: 0, busy: false, again: false, flush: false, timer: null as ReturnType<typeof setTimeout> | null });
+  const markRead = useCallback(
+    (flush = false) => {
+      if (!supabase || !uid) return;
+      const sb = supabase;
+      const r = reading.current;
+      const go = (now: boolean) => {
+        if (!now && (!focused.current || AppState.currentState !== 'active')) {
+          owedRead.current = true;
+          return;
+        }
+        if (r.chat !== conversationId) {
+          r.chat = conversationId;
+          r.at = 0;
+        }
+        if (r.busy) {
+          r.again = true;
+          return;
+        }
+        const wait = now ? 0 : r.at + READ_EVERY_MS - Date.now();
+        if (wait > 0) {
+          r.timer ??= setTimeout(() => {
+            r.timer = null;
+            go(false);
+          }, wait);
+          return;
+        }
+        if (r.timer) clearTimeout(r.timer);
+        r.timer = null;
+        r.at = Date.now();
+        r.busy = true;
+        owedRead.current = false;
+        const fresh = unseen.current || mayBeUnread(uid, conversationId);
+        unseen.current = false;
+        sb.rpc('mark_conversation_read', { p_conversation: conversationId })
+          .then(
+            ({ error: e }) => {
+              if (e) return;
+              // Read here: the inbox shows it at once, and the echo of my own membership row
+              // (which reloaded the inbox, this chat's photo, title and members) changes nothing more.
+              markedReadHere(uid, conversationId);
+              if (fresh) expectEcho('conversation_members', (row) => row.conversation_id === conversationId && row.user_id === uid);
+            },
+            () => undefined,
+          )
+          .then(() => {
+            r.busy = false;
+            if (!r.again) return;
+            // A message arrived while this call was on its way: one more, for the last one.
+            const last = r.flush;
+            r.again = false;
+            r.flush = false;
+            go(last);
+          });
+      };
+      if (!flush) go(false);
+      else if (r.timer) go(true);
+      else if (r.busy && r.again) r.flush = true;
+    },
+    [conversationId, uid],
+  );
   useFocusEffect(
     useCallback(() => {
       focused.current = true;
       if (owedRead.current) markRead();
       return () => {
         focused.current = false;
+        // Leaving the chat: a read still waiting for its turn is sent now, not lost.
+        markRead(true);
       };
     }, [markRead]),
   );

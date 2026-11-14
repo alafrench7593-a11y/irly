@@ -383,18 +383,30 @@ export function startSync(uid: string): () => void {
   // time too. Channels become ready within moments of each other: one reload per kind.
   const behind = new Set<SyncKind>();
   let catchUp: ReturnType<typeof setTimeout> | null = null;
-  const watch = (name: string, kinds: SyncKind[], bind: (c: RealtimeChannel) => RealtimeChannel) =>
-    bind(sb.channel(topic(`sync:${name}:${uid}`), { config: { postgres_changes_options: { wait: true } } })).subscribe((status) => {
+  // After a dropped connection (or a server restart) every phone listens again in the same
+  // second: each waits a random 0–3 s more (`herd`), so their catch-up reads do not all land
+  // at once. The first time, at app start, nothing is added.
+  let spread = 0;
+  const catchUpSoon = (kinds: readonly SyncKind[], herd: boolean) => {
+    kinds.forEach((k) => behind.add(k));
+    if (herd && !spread) spread = Math.random() * 3000;
+    if (catchUp) clearTimeout(catchUp);
+    catchUp = setTimeout(() => {
+      catchUp = null;
+      spread = 0;
+      const kinds = [...behind];
+      behind.clear();
+      changed(...kinds);
+    }, 300 + spread);
+  };
+  const watch = (name: string, kinds: SyncKind[], bind: (c: RealtimeChannel) => RealtimeChannel) => {
+    let listened = false;
+    return bind(sb.channel(topic(`sync:${name}:${uid}`), { config: { postgres_changes_options: { wait: true } } })).subscribe((status) => {
       if (status !== 'SUBSCRIBED') return;
-      kinds.forEach((k) => behind.add(k));
-      if (catchUp) clearTimeout(catchUp);
-      catchUp = setTimeout(() => {
-        catchUp = null;
-        const kinds = [...behind];
-        behind.clear();
-        changed(...kinds);
-      }, 300);
+      catchUpSoon(kinds, listened);
+      listened = true;
     });
+  };
   // One channel per table: a table the server does not publish (yet) can
   // only silence itself, never the others.
   const channels = watched(uid).map(({ table, filter, event = '*', kinds, ignore }) =>
@@ -423,13 +435,14 @@ export function startSync(uid: string): () => void {
       if (!away) away = Date.now();
       return;
     }
-    if (away && Date.now() - away > 30_000) changedAll();
+    // Often everyone at once too (a notification sent to all): spread like a reconnection.
+    if (away && Date.now() - away > 30_000) catchUpSoon(KINDS, true);
     away = 0;
   });
   // Back online (web): resync; offline: screens can say so.
   const online = () => {
     useVersions.setState({ online: true });
-    changedAll();
+    catchUpSoon(KINDS, true);
   };
   const offline = () => useVersions.setState({ online: false });
   const web = Platform.OS === 'web' && typeof window !== 'undefined';
