@@ -40,7 +40,7 @@ jobs:
         run: |
           mode="$(tr -d '[:space:]' < .github/staging.txt)"
           case "$mode" in
-            probe|create|adopt|schema) kind=copy ;;
+            probe|create|adopt|schema|drift) kind=copy ;;
             explain) kind=explain ;;
             optimize) kind=optimize ;;
             seed-small|seed-medium|seed-large) kind=seed ;;

@@ -73,6 +73,26 @@ if (mode === 'probe') {
   }
 }
 
+if (mode === 'drift') {
+  // Read only, on production: are the functions and policies the next migration rewrites still what the
+  // migrations made them? A hand-made change there would otherwise be overwritten without notice.
+  const expected = {"f:girl_selfie_required()": "35df32c8a9a6d128faf3b6f6358a7e70", "f:my_calendar(timestamp with time zone,timestamp with time zone)": "c44a73500dfe105da8625532d0306a11", "f:private.blocked_unchecked(uuid,uuid)": "31440ddf7da0ae627f8d2ebd747a6ccb", "f:private.can_see(text,text)": "02a96713ab2f7dcd3eedbfd61723b58e", "f:private.discoverable(uuid)": "d388d28b116d8d242b9cff072560d22c", "f:private.friends_unchecked(uuid,uuid)": "5520a52fb9ac4fcca2f617b81e4b82f2", "f:private.girl_chat(uuid)": "d526f2397cf85d56b56ad5638eb009f0", "f:private.girl_eligible_unchecked(uuid)": "dc2a1b82c4cd24fd0304f814bc4f75eb", "f:private.girl_selfie_required()": "5aa464088f54e2f48a22538e0f7055e3", "f:private.girl_target(text,text)": "87752f805507da496c76afbe060a33a6", "f:private.identity_verified(uuid)": "5f7afe5e9053fd9e7776fa4c7561b3a7", "f:private.is_admin(uuid)": "d9b8e1754d38513fa39d132b0cfc85a5", "f:private.is_girl_eligible(uuid)": "46b5e10c5d599f3466d7943b41e5dc02", "f:private.is_sanctioned(uuid)": "21a9354687a1de2c4bb35c71842cd936", "f:private.moderates(uuid)": "8ad0b7d9cadc0a2215f6e66c860c1ea2", "f:private.my_block_ids()": "53bf66f7895d7ca7b3eb25072fcc879e", "f:private.notification_is_girl(text,jsonb)": "fe4b2315de2de26a03001fc4abfa41f1", "f:private.profile_visible_unchecked(uuid,uuid)": "48a114f885d845a228c1ef6323600017", "f:private.staff_power(uuid)": "cfc7618ed85de61a02253f54989287fe", "f:private.visible_to(uuid,uuid,text)": "96e9b72587cfb6537cb25b8947499327", "p:comments.comments_girl_only": "f017e16892c1775bdcda3254ede45709", "p:comments.comments_read": "81df6d0f53cd1cf94db82e91c3a8e602", "p:conversation_members.conversation_members_read": "df7d593d62adcbb8a8e98db7677b998f", "p:conversations.conversations_read": "099ca19f5d98696c1b7b250a6d337163", "p:likes.likes_read": "32dcf561c96838d78a6829cdcf9ca38c", "p:messages.messages_not_removed_for_me": "df1f9ce324e6c896e9681873f7c42836", "p:messages.messages_read": "0f0f9fbfab94e76860db8f9741ac5451", "p:messages.messages_send": "d9abbe6cd722af85859140a9a9c0f1bf", "p:notifications.notifications_self": "4097e050bced07aba2046217d48ee74a"};
+  const got = await call('POST', `/projects/${ref}/database/query`, {
+    query: `select 'f:'||p.oid::regprocedure::text as k, md5(p.prosrc) as h from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') and p.proname = any(array['blocked_unchecked','friends_unchecked','visible_to','profile_visible_unchecked','discoverable','girl_chat','my_block_ids','is_sanctioned','staff_power','identity_verified','girl_selfie_required','girl_eligible_unchecked','is_admin','moderates','can_see','girl_target','notification_is_girl','is_girl_eligible','my_calendar']) union all select 'p:'||tablename||'.'||policyname, md5(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\\s+','','g')) from pg_policies where schemaname='public' and policyname = any(array['messages_read','conversations_read','conversation_members_read','likes_read','comments_read','comments_girl_only','messages_not_removed_for_me','messages_send','notifications_self']) order by 1`,
+    read_only: true,
+  });
+  if (got.failed) {
+    console.log(got.failed);
+    process.exit(1);
+  }
+  const live = Object.fromEntries(got.map((r) => [r.k, r.h]));
+  const differ = Object.keys(expected).filter((k) => live[k] !== expected[k]);
+  const extra = Object.keys(live).filter((k) => !(k in expected));
+  console.log(`\n## Production against the migrations: ${Object.keys(expected).length} objects compared`);
+  console.log(`different or missing in production: ${differ.join(', ') || 'none'}`);
+  console.log(`only in production: ${extra.join(', ') || 'none'}`);
+}
+
 if (mode === 'create') {
   console.log('\n## Creating the staging branch');
   const existing = Array.isArray(branches) ? branches.find((b) => b.name === 'staging') : null;
