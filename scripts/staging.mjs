@@ -122,8 +122,55 @@ if (mode === 'adopt') {
     process.exit(1);
   }
   if (same.length) {
-    console.log('the schemas differ: nothing recorded');
-    process.exit(1);
+    // Supabase copies the public and private schemas; what is attached to its own schemas (storage's
+    // policies, triggers on auth and storage) is not. Those are read from production's catalogue
+    // (definitions only, no rows) and created on the branch.
+    const policySql = `select schemaname, tablename, policyname, permissive, array_to_string(roles, ',') as roles, cmd, qual, with_check from pg_policies where schemaname in ('public', 'private', 'storage') order by 1, 2, 3`;
+    const triggerSql = `select n.nspname as schema, c.relname as tbl, t.tgname as name, pg_get_triggerdef(t.oid) as def from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace where not t.tgisinternal and n.nspname in ('public', 'private', 'auth', 'storage') order by 1, 2, 3`;
+    const [lp, cp, lt, ct] = [await sql(ref, policySql, true), await sql(staging.project_ref, policySql, true), await sql(ref, triggerSql, true), await sql(staging.project_ref, triggerSql, true)];
+    if ([lp, cp, lt, ct].some((r) => r.failed)) {
+      console.log([lp, cp, lt, ct].map((r) => r.failed).filter(Boolean).join('\n'));
+      process.exit(1);
+    }
+    const key = (r) => `${r.schemaname ?? r.schema}.${r.tablename ?? r.tbl}.${r.policyname ?? r.name}`;
+    const haveP = new Set(cp.map(key));
+    const haveT = new Set(ct.map(key));
+    const missingP = lp.filter((r) => !haveP.has(key(r)));
+    const missingT = lt.filter((r) => !haveT.has(key(r)));
+    const extra = [...cp.filter((r) => !new Set(lp.map(key)).has(key(r))), ...ct.filter((r) => !new Set(lt.map(key)).has(key(r)))].map(key);
+    console.log(`policies missing on staging: ${missingP.map(key).join(', ') || 'none'}`);
+    console.log(`triggers missing on staging: ${missingT.map(key).join(', ') || 'none'}`);
+    console.log(`only on staging: ${extra.join(', ') || 'none'}`);
+    const changed = lp.filter((r) => haveP.has(key(r)) && JSON.stringify(r) !== JSON.stringify(cp.find((x) => key(x) === key(r)))).map(key);
+    console.log(`policies with another definition: ${changed.join(', ') || 'none'}`);
+    if (missingP.some((r) => r.schemaname !== 'storage') || changed.length || extra.length) {
+      console.log('differences outside what Supabase leaves out: nothing changed');
+      process.exit(1);
+    }
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const ddl = [
+      ...missingP.map((r) => `create policy ${q(r.policyname)} on ${q(r.schemaname)}.${q(r.tablename)} as ${r.permissive === 'PERMISSIVE' ? 'permissive' : 'restrictive'} for ${r.cmd.toLowerCase()} to ${r.roles.split(',').map((x) => (x === 'public' ? 'public' : q(x))).join(', ')}${r.qual ? ` using (${r.qual})` : ''}${r.with_check ? ` with check (${r.with_check})` : ''};`),
+      ...missingT.map((r) => `${r.def};`),
+    ];
+    const made = await sql(staging.project_ref, `begin;\n${ddl.join('\n')}\ncommit;`, false);
+    console.log(made.failed ?? `created on staging: ${missingP.length} policies, ${missingT.length} triggers`);
+    if (made.failed) process.exit(1);
+    const again = await sql(staging.project_ref, shape, true);
+    const still = ['tables', 'functions', 'policies', 'triggers', 'indexes', 'functions_print', 'policies_print'].filter((k) => live[0][k] !== again[0]?.[k]);
+    console.log(still.length ? `STILL DIFFERENT: ${still.join(', ')}` : 'now the same tables, functions, policies, triggers and indexes');
+    if (still.length) process.exit(1);
+  }
+  // Scheduled jobs are rows, so they were not copied: the ones that only call a function of ours are
+  // scheduled on the branch too (their text holds no key). Jobs with anything else in them are left out.
+  const jobs = await sql(ref, 'select jobname, schedule, command from cron.job order by jobname', true);
+  if (!jobs.failed) {
+    const plain = jobs.filter((j) => /^\s*select\s+(private|public)\.[a-z_0-9]+\(\s*\)\s*;?\s*$/i.test(j.command));
+    console.log(`scheduled jobs in production: ${jobs.length}; copied (plain function calls): ${plain.map((j) => j.jobname).join(', ') || 'none'}; left out: ${jobs.filter((j) => !plain.includes(j)).map((j) => j.jobname).join(', ') || 'none'}`);
+    const lit = (v) => `'${String(v).replace(/'/g, "''")}'`;
+    if (plain.length) {
+      const sched = await sql(staging.project_ref, plain.map((j) => `select cron.schedule(${lit(j.jobname)}, ${lit(j.schedule)}, ${lit(j.command)});`).join('\n'), false);
+      console.log(sched.failed ?? 'jobs scheduled on staging');
+    }
   }
   const values = names.map((r) => `('${String(r.name).replace(/'/g, "''")}')`).join(', ');
   const done = await sql(staging.project_ref, `create schema if not exists private; create table if not exists private.irly_migrations (name text primary key, applied_at timestamptz not null default now()); insert into private.irly_migrations (name) values ${values} on conflict do nothing; select count(*)::int as recorded from private.irly_migrations;`, false);
