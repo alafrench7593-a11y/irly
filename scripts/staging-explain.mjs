@@ -5,28 +5,36 @@
  * back. Goes through the staging guard (scripts/staging-lib.mjs): it cannot run against production.
  * Env: SUPABASE_ACCESS_TOKEN. Usage: node scripts/staging-explain.mjs
  */
+import { readFileSync } from 'node:fs';
 import { accessToken, createStaging, memberId } from './staging-lib.mjs';
 
 const api = createStaging({ token: accessToken() });
 const MEMBERS = [1, 500];
 
+const uid = (m) => `'${memberId(m)}'::uuid`;
+/** What the app really sends: PostgREST puts the member's id in the request as a literal, not as auth.uid(). */
 const STATEMENTS = [
-  ['my_calendar()', `select * from public.my_calendar()`],
-  ['my_calendar, its body', `select a.id, a.title, a.creator_id = auth.uid(), (select c.id from public.conversations c where c.activity_id = a.id)
-     from (select x.activity_id from public.activity_participants x where x.user_id = auth.uid() and x.status = 'going' offset 0) x
-     join public.activities a on a.id = x.activity_id
-     where a.cancelled_at is null and a.starts_at between now() - interval '1 day' and now() + interval '60 days' order by a.starts_at`],
-  ['my participations only', `select x.activity_id from public.activity_participants x where x.user_id = auth.uid() and x.status = 'going'`],
-  ['engagement(20 posts)', `select * from public.engagement('community_post', (select array_agg(id::text) from (select id from public.community_posts where deleted_at is null order by created_at desc limit 20) s))`],
-  ['notifications, latest 50', `select id, kind, payload, read_at, created_at from public.notifications where kind not in ('MESSAGE_CREATED', 'GROUP_ADDED') order by created_at desc limit 50`],
-  ['activities list', `select id, title, starts_at from public.activities where city_id in ('dubai') and cancelled_at is null and starts_at >= now() - interval '2 hours' and girl_only = false order by starts_at limit 60`],
-  ['messages, latest 50 of one chat', `select id, sender_id, body, created_at from public.messages where conversation_id = (select conversation_id from public.conversation_members where user_id = auth.uid() order by conversation_id limit 1) and deleted_at is null order by created_at desc, id desc limit 50`],
-  ['my_conversations()', `select * from public.my_conversations()`],
-  ['home_feed()', `select * from public.home_feed('mixte')`],
-  ['live_feed()', `select * from public.live_feed('dubai', 'irly')`],
-  ['games_overview()', `select * from public.games_overview('mixte')`],
-  ['my_profile()', `select * from public.my_profile()`],
-  ['my memberships', `select conversation_id from public.conversation_members where user_id = auth.uid() limit 301`],
+  ['notifications, latest 50 (as the app asks)', () => `select id, kind, payload, read_at, created_at from public.notifications where kind not in ('MESSAGE_CREATED', 'GROUP_ADDED') order by created_at desc limit 50`],
+  ['my_calendar()', () => `select * from public.my_calendar()`],
+  ['my_calendar body, auth.uid() as written', () => `select a.id from (select x.activity_id from public.activity_participants x where x.user_id = auth.uid() and x.status = 'going' offset 0) x join public.activities a on a.id = x.activity_id where a.cancelled_at is null and a.starts_at between now() - interval '1 day' and now() + interval '60 days'`],
+  ['my_calendar body, (select auth.uid())', () => `select a.id from (select x.activity_id from public.activity_participants x where x.user_id = (select auth.uid()) and x.status = 'going' offset 0) x join public.activities a on a.id = x.activity_id where a.cancelled_at is null and a.starts_at between now() - interval '1 day' and now() + interval '60 days'`],
+  ['my memberships (literal id, as the app asks)', (m) => `select conversation_id from public.conversation_members where user_id = ${uid(m)} limit 301`],
+  ['participants of my activities (literal id, as the app asks)', (m) => `select activity_id, status from public.activity_participants where user_id = ${uid(m)}`],
+  ['engagement(20 posts)', () => `select * from public.engagement('community_post', (select array_agg(id::text) from (select id from public.community_posts where deleted_at is null order by created_at desc limit 20) s))`],
+  ['messages, latest 50 of one chat', (m) => `select id, sender_id, body, created_at from public.messages where conversation_id = (select conversation_id from public.conversation_members where user_id = ${uid(m)} order by conversation_id limit 1) and deleted_at is null order by created_at desc, id desc limit 50`],
+  ['my_conversations()', () => `select * from public.my_conversations()`],
+  ['community_posts_page', () => `select * from public.community_posts_page((select id from public.communities order by members_count desc nulls last limit 1), 'recent', null, 0, 20)`],
+];
+
+const read = (f) => readFileSync(new URL(`../docs/perf/sql/${f}`, import.meta.url), 'utf8');
+const SELF = `alter policy notifications_self on public.notifications using (user_id = (select auth.uid()));`;
+/** Candidate changes, each applied inside the transaction that is rolled back: the branch is left as it was. */
+const VARIANTS = [
+  ['as it is', ''],
+  ['notifications_self with (select auth.uid())', SELF],
+  ['helper plans (02)', read('02-helper-plans.sql')],
+  ['helper plans + policies (02 + 03)', `${read('02-helper-plans.sql')}\n${read('03-policies.sql')}`],
+  ['02 + 03 + notifications_self', `${read('02-helper-plans.sql')}\n${read('03-policies.sql')}\n${SELF}`],
 ];
 
 const lit = (s) => `'${String(s).replace(/'/g, "''")}'`;
@@ -40,10 +48,11 @@ function costly(plan, out = []) {
   return out;
 }
 
-async function explain(member, statement) {
+async function explain(member, statement, ddl) {
   const id = memberId(member);
   const rows = await api.sql(
     `begin;
+${ddl}
 create temp table _plan (j json) on commit drop;
 do $do$
 declare v json;
@@ -69,22 +78,23 @@ const server = await api.sql(`select current_setting('server_version') as versio
 console.log('## Staging at rest');
 console.log(JSON.stringify(server[0]));
 
-for (const [label, statement] of STATEMENTS) {
+for (const [label, make] of STATEMENTS) {
   console.log(`\n## ${label}`);
   for (const member of MEMBERS) {
-    try {
-      const runs = [];
-      let last = null;
-      for (let i = 0; i < 3; i += 1) {
-        last = await explain(member, statement);
-        runs.push(last['Execution Time']);
+    for (const [variant, ddl] of VARIANTS) {
+      try {
+        const runs = [];
+        let last = null;
+        for (let i = 0; i < 3; i += 1) {
+          last = await explain(member, make(member), ddl);
+          runs.push(last['Execution Time']);
+        }
+        runs.sort((a, b) => a - b);
+        const top = costly(last.Plan).sort((a, b) => b.own - a.own)[0];
+        console.log(`member ${member} · ${variant}: ${runs[1].toFixed(1)} ms, rows ${last.Plan['Actual Rows']} · ${top.what} rows ${top.rows} x ${top.loops}${top.removed ? `, ${top.removed} removed` : ''}`);
+      } catch (e) {
+        console.log(`member ${member} · ${variant}: could not run: ${String(e.message).slice(0, 260)}`);
       }
-      runs.sort((a, b) => a - b);
-      const top = costly(last.Plan).sort((a, b) => b.own - a.own).slice(0, 4);
-      console.log(`member ${member}: median ${runs[1].toFixed(1)} ms (runs ${runs.map((r) => r.toFixed(1)).join(', ')}), planning ${last['Planning Time'].toFixed(1)} ms, rows ${last.Plan['Actual Rows']}`);
-      for (const t of top) console.log(`   ${t.own.toFixed(1)} ms  ${t.what}  rows ${t.rows} x ${t.loops}${t.removed ? `, ${t.removed} removed by filter` : ''}`);
-    } catch (e) {
-      console.log(`member ${member}: could not run: ${String(e.message).slice(0, 300)}`);
     }
   }
 }
