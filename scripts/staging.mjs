@@ -91,6 +91,10 @@ if (mode === 'drift') {
   console.log(`\n## Production against the migrations: ${Object.keys(expected).length} objects compared`);
   console.log(`different or missing in production: ${differ.join(', ') || 'none'}`);
   console.log(`only in production: ${extra.join(', ') || 'none'}`);
+  for (const k of differ) {
+    const src = await call('POST', `/projects/${ref}/database/query`, { query: `select l.lanname as lang, p.prosrc as body from pg_proc p join pg_language l on l.oid = p.prolang where 'f:'||p.oid::regprocedure::text = '${k}'`, read_only: true });
+    console.log(`--- ${k} in production: ${src.failed ?? JSON.stringify(src[0])}`);
+  }
 }
 
 if (mode === 'create') {
