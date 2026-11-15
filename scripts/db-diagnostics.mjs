@@ -99,7 +99,7 @@ title('What this token may read (GET only, nothing is created)');
 for (const [label, path] of [
   ['organisations', '/organizations'],
   ['branches (staging copies) of this project', `/projects/${ref}/branches`],
-  ['read replicas / load balancers', `/projects/${ref}/config/database/pgbouncer`],
+  ['connection pool', `/projects/${ref}/config/database/pgbouncer`],
 ]) {
   const r = await get(path);
   if (r.failed) console.log(`${label}: ${r.failed}`);
