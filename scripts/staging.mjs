@@ -1,0 +1,222 @@
+/**
+ * The staging copy of the Supabase project (a « branch »: its own database, separate from production).
+ * Modes: `probe` only reads (what the plan allows, whether a staging copy exists); `create` asks Supabase
+ * for a staging branch named « staging »; `adopt` compares the branch's schema with production's (read only on production) and records on the
+ * branch the migrations production has already received, since Supabase copies the schema, not our record of
+ * it; `schema` applies supabase/migrations to that branch, and only to it (it refuses to run if the branch's
+ * reference is production's). Nothing here reads or writes production
+ * data, and no key, password or address is printed.
+ * Env: SUPABASE_ACCESS_TOKEN. Usage: node scripts/staging.mjs probe|create|adopt|schema
+ */
+import { spawnSync } from 'node:child_process';
+
+const raw = (process.env.SUPABASE_ACCESS_TOKEN || '').trim();
+const token = (raw.match(/sbp_[A-Za-z0-9_]+/) || [])[0];
+if (!token) {
+  console.error('SUPABASE_ACCESS_TOKEN is not set: nothing done.');
+  process.exit(1);
+}
+const mode = process.argv[2] || 'probe';
+const ref = 'yqutcmgslwxcmnsqmhvy';
+const base = 'https://api.supabase.com/v1';
+const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+const cut = (v, n = 300) => {
+  const s = String(v ?? '').replace(/\s+/g, ' ');
+  return s.length > n ? `${s.slice(0, n)}…` : s;
+};
+const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o && o[k] !== undefined).map((k) => [k, o[k]]));
+async function call(method, path, body) {
+  try {
+    const res = await fetch(base + path, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const text = await res.text();
+    if (!res.ok) return { failed: `${res.status} ${cut(text, 240)}` };
+    return text ? JSON.parse(text) : {};
+  } catch (e) {
+    return { failed: String(e.message) };
+  }
+}
+const BRANCH = ['id', 'name', 'project_ref', 'parent_project_ref', 'is_default', 'persistent', 'status', 'created_at', 'with_data'];
+
+console.log('## Project fields (names only)');
+const project = await call('GET', `/projects/${ref}`);
+console.log(project.failed ?? Object.keys(project).join(', '));
+
+console.log('\n## Backups (kept only on a paid plan)');
+const backups = await call('GET', `/projects/${ref}/database/backups`);
+if (backups.failed) console.log(backups.failed);
+else {
+  const list = backups.backups ?? [];
+  console.log(JSON.stringify({ ...pick(backups, ['region', 'walg_enabled', 'pitr_enabled']), count: list.length, newest: list[0]?.inserted_at ?? null, oldest: list[list.length - 1]?.inserted_at ?? null, kinds: [...new Set(list.map((b) => b.status))] }));
+}
+
+console.log('\n## Staging branches');
+const branches = await call('GET', `/projects/${ref}/branches`);
+console.log(branches.failed ?? JSON.stringify((Array.isArray(branches) ? branches : []).map((b) => pick(b, BRANCH))));
+
+if (mode === 'probe') {
+  const staging = Array.isArray(branches) ? branches.find((b) => b.name === 'staging' && b.is_default === false && b.project_ref !== ref) : null;
+  if (staging) {
+    console.log('\n## Who owns what on the staging branch (read only)');
+    const who = await call('POST', `/projects/${staging.project_ref}/database/query`, {
+      query: `select current_user as runs_as, session_user as session, (select rolsuper from pg_roles where rolname = current_user) as superuser,
+        (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r') as public_table_owners,
+        (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'private' and c.relkind = 'r') as private_table_owners,
+        (select string_agg(r.rolname, ', ') from pg_roles r where pg_has_role(current_user, r.oid, 'MEMBER') and r.rolname not like 'pg_%') as member_of`,
+      read_only: true,
+    });
+    console.log(who.failed ?? JSON.stringify(who[0]));
+    const live = await call('POST', `/projects/${ref}/database/query`, {
+      query: `select (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r') as public_table_owners`,
+      read_only: true,
+    });
+    console.log('production:', live.failed ?? JSON.stringify(live[0]));
+  }
+}
+
+if (mode === 'drift') {
+  // Read only, on production: are the functions and policies the next migration rewrites still what the
+  // migrations made them? A hand-made change there would otherwise be overwritten without notice.
+  const expected = {"f:girl_selfie_required()": "35df32c8a9a6d128faf3b6f6358a7e70", "f:my_calendar(timestamp with time zone,timestamp with time zone)": "c44a73500dfe105da8625532d0306a11", "f:private.blocked_unchecked(uuid,uuid)": "31440ddf7da0ae627f8d2ebd747a6ccb", "f:private.can_see(text,text)": "02a96713ab2f7dcd3eedbfd61723b58e", "f:private.discoverable(uuid)": "d388d28b116d8d242b9cff072560d22c", "f:private.friends_unchecked(uuid,uuid)": "5520a52fb9ac4fcca2f617b81e4b82f2", "f:private.girl_chat(uuid)": "d526f2397cf85d56b56ad5638eb009f0", "f:private.girl_eligible_unchecked(uuid)": "dc2a1b82c4cd24fd0304f814bc4f75eb", "f:private.girl_selfie_required()": "5aa464088f54e2f48a22538e0f7055e3", "f:private.girl_target(text,text)": "87752f805507da496c76afbe060a33a6", "f:private.identity_verified(uuid)": "5f7afe5e9053fd9e7776fa4c7561b3a7", "f:private.is_admin(uuid)": "d9b8e1754d38513fa39d132b0cfc85a5", "f:private.is_girl_eligible(uuid)": "46b5e10c5d599f3466d7943b41e5dc02", "f:private.is_sanctioned(uuid)": "21a9354687a1de2c4bb35c71842cd936", "f:private.moderates(uuid)": "8ad0b7d9cadc0a2215f6e66c860c1ea2", "f:private.my_block_ids()": "53bf66f7895d7ca7b3eb25072fcc879e", "f:private.notification_is_girl(text,jsonb)": "fe4b2315de2de26a03001fc4abfa41f1", "f:private.profile_visible_unchecked(uuid,uuid)": "48a114f885d845a228c1ef6323600017", "f:private.staff_power(uuid)": "cfc7618ed85de61a02253f54989287fe", "f:private.visible_to(uuid,uuid,text)": "96e9b72587cfb6537cb25b8947499327", "p:comments.comments_girl_only": "f017e16892c1775bdcda3254ede45709", "p:comments.comments_read": "81df6d0f53cd1cf94db82e91c3a8e602", "p:conversation_members.conversation_members_read": "df7d593d62adcbb8a8e98db7677b998f", "p:conversations.conversations_read": "099ca19f5d98696c1b7b250a6d337163", "p:likes.likes_read": "32dcf561c96838d78a6829cdcf9ca38c", "p:messages.messages_not_removed_for_me": "df1f9ce324e6c896e9681873f7c42836", "p:messages.messages_read": "0f0f9fbfab94e76860db8f9741ac5451", "p:messages.messages_send": "d9abbe6cd722af85859140a9a9c0f1bf", "p:notifications.notifications_self": "4097e050bced07aba2046217d48ee74a"};
+  const got = await call('POST', `/projects/${ref}/database/query`, {
+    query: `select 'f:'||p.oid::regprocedure::text as k, md5(p.prosrc) as h from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private') and p.proname = any(array['blocked_unchecked','friends_unchecked','visible_to','profile_visible_unchecked','discoverable','girl_chat','my_block_ids','is_sanctioned','staff_power','identity_verified','girl_selfie_required','girl_eligible_unchecked','is_admin','moderates','can_see','girl_target','notification_is_girl','is_girl_eligible','my_calendar']) union all select 'p:'||tablename||'.'||policyname, md5(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\\s+','','g')) from pg_policies where schemaname='public' and policyname = any(array['messages_read','conversations_read','conversation_members_read','likes_read','comments_read','comments_girl_only','messages_not_removed_for_me','messages_send','notifications_self']) order by 1`,
+    read_only: true,
+  });
+  if (got.failed) {
+    console.log(got.failed);
+    process.exit(1);
+  }
+  const live = Object.fromEntries(got.map((r) => [r.k, r.h]));
+  const differ = Object.keys(expected).filter((k) => live[k] !== expected[k]);
+  const extra = Object.keys(live).filter((k) => !(k in expected));
+  console.log(`\n## Production against the migrations: ${Object.keys(expected).length} objects compared`);
+  console.log(`different or missing in production: ${differ.join(', ') || 'none'}`);
+  console.log(`only in production: ${extra.join(', ') || 'none'}`);
+  for (const k of differ) {
+    const src = await call('POST', `/projects/${ref}/database/query`, { query: `select l.lanname as lang, p.prosrc as body from pg_proc p join pg_language l on l.oid = p.prolang where 'f:'||p.oid::regprocedure::text = '${k}'`, read_only: true });
+    console.log(`--- ${k} in production: ${src.failed ?? JSON.stringify(src[0])}`);
+  }
+}
+
+if (mode === 'create') {
+  console.log('\n## Creating the staging branch');
+  const existing = Array.isArray(branches) ? branches.find((b) => b.name === 'staging') : null;
+  if (existing) console.log(`already there: ${JSON.stringify(pick(existing, BRANCH))}`);
+  else {
+    const made = await call('POST', `/projects/${ref}/branches`, { branch_name: 'staging', persistent: true });
+    console.log(made.failed ?? JSON.stringify(pick(made, BRANCH)));
+    if (made.failed) process.exitCode = 1;
+  }
+}
+
+if (mode === 'schema') {
+  console.log('\n## Applying the migrations to the staging branch');
+  const staging = Array.isArray(branches) ? branches.find((b) => b.name === 'staging') : null;
+  if (!staging?.project_ref) {
+    console.log('no staging branch: nothing applied');
+    process.exit(1);
+  }
+  if (staging.project_ref === ref || staging.is_default) {
+    console.log('the staging branch points at production: refused');
+    process.exit(1);
+  }
+  const health = await call('GET', `/projects/${staging.project_ref}/health?services=db&services=rest&services=auth&services=realtime`);
+  console.log('services:', health.failed ?? JSON.stringify((Array.isArray(health) ? health : []).map((x) => pick(x, ['name', 'status']))));
+  const run = spawnSync(process.execPath, ['scripts/deploy-db.mjs'], { env: { ...process.env, SUPABASE_PROJECT_REF: staging.project_ref }, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const lines = `${run.stdout ?? ''}${run.stderr ?? ''}`.split('\n');
+  const added = lines.filter((l) => l.startsWith('+ ')).length;
+  console.log(`migrations applied in this run: ${added}`);
+  console.log(lines.filter((l) => !l.startsWith('+ ') && !l.startsWith('= ')).join('\n').slice(0, 6000));
+  process.exitCode = run.status ?? 1;
+}
+
+if (mode === 'adopt') {
+  console.log('\n## Comparing the staging branch with production, then recording what it already holds');
+  const staging = Array.isArray(branches) ? branches.find((b) => b.name === 'staging') : null;
+  if (!staging?.project_ref || staging.project_ref === ref || staging.is_default) {
+    console.log('no separate staging branch: nothing done');
+    process.exit(1);
+  }
+  const sql = (project, query, readOnly) => call('POST', `/projects/${project}/database/query`, { query, read_only: readOnly });
+  const shape = `select
+    (select count(*) from information_schema.tables where table_schema in ('public', 'private'))::int as tables,
+    (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public', 'private'))::int as functions,
+    (select count(*) from pg_policies where schemaname in ('public', 'private', 'storage'))::int as policies,
+    (select count(*) from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace where not t.tgisinternal and n.nspname in ('public', 'private', 'auth', 'storage'))::int as triggers,
+    (select count(*) from pg_indexes where schemaname in ('public', 'private'))::int as indexes,
+    (select count(*) from pg_publication_tables where pubname = 'supabase_realtime')::int as realtime_tables,
+    (select md5(string_agg(md5(pg_get_functiondef(p.oid)), ',' order by p.oid::regprocedure::text)) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public', 'private') and p.prokind = 'f') as functions_print,
+    (select md5(string_agg(schemaname || '.' || tablename || '.' || policyname || ':' || cmd || ':' || coalesce(qual, '') || ':' || coalesce(with_check, ''), ',' order by schemaname, tablename, policyname)) from pg_policies where schemaname in ('public', 'private', 'storage')) as policies_print,
+    (select count(*) from cron.job)::int as scheduled_jobs,
+    (select count(*) from auth.users)::int as accounts,
+    (select count(*) from public.profiles)::int as profiles,
+    (select count(*) from public.messages)::int as messages,
+    (select count(*) from public.push_tokens)::int as push_tokens,
+    current_setting('server_version') as version, current_setting('max_connections') as max_connections, current_setting('shared_buffers') as shared_buffers, current_setting('effective_cache_size') as effective_cache_size`;
+  const live = await sql(ref, shape, true);
+  const copy = await sql(staging.project_ref, shape, true);
+  console.log('production:', live.failed ?? JSON.stringify(live[0]));
+  console.log('staging:   ', copy.failed ?? JSON.stringify(copy[0]));
+  if (live.failed || copy.failed) process.exit(1);
+  const same = ['tables', 'functions', 'policies', 'triggers', 'indexes', 'functions_print', 'policies_print'].filter((k) => live[0][k] !== copy[0][k]);
+  console.log(same.length ? `DIFFERENT: ${same.join(', ')}` : 'same tables, functions, policies, triggers and indexes');
+  if (copy[0].accounts > 0 || copy[0].profiles > 0 || copy[0].messages > 0) console.log('WARNING: the staging branch holds rows');
+  const names = await sql(ref, 'select name from private.irly_migrations order by 1', true);
+  if (names.failed) {
+    console.log(names.failed);
+    process.exit(1);
+  }
+  if (same.length) {
+    // Supabase copies the public and private schemas; what is attached to its own schemas (storage's
+    // policies, triggers on auth and storage) is not. Those are read from production's catalogue
+    // (definitions only, no rows) and created on the branch.
+    const policySql = `select schemaname, tablename, policyname, permissive, array_to_string(roles, ',') as roles, cmd, qual, with_check from pg_policies where schemaname in ('public', 'private', 'storage') order by 1, 2, 3`;
+    const triggerSql = `select n.nspname as schema, c.relname as tbl, t.tgname as name, pg_get_triggerdef(t.oid) as def from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace where not t.tgisinternal and n.nspname in ('public', 'private', 'auth', 'storage') order by 1, 2, 3`;
+    const [lp, cp, lt, ct] = [await sql(ref, policySql, true), await sql(staging.project_ref, policySql, true), await sql(ref, triggerSql, true), await sql(staging.project_ref, triggerSql, true)];
+    if ([lp, cp, lt, ct].some((r) => r.failed)) {
+      console.log([lp, cp, lt, ct].map((r) => r.failed).filter(Boolean).join('\n'));
+      process.exit(1);
+    }
+    const key = (r) => `${r.schemaname ?? r.schema}.${r.tablename ?? r.tbl}.${r.policyname ?? r.name}`;
+    const haveP = new Set(cp.map(key));
+    const haveT = new Set(ct.map(key));
+    const missingP = lp.filter((r) => !haveP.has(key(r)));
+    const missingT = lt.filter((r) => !haveT.has(key(r)));
+    const extra = [...cp.filter((r) => !new Set(lp.map(key)).has(key(r))), ...ct.filter((r) => !new Set(lt.map(key)).has(key(r)))].map(key);
+    console.log(`policies missing on staging: ${missingP.map(key).join(', ') || 'none'}`);
+    console.log(`triggers missing on staging: ${missingT.map(key).join(', ') || 'none'}`);
+    console.log(`only on staging: ${extra.join(', ') || 'none'}`);
+    const changed = lp.filter((r) => haveP.has(key(r)) && JSON.stringify(r) !== JSON.stringify(cp.find((x) => key(x) === key(r)))).map(key);
+    console.log(`policies with another definition: ${changed.join(', ') || 'none'}`);
+    if (missingP.some((r) => r.schemaname !== 'storage') || changed.length || extra.length) {
+      console.log('differences outside what Supabase leaves out: nothing changed');
+      process.exit(1);
+    }
+    const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const ddl = [
+      ...missingP.map((r) => `create policy ${q(r.policyname)} on ${q(r.schemaname)}.${q(r.tablename)} as ${r.permissive === 'PERMISSIVE' ? 'permissive' : 'restrictive'} for ${r.cmd.toLowerCase()} to ${r.roles.split(',').map((x) => (x === 'public' ? 'public' : q(x))).join(', ')}${r.qual ? ` using (${r.qual})` : ''}${r.with_check ? ` with check (${r.with_check})` : ''};`),
+      ...missingT.map((r) => `${r.def};`),
+    ];
+    const made = await sql(staging.project_ref, `begin;\n${ddl.join('\n')}\ncommit;`, false);
+    console.log(made.failed ?? `created on staging: ${missingP.length} policies, ${missingT.length} triggers`);
+    if (made.failed) process.exit(1);
+    const again = await sql(staging.project_ref, shape, true);
+    const still = ['tables', 'functions', 'policies', 'triggers', 'indexes', 'functions_print', 'policies_print'].filter((k) => live[0][k] !== again[0]?.[k]);
+    console.log(still.length ? `STILL DIFFERENT: ${still.join(', ')}` : 'now the same tables, functions, policies, triggers and indexes');
+    if (still.length) process.exit(1);
+  }
+  // Scheduled jobs are rows, so they were not copied: the ones that only call a function of ours are
+  // scheduled on the branch too (their text holds no key). Jobs with anything else in them are left out.
+  const jobs = await sql(ref, 'select jobname, schedule, command from cron.job order by jobname', true);
+  if (!jobs.failed) {
+    const plain = jobs.filter((j) => /^\s*select\s+(private|public)\.[a-z_0-9]+\(\s*\)\s*;?\s*$/i.test(j.command));
+    console.log(`scheduled jobs in production: ${jobs.length}; copied (plain function calls): ${plain.map((j) => j.jobname).join(', ') || 'none'}; left out: ${jobs.filter((j) => !plain.includes(j)).map((j) => j.jobname).join(', ') || 'none'}`);
+    const lit = (v) => `'${String(v).replace(/'/g, "''")}'`;
+    if (plain.length) {
+      const sched = await sql(staging.project_ref, plain.map((j) => `select cron.schedule(${lit(j.jobname)}, ${lit(j.schedule)}, ${lit(j.command)});`).join('\n'), false);
+      console.log(sched.failed ?? 'jobs scheduled on staging');
+    }
+  }
+  const values = names.map((r) => `('${String(r.name).replace(/'/g, "''")}')`).join(', ');
+  const done = await sql(staging.project_ref, `create schema if not exists private; create table if not exists private.irly_migrations (name text primary key, applied_at timestamptz not null default now()); insert into private.irly_migrations (name) values ${values} on conflict do nothing; select count(*)::int as recorded from private.irly_migrations;`, false);
+  console.log(done.failed ?? `recorded on staging: ${JSON.stringify(done)} (production has ${names.length})`);
+}

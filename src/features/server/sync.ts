@@ -294,6 +294,13 @@ export function heardMessage(payload: Payload) {
   if (messages.size > 200) messages.forEach((until, k) => until <= now && messages.delete(k));
   messages.set(`${commit}|${m.conversation_id}|${stampMs(m.created_at)}`, now + 10_000);
 }
+/**
+ * A chat you are in changed (renamed, a new photo, a new message's time). Heard by the inbox's
+ * channels, which name your chats (chat.ts): the inbox, and an open chat's photo, title and members.
+ */
+export function heardConversation(payload: Payload & { eventType?: unknown }) {
+  hear('conversations', payload, ['inbox']);
+}
 function messageBump(e: Heard, now: number): boolean {
   if (e.table !== 'conversations' || !e.commit || typeof e.row.id !== 'string') return false;
   // Same transaction AND the time of that very message: a rename or a new photo never matches.
@@ -316,6 +323,7 @@ export const changedAll = () => changed(...KINDS);
 
 /** What each server signal (public.sync_signals.kind) reloads. */
 const SIGNAL_KINDS: Record<string, SyncKind[]> = {
+  // A leave that concerns you; someone joined a plan of yours, or changed her answer.
   activities: ['activities'],
   communities: ['communities'],
   // Leaving a chat often means its activity or community went away too (a deleted community is
@@ -329,12 +337,23 @@ const SIGNAL_KINDS: Record<string, SyncKind[]> = {
 };
 const SIGNAL_CATCH_UP: SyncKind[] = ['activities', 'communities', 'inbox', 'follows', 'friends', 'saved'];
 
-type Watched = { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE'; kinds: SyncKind[]; ignore?: (row: Record<string, unknown>) => boolean };
+/*
+ * `filter`: what the server compares before anything else. A table listened to without one
+ * costs a row-level-security query per connected member for each of its changes (Realtime
+ * checks every change against every subscription), so every table whose rows concern
+ * named members is filtered on them; several filters are several subscriptions on the
+ * table's one channel. What is left without a filter is public by nature and changes
+ * rarely: plans, communities and their pins and channels, profiles.
+ */
+type Watched = { table: string; filter?: string | string[]; event?: '*' | 'INSERT' | 'UPDATE'; kinds: SyncKind[]; ignore?: (row: Record<string, unknown>) => boolean };
 const watched = (uid: string): Watched[] => [
   { table: 'activities', kinds: ['activities'] },
-  // Joins and status changes you may see (the read rule limits them); leaves arrive as signals.
-  { table: 'activity_participants', event: 'INSERT', kinds: ['activities'] },
-  { table: 'activity_participants', event: 'UPDATE', kinds: ['activities'] },
+  // Your own joins and status changes (another phone of yours, a host adding you). Someone
+  // joining a plan of yours arrives as a signal, as leaves do (migration irly_realtime_scale);
+  // an open plan and an open place listen to their own attendees (activities.ts, bali/data.ts).
+  // Every join in the app used to be checked against, and reload the lists of, every member.
+  { table: 'activity_participants', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['activities'] },
+  { table: 'activity_participants', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['activities'] },
   { table: 'communities', kinds: ['communities', 'inbox'] },
   // Your own memberships (other people's joins move communities.members_count).
   { table: 'community_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['communities'] },
@@ -347,18 +366,18 @@ const watched = (uid: string): Watched[] => [
   // Reading, archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
   { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox'] },
   { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['inbox'] },
-  { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
+  // (A chat renamed or given a photo: heard with the inbox, for the chats you are in: chat.ts, heardConversation.)
   { table: 'profiles', event: 'UPDATE', kinds: ['people'] },
   { table: 'saves', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['saved'] },
   // One MESSAGE_CREATED row per chat message received (and its read receipt): the bell never
   // lists them (the inbox shows messages), so they are not a reason to re-read it.
   { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'], ignore: (row) => row.kind === 'MESSAGE_CREATED' },
-  // Follows you are part of (the read rule limits them): counts and buttons everywhere.
-  { table: 'follows', event: 'INSERT', kinds: ['follows'] },
-  // Friend requests and friendships you are part of (the read rule limits them):
+  // Follows you are part of (the only ones the read rule lets you see): counts and buttons everywhere.
+  { table: 'follows', filter: [`follower_id=eq.${uid}`, `followee_id=eq.${uid}`], event: 'INSERT', kinds: ['follows'] },
+  // Friend requests and friendships you are part of (the only ones the read rule lets you see):
   // Add / Requested / Accept / Friends, the bell and who may message whom.
-  { table: 'friendships', event: 'INSERT', kinds: ['friends'] },
-  { table: 'friendships', event: 'UPDATE', kinds: ['friends'] },
+  { table: 'friendships', filter: [`user_a=eq.${uid}`, `user_b=eq.${uid}`], event: 'INSERT', kinds: ['friends'] },
+  { table: 'friendships', filter: [`user_a=eq.${uid}`, `user_b=eq.${uid}`], event: 'UPDATE', kinds: ['friends'] },
 ];
 
 /**
@@ -411,10 +430,15 @@ export function startSync(uid: string): () => void {
   // only silence itself, never the others.
   const channels = watched(uid).map(({ table, filter, event = '*', kinds, ignore }) =>
     watch(`${table}:${event}`, kinds, (c) =>
-      c.on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, (payload) => {
-        if (ignore?.((payload.new ?? {}) as Record<string, unknown>)) return;
-        hear(table, payload, kinds);
-      }),
+      // (A row matches one filter at most: nobody follows or befriends herself.)
+      (Array.isArray(filter) ? filter : [filter]).reduce(
+        (ch, f) =>
+          ch.on('postgres_changes', { event, schema: 'public', table, ...(f ? { filter: f } : {}) }, (payload) => {
+            if (ignore?.((payload.new ?? {}) as Record<string, unknown>)) return;
+            hear(table, payload, kinds);
+          }),
+        c,
+      ),
     ),
   );
   // Leaves, removals, unfriends, unfollows and unsaves that concern you,

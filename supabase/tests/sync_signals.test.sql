@@ -127,9 +127,11 @@ begin
   perform pg_temp.as_admin();
   insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at)
   values (act, a, 'Signals walk', 'sport', 'dubai', 'marina', now() + interval '1 day');
+  -- (Before the joins: they tell the host too (20261120000000_irly_realtime_scale), and one
+  -- transaction, as this block is, tells a member once about a plan, joins and leave together.)
+  base := coalesce((select max(id) from public.sync_signals), 0);
   insert into public.activity_participants (activity_id, user_id) values (act, a), (act, b), (act, c)
   on conflict do nothing;
-  base := coalesce((select max(id) from public.sync_signals), 0);
   delete from public.activity_participants where activity_id = act and user_id = b;
   perform pg_temp.check((select count(*) from public.sync_signals where id > base and kind = 'activities' and ref = act::text and user_id in (a, b, c)) = 3, 'activity leave signals person, host and attendees');
   perform pg_temp.check((select count(*) from public.sync_signals where id > base and user_id not in (a, b, c)) = 0, 'activity leave signals nobody else');

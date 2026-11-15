@@ -8,8 +8,10 @@ import { storageName } from '@/config/app';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
-import { changed, echoGate, expectEcho, heardMessage, resetSyncEchoes, syncNow, useRefreshOn, useSyncVersion } from './sync';
+import { allKnown, IN_FILTER_MAX, inFilters } from './live-filters';
+import { changed, echoGate, expectEcho, heardConversation, heardMessage, resetSyncEchoes, syncNow, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
 import { primeFaces } from './faces';
@@ -142,6 +144,7 @@ function readInbox(uid: string) {
         readHere.forEach((at, id) => at < now - 30_000 && readHere.delete(id));
         const rows = ((data as InboxRow[]) ?? []).map((r) => ((readHere.get(r.conversation_id) ?? -Infinity) > sentAt && r.unread ? { ...r, unread: 0 } : r));
         useInboxStore.setState({ rows, for: uid, error: null });
+        if (inboxLive?.uid === uid) inboxLive.seen(rows.map((r) => r.conversation_id));
       }
     })
     .then(
@@ -187,7 +190,9 @@ function refreshInbox(uid: string) {
 }
 
 /** New messages and removals anywhere I am a member: one pair of channels, however many screens show the inbox. */
-let inboxLive: { uid: string; users: number; stop: () => void } | null = null;
+/** At most this many `in` filters per inbox channel (100 chats each); a member of more chats listens to all, as before. */
+const INBOX_FILTERS = 3;
+let inboxLive: { uid: string; users: number; seen: (ids: string[]) => void; stop: () => void } | null = null;
 function listenInbox(uid: string): () => void {
   if (!supabase) return () => undefined;
   if (inboxLive && inboxLive.uid !== uid) {
@@ -220,31 +225,103 @@ function listenInbox(uid: string): () => void {
       }, wait);
     };
     const gate = echoGate(reread, 800, () => inboxReadAt);
-    // Joins, leaves, renames and deletions arrive through the app's sync channel.
-    const channel = liveChannel(`inbox-${uid}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        // Its conversation's last_message_at bump (same transaction) is not a second inbox reload.
-        heardMessage(payload);
-        gate.heard(payload);
-      })
+    // Only the chats I am in (see live-filters): the server no longer checks every message
+    // of the app against every member. Joins and leaves arrive through the app's sync channel;
+    // a chat I was just added to is then in the inbox read, which names it here (`seen`).
+    let stopped = false;
+    let started = false;
+    let open: RealtimeChannel[] = [];
+    // The chats the channels were opened for; null: every chat (they could not be named).
+    let known: Set<string> | null = new Set();
+    const listen = (name: string, table: string, event: 'INSERT' | 'UPDATE', filters: string[] | null, heard: (payload: { commit_timestamp?: unknown; new?: unknown }) => void) => {
+      let c = liveChannel(`${name}-${uid}`);
+      for (const filter of filters ?? [undefined]) c = c.on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, heard);
       // Listening: a message sent before then is in no event (one coalesced inbox read,
       // none when the app's sync catch-up already read the inbox after this moment).
-      .subscribe(whenListening(gate.listening));
-    // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
-    // UPDATE never reaches you; the removal row does (members only), and the preview updates.
-    // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
-    // and new messages must keep arriving whatever happens to this one.
-    const removals = liveChannel(`inbox-removals-${uid}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, gate.heard)
-      .subscribe(whenListening(gate.listening));
+      open.push(c.subscribe(whenListening(gate.listening)));
+    };
+    const listenTo = (ids: string[] | null) => {
+      if (stopped) return;
+      const filters = ids && inFilters('conversation_id', ids, INBOX_FILTERS);
+      const previous = open;
+      open = [];
+      known = ids && filters ? new Set(ids) : null;
+      if (!filters || filters.length) {
+        listen('inbox', 'messages', 'INSERT', filters, (payload) => {
+          // Its conversation's last_message_at bump (same transaction) is not a second inbox reload.
+          heardMessage(payload);
+          gate.heard(payload);
+        });
+        // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
+        // UPDATE never reaches you; the removal row does (members only), and the preview updates.
+        // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
+        // and new messages must keep arriving whatever happens to this one.
+        listen('inbox-removals', 'message_removals', 'INSERT', filters, gate.heard);
+        // A chat renamed, or its photo changed (and every message's time, which the app's
+        // sync layer knows not to reload for): the inbox, and an open chat's header.
+        listen('inbox-chats', 'conversations', 'UPDATE', ids && filters ? inFilters('id', ids, INBOX_FILTERS) : null, heardConversation);
+      }
+      // The channels before go once the new ones are asked for: what is said in between is
+      // read by the catch-up above when the new ones listen.
+      previous.forEach((c) => void sb.removeChannel(c));
+    };
+    // Every chat I am a member of, also those the inbox does not list (a cleared chat comes back
+    // with its next message). Unreadable, or too many to name: every chat, as before.
+    let asking = false;
+    let askAgain = false;
+    // Chats the inbox lists that my list of chats did not name: never asked for twice.
+    const unnamed = new Set<string>();
+    let wanted: string[] = [];
+    const name = () => {
+      if (stopped) return;
+      if (asking) {
+        askAgain = true;
+        return;
+      }
+      asking = true;
+      Promise.resolve(
+        sb
+          .from('conversation_members')
+          .select('conversation_id')
+          .eq('user_id', uid)
+          .limit(INBOX_FILTERS * IN_FILTER_MAX + 1),
+      )
+        .then(
+          ({ data, error }) => (error || !data ? null : (data as { conversation_id: string }[]).map((r) => r.conversation_id)),
+          () => null,
+        )
+        .then((ids) => {
+          asking = false;
+          if (ids) wanted.forEach((id) => !ids.includes(id) && unnamed.add(id));
+          wanted = [];
+          // The same chats as the channels already name: nothing to open again.
+          const same = started && ids !== null && known !== null && ids.length === known.size && allKnown(known, ids);
+          if (!same) listenTo(ids);
+          started = true;
+          if (askAgain) {
+            askAgain = false;
+            name();
+          }
+        });
+    };
+    name();
     inboxLive = {
       uid,
       users: 0,
+      // A chat in the inbox that the channels do not name yet (I was just added to it).
+      seen: (ids) => {
+        if (!started || allKnown(known, ids)) return;
+        const missing = ids.filter((id) => !known?.has(id) && !unnamed.has(id));
+        if (!missing.length) return;
+        wanted = [...wanted, ...missing];
+        name();
+      },
       stop: () => {
+        stopped = true;
         gate.cancel();
         if (later) clearTimeout(later);
-        void sb.removeChannel(channel);
-        void sb.removeChannel(removals);
+        open.forEach((c) => void sb.removeChannel(c));
+        open = [];
       },
     };
   }

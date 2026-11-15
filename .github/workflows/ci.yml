@@ -34,8 +34,12 @@ jobs:
         run: node --experimental-strip-types --no-warnings scripts/check-ludo.mts
       - name: Voice tokens (claims, signature)
         run: node --experimental-strip-types --no-warnings scripts/test-voice-token.mts
+      - name: Realtime filters (every row named once, within what Realtime accepts)
+        run: node --experimental-strip-types --no-warnings scripts/test-live-filters.mts
       - name: Website (titles, canonical, language versions, structured data, links, sitemap)
         run: node scripts/test-site.mjs
+      - name: Staging guard (the seed and the load refuse production)
+        run: node scripts/test-staging-guard.mjs
       - name: Native fingerprint (over-the-air updates still reach the installed apps)
         run: node scripts/check-fingerprint.mjs
       - name: Web build

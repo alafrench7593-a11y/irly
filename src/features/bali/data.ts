@@ -3,6 +3,7 @@ import { useAccount } from '@/features/auth/account';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityScope } from '@/data/destinations';
 import { useCityFilter } from '@/features/server/scope';
+import { inFilters } from '@/features/server/live-filters';
 import { useRefreshOn } from '@/features/server/sync';
 import type { CityId } from '@/data/types';
 import type { AreaProfile, OpeningHours } from './fit';
@@ -339,9 +340,17 @@ export function usePlaceActivities(slug: string) {
     [],
   );
   const { reload } = q;
+  // A plan made here since (its id is not listened to yet), renamed, cancelled or deleted.
+  useRefreshOn(['activities'], reload);
+  // Joins and answers for the plans listed (the server no longer checks every join of the
+  // app against this screen); more than Realtime can name: every join, as before.
+  const listed = q.data
+    .map((a) => a.id)
+    .sort()
+    .join(',');
   useEffect(() => {
-    if (!supabase) return;
-    // Any join anywhere arrives here (no place to filter on): a burst is one reload.
+    if (!supabase || !listed) return;
+    // A burst is one reload.
     let soon: ReturnType<typeof setTimeout> | null = null;
     const later = () => {
       if (soon) return;
@@ -350,15 +359,19 @@ export function usePlaceActivities(slug: string) {
         reload();
       }, 800);
     };
-    const channel = liveChannel(`place-acts-${slug}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, later)
-      // Listening: a join made before then is in no event.
-      .subscribe(whenListening(later));
+    const filters = inFilters('activity_id', listed.split(','), 1);
+    let channel = liveChannel(`place-acts-${slug}`);
+    for (const filter of filters ?? [undefined])
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', ...(filter ? { filter } : {}) }, later);
+    // A leave cannot be filtered (it carries no key, and is not checked against the read rules): any leave, as before.
+    if (filters) channel = channel.on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'activity_participants' }, later);
+    // Listening: a join made before then is in no event.
+    channel.subscribe(whenListening(later));
     return () => {
       if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
-  }, [slug, reload]);
+  }, [slug, listed, reload]);
   return q;
 }
 

@@ -400,9 +400,12 @@ export function useCommunityFeed(communityId: string, space?: string | null, opt
     const g = echoGate(() => reload(false), 300, () => sentAt.current);
     gate.current = g;
     const channel = liveChannel(`community-${communityId}`)
-      // New and edited posts; pins (an unpin carries no community to filter on).
+      // New and edited posts; this community's pins. An unpin carries no community to filter on
+      // (and is not checked against the read rules): any unpin, as before. Every pin of the app
+      // used to be checked against every open community page.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, g.heard)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, g.heard)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins', filter: `community_id=eq.${communityId}` }, g.heard)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_pins' }, g.heard)
       // Listening: a post made before then is in no event (one coalesced reload).
       .subscribe(whenListening(() => g.heard()));
     return () => {
