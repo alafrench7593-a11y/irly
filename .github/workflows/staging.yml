@@ -1,0 +1,32 @@
+name: Staging copy
+
+# Reads, or creates, the staging copy of the Supabase project (a branch: its own database, apart from
+# production). The mode is the content of .github/staging.txt: « probe » only reads.
+# Needs the SUPABASE_ACCESS_TOKEN secret (the database deploy's).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/confident-ride-1o2o3x']
+    paths: ['.github/staging.txt']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/staging.mjs "$(tr -d '[:space:]' < .github/staging.txt)"
