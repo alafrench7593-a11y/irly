@@ -401,7 +401,7 @@ export const COUNTS_SQL = `select
 const PREFLIGHT_SQL = `select
   (select count(*) from auth.users where id::text not like ${like})::int as other_accounts,
   (select count(*) from pg_trigger t where not t.tgisinternal and t.tgenabled <> 'D' and (t.tgrelid, t.tgname) in (('public.messages'::regclass, 'messages_created'), ('public.community_posts'::regclass, 'community_posts_created'), ('public.activities'::regclass, 'activities_community_fanout')))::int as triggers_on,
-  (select count(*) from pg_class c where c.oid in ('public.messages'::regclass, 'public.community_posts'::regclass, 'public.activities'::regclass) and pg_has_role(current_user, c.relowner, 'USAGE'))::int as tables_owned,
+  (select count(*) from pg_class c where c.oid in ('public.messages'::regclass, 'public.community_posts'::regclass, 'public.activities'::regclass) and (pg_get_userbyid(c.relowner) = 'postgres' or pg_has_role(current_user, c.relowner, 'USAGE')))::int as tables_owned,
   (select n.nspname from pg_extension e join pg_namespace n on n.oid = e.extnamespace where e.extname = 'pgcrypto') as pgcrypto,
   current_setting('server_version') as version`;
 
@@ -412,7 +412,7 @@ export async function seed(api, { size, token, log = console.log, allowOthers = 
   const [pre] = await api.sql(PREFLIGHT_SQL, { readOnly: true });
   if (pre.other_accounts > 0 && !allowOthers) throw new Error(`the staging branch holds ${pre.other_accounts} account(s) that are not load-test ones. Nothing written (pass --allow-others if they are expected).`);
   if (pre.triggers_on !== 3) throw new Error(`expected the 3 fan-out triggers to exist and be on, found ${pre.triggers_on}: an earlier run may have been cut off, or the schema changed. Nothing written.`);
-  if (pre.tables_owned !== 3) throw new Error('the role the Management API runs as does not own the tables whose fan-out triggers must be switched off. Nothing written.');
+  if (pre.tables_owned !== 3) throw new Error('neither postgres (the role the Management API writes as) nor the reading role owns the tables whose fan-out triggers must be switched off. Nothing written.');
   if (!pre.pgcrypto) throw new Error('pgcrypto is not installed: no password can be set. Nothing written.');
   // The members' password: kept if the one already there is still right (so a second run changes nothing).
   const password = loadPassword(token).replace(/'/g, "''");
