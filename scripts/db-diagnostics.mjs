@@ -121,7 +121,7 @@ async function logs(label, query, hours = 24) {
   title(label);
   const end = new Date();
   const start = new Date(end.getTime() - hours * 3600 * 1000);
-  const r = await get(`/projects/${ref}/analytics/endpoints/logs.all?sql=${encodeURIComponent(query)}&iso_timestamp_start=${start.toISOString()}&iso_timestamp_end=${end.toISOString()}`);
+  const r = await get(`/projects/${ref}/analytics/endpoints/logs?sql=${encodeURIComponent(query)}&iso_timestamp_start=${start.toISOString()}&iso_timestamp_end=${end.toISOString()}`);
   if (r.failed) console.log(`could not read: ${r.failed}`);
   else if (r.error) console.log(`could not read: ${cut(JSON.stringify(r.error), 300)}`);
   else table(r.result ?? [], 40);
