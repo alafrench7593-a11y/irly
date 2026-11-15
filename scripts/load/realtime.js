@@ -40,8 +40,43 @@ function inFilters(column, list) {
   return out;
 }
 
+/**
+ * What the app listened to before the filters (RT_PROFILE=unfiltered), to measure what they change: the
+ * inbox hears every message, removal and conversation update, and joins, follows and friendships have no
+ * filter. Everything else as today.
+ */
+function channelsBefore(uid) {
+  const mineOnly = `user_id=eq.${uid}`;
+  const watched = [
+    ['activities', '*', undefined],
+    ['activity_participants', 'INSERT', undefined],
+    ['activity_participants', 'UPDATE', undefined],
+    ['communities', '*', undefined],
+    ['community_members', 'INSERT', mineOnly],
+    ['community_members', 'UPDATE', mineOnly],
+    ['community_activity_pins', '*', undefined],
+    ['community_channels', '*', undefined],
+    ['community_pins', '*', undefined],
+    ['conversation_members', 'INSERT', mineOnly],
+    ['conversation_members', 'UPDATE', mineOnly],
+    ['conversations', 'UPDATE', undefined],
+    ['profiles', 'UPDATE', undefined],
+    ['saves', 'INSERT', mineOnly],
+    ['notifications', '*', mineOnly],
+    ['follows', 'INSERT', undefined],
+    ['friendships', 'INSERT', undefined],
+    ['friendships', 'UPDATE', undefined],
+  ];
+  const out = watched.map(([table, event, filter]) => ({ name: `sync:${table}:${event}:${uid}`, bindings: [{ event, table, filter }] }));
+  out.push({ name: `sync:signals:${uid}`, bindings: [{ event: 'INSERT', table: 'sync_signals', filter: mineOnly }] });
+  out.push({ name: `inbox-${uid}`, bindings: [{ event: 'INSERT', table: 'messages' }] });
+  out.push({ name: `inbox-removals-${uid}`, bindings: [{ event: 'INSERT', table: 'message_removals' }] });
+  return out;
+}
+
 /** The channels of one member: [{ name, bindings: [{ event, table, filter? }] }]. */
 function channelsOf(uid, chats) {
+  if (__ENV.RT_PROFILE === 'unfiltered') return channelsBefore(uid);
   const mineOnly = `user_id=eq.${uid}`;
   const watched = [
     ['activities', '*', [undefined]],

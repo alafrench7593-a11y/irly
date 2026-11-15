@@ -335,6 +335,7 @@ export async function runStage(api, { users, token, hold = 180, realtimeCap = 20
   const child = spawn(k6, ['run', '--quiet', '--no-color', '--no-usage-report', '--log-format', 'raw', join(HERE, 'load', 'main.js')], {
     stdio: ['ignore', 'ignore', 'pipe'],
     env: {
+      RT_PROFILE: env.RT_PROFILE || '',
       ...env,
       SUPABASE_ACCESS_TOKEN: '',
       BASE_URL: targets.base,

@@ -45,6 +45,7 @@ jobs:
             optimize) kind=optimize ;;
             seed-small|seed-medium|seed-large) kind=seed ;;
             load-100|load-500|load-1000|load-5000|load-10000) kind=load ;;
+            before-100|before-500) kind=load; echo "RT_PROFILE=unfiltered" >> "$GITHUB_ENV" ;;
             *) echo "unknown mode: $mode"; exit 1 ;;
           esac
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
