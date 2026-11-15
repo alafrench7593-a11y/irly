@@ -42,6 +42,7 @@ jobs:
           case "$mode" in
             probe|create|adopt|schema|drift) kind=copy ;;
             explain) kind=explain ;;
+            try) kind=try ;;
             optimize) kind=optimize ;;
             seed-small|seed-medium|seed-large) kind=seed ;;
             load-100|load-500|load-1000|load-5000|load-10000) kind=load ;;
@@ -71,6 +72,12 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/staging-apply.mjs
+      - name: Try one call on the staging branch, rolled back
+        if: steps.mode.outputs.kind == 'try'
+        timeout-minutes: 10
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/staging-try.mjs
       - name: Seed the staging branch (fictitious members)
         if: steps.mode.outputs.kind == 'seed'
         env:

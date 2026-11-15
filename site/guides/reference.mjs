@@ -151,6 +151,7 @@ export const REFERENCE = [
     cover: 'brunch',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'IRLY Press Kit: Facts, Logo and Screenshots | IRLY',
     description: 'Facts about IRLY for journalists and writers: what the app is, where it works, what it costs, its logo, real screenshots and a press contact.',
     h1: 'IRLY press kit',
@@ -168,7 +169,8 @@ export const REFERENCE = [
 <li><strong>What it does:</strong> communities by interest, activities to join or create, group chats, a live feed of what members are doing.</li>
 <li><strong>Launch city:</strong> Dubai, United Arab Emirates. The other emirates are opening in early access.</li>
 <li><strong>Price:</strong> free.</li>
-<li><strong>Where it runs:</strong> in the browser today. iOS and Android apps are coming.</li>
+<li><strong>Where it runs:</strong> on iPhone, with the app published on the Apple App Store, and in the browser at getirly.com/app. The Android app is coming soon.</li>
+<li><strong>App Store link:</strong> <a href="https://apps.apple.com/app/id6821592549" rel="noopener">apps.apple.com/app/id6821592549</a></li>
 <li><strong>Languages:</strong> English and French.</li>
 <li><strong>Who it is for:</strong> adults (18 and over) who want a wider circle of friends: newcomers, long-time residents, French speakers, women looking for women-only spaces, people who do sport, professionals.</li>
 <li><strong>IRLY Girl:</strong> a space reserved for women, with its own communities and activities.</li>
@@ -201,12 +203,12 @@ export const REFERENCE = [
     ],
     faq: [
       { q: 'Is IRLY a dating app?', a: 'No. IRLY is for friendship and group activities.' },
-      { q: 'Where is IRLY available?', a: 'Dubai is the launch city, and the other emirates of the UAE are opening in early access. It runs in the browser; iOS and Android apps are coming.' },
+      { q: 'Where is IRLY available?', a: 'Dubai is the launch city, and the other emirates of the UAE are opening in early access. It is on the App Store for iPhone and runs in the browser; the Android app is coming soon.' },
       { q: 'How much does IRLY cost?', a: 'It is free.' },
       { q: 'How many people use IRLY?', a: 'IRLY does not publish user numbers at this stage.' },
       { q: 'Who can I contact for an interview?', a: 'Write to getirly@gmail.com. Interviews are possible in English and French.' },
     ],
-    cta: { title: 'See it for yourself', body: 'IRLY runs in the browser: open it and look around.', label: 'Open IRLY' },
+    cta: { title: 'See it for yourself', body: 'IRLY is on the App Store for iPhone and runs in the browser: open it and look around.', label: 'Open IRLY' },
     related: [
       { label: 'What is IRLY?', path: 'irly/what-is-irly/' },
       { label: 'How IRLY works', path: 'irly/how-it-works/' },
@@ -221,6 +223,7 @@ export const REFERENCE = [
     cover: 'brunch',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'IRLY, espace presse : faits, logo et captures | IRLY',
     description: 'Les faits sur IRLY pour les journalistes : ce qu’est l’application, où elle fonctionne, son prix, son logo, de vraies captures d’écran et un contact presse.',
     h1: 'Espace presse d’IRLY',
@@ -238,7 +241,8 @@ export const REFERENCE = [
 <li><strong>Ce qu’elle fait :</strong> des communautés par centre d’intérêt, des activités à rejoindre ou à créer, des chats de groupe, un fil en direct de ce que font les membres.</li>
 <li><strong>Ville de lancement :</strong> Dubaï, Émirats arabes unis. Les autres émirats ouvrent en accès anticipé.</li>
 <li><strong>Prix :</strong> gratuite.</li>
-<li><strong>Où elle fonctionne :</strong> dans le navigateur aujourd’hui. Les applications iOS et Android arrivent.</li>
+<li><strong>Où elle fonctionne :</strong> sur iPhone, avec l’application publiée sur l’App Store d’Apple, et dans le navigateur à l’adresse getirly.com/app. L’application Android arrive bientôt.</li>
+<li><strong>Lien App Store :</strong> <a href="https://apps.apple.com/app/id6821592549" rel="noopener">apps.apple.com/app/id6821592549</a></li>
 <li><strong>Langues :</strong> français et anglais.</li>
 <li><strong>Pour qui :</strong> des adultes (18 ans et plus) qui veulent élargir leur cercle d’amis : nouveaux arrivants, résidents de longue date, francophones, femmes qui cherchent des espaces réservés aux femmes, sportifs, professionnels.</li>
 <li><strong>IRLY Girl :</strong> un espace réservé aux femmes, avec ses communautés et ses activités.</li>
@@ -271,12 +275,12 @@ export const REFERENCE = [
     ],
     faq: [
       { q: 'IRLY est-elle une application de rencontres amoureuses ?', a: 'Non. IRLY sert à se faire des amis et à participer à des activités de groupe.' },
-      { q: 'Où IRLY est-elle disponible ?', a: 'Dubaï est la ville de lancement, et les autres émirats ouvrent en accès anticipé. Elle fonctionne dans le navigateur ; les applications iOS et Android arrivent.' },
+      { q: 'Où IRLY est-elle disponible ?', a: 'Dubaï est la ville de lancement, et les autres émirats ouvrent en accès anticipé. Elle est sur l’App Store pour iPhone et fonctionne dans le navigateur ; l’application Android arrive bientôt.' },
       { q: 'Combien coûte IRLY ?', a: 'Elle est gratuite.' },
       { q: 'Combien de personnes utilisent IRLY ?', a: 'IRLY ne publie pas de nombre d’utilisateurs à ce stade.' },
       { q: 'Qui contacter pour une interview ?', a: 'Écrivez à getirly@gmail.com. Les interviews sont possibles en français et en anglais.' },
     ],
-    cta: { title: 'Voir par vous-même', body: 'IRLY fonctionne dans le navigateur : ouvrez-la et faites le tour.', label: 'Ouvrir IRLY' },
+    cta: { title: 'Voir par vous-même', body: 'IRLY est sur l’App Store pour iPhone et fonctionne dans le navigateur : ouvrez-la et faites le tour.', label: 'Ouvrir IRLY' },
     related: [
       { label: 'IRLY, c’est quoi ?', path: 'fr/irly/c-est-quoi/' },
       { label: 'Comment fonctionne IRLY ?', path: 'fr/irly/comment-ca-marche/' },

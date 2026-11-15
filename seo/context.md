@@ -1,13 +1,15 @@
 # What IRLY is, with the source of each fact
 
-Read from the code on 12 November 2026. The pages of the site say nothing that is not here. When the app changes, this file changes first, then the pages.
+Read from the code on 12 November 2026; App Store availability added on 15 November 2026. The pages of the site say nothing that is not here. When the app changes, this file changes first, then the pages.
 
 ## Identity
 | Fact | Source |
 | --- | --- |
 | Name: IRLY; app name « IRLY — Make Friends IRL »; site getirly.com | owner |
 | An app to meet people who share your interests and do things together in real life; not a dating app | owner |
-| Free; in the browser at getirly.com/app; iOS and Android apps coming | owner (not traced in code) |
+| Free; in the browser at getirly.com/app | owner (not traced in code) |
+| iPhone app published on the Apple App Store, free: `https://apps.apple.com/app/id6821592549` (App Store id 6821592549). The only store link; written without `?l=` or a country path | App Store Connect shows the version « ready for sale »; link given by the owner on 15 November 2026 |
+| Android app: not out, « coming soon »; no Google Play link | owner |
 | English and French, written, not machine-translated | `src/i18n/index.ts` |
 | For adults: « IRLY is for people 18 and over » | `src/app/onboarding/profile.tsx`, `src/features/auth/signup.ts` |
 | Publisher ALF FASHION BRAND FZCO; contact getirly@gmail.com | `src/config/app.ts`, `site/head.html` |
@@ -29,7 +31,7 @@ Read from the code on 12 November 2026. The pages of the site say nothing that i
 | IRLY Games | One game, Loup-Garou: online, against AI players, or a table joined by code | `src/features/games/catalog.ts`, `src/features/games/werewolf/home/WerewolfHome.tsx` |
 
 ## Never to be written
-User numbers, ratings, reviews, testimonials, awards, partners, press, a count or list of communities, scheduled activities, prices of anything, store links (until the apps are out).
+User numbers, ratings, reviews, testimonials, awards, partners, press, a count or list of communities, scheduled activities, prices of anything, an App Store rating, review count, download count, ranking, « featured by Apple », release date or version number, a Google Play link (until the Android app is out), any store link other than the App Store one above.
 
 ## Left out on purpose
 - Google, Apple and phone sign-in: the buttons exist but show only when switched on; the live setting was not confirmed.

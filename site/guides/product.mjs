@@ -16,10 +16,11 @@ export const PRODUCT = [
     cover: 'brunch',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'What Is IRLY? The App to Make Friends in Dubai | IRLY',
     description: 'IRLY is a free app to make friends in real life in Dubai and the UAE: communities, activities and group chats. What it is, who it is for, what it is not.',
     h1: 'What is IRLY?',
-    lead: 'IRLY is a free app for making friends in real life: you join communities built around your interests, join or organise activities, and talk in a group chat before you meet. It starts in Dubai, its launch city, with the other emirates of the UAE opening in early access; it is in English and French. It is not a dating app, and it works today in the browser, with iOS and Android apps coming soon.',
+    lead: 'IRLY is a free app for making friends in real life: you join communities built around your interests, join or organise activities, and talk in a group chat before you meet. It starts in Dubai, its launch city, with the other emirates of the UAE opening in early access; it is in English and French. It is not a dating app. It is on the App Store for iPhone and works in the browser; the Android app is coming soon.',
     sections: [
       {
         h2: 'IRLY in a few lines',
@@ -63,7 +64,7 @@ export const PRODUCT = [
       {
         h2: 'Where it works, and on which device',
         html: `<p>IRLY starts in Dubai, its launch city; the other emirates of the United Arab Emirates are opening in early access. When you sign up, you choose your emirate.</p>
-<p>Today IRLY works in the browser, as a web app, at getirly.com/app: on a phone, a tablet or a computer, with nothing to install. iOS and Android apps are coming soon.</p>`,
+<p>IRLY is available on the <a href="https://apps.apple.com/app/id6821592549" rel="noopener">App Store</a> for iPhone, free. It also works in the browser, as a web app, at getirly.com/app: on a phone, a tablet or a computer, with nothing to install. The Android app is coming soon.</p>`,
       },
       {
         h2: 'Price and languages',
@@ -79,7 +80,7 @@ export const PRODUCT = [
     faq: [
       { q: 'Is IRLY free?', a: 'Yes, IRLY is free. An organiser can mark an activity as paid when it has a cost of its own, and the activity page shows it before you join.' },
       { q: 'Is IRLY a dating app?', a: 'No. IRLY is made for friendship: communities, group activities and group chats. It is not designed for dating.' },
-      { q: 'Where can I use IRLY?', a: 'IRLY starts in Dubai, its launch city; the other emirates of the UAE are opening in early access. It works today in the browser at getirly.com/app, and iOS and Android apps are coming soon.' },
+      { q: 'Where can I use IRLY?', a: 'IRLY starts in Dubai, its launch city; the other emirates of the UAE are opening in early access. It is available on the App Store for iPhone and in the browser at getirly.com/app; the Android app is coming soon.' },
       { q: 'Which languages does IRLY support?', a: 'English and French. You choose the language in the app’s settings.' },
       { q: 'What is IRLY Girl?', a: 'IRLY Girl is a space inside IRLY reserved for women, with its own communities and activities. The team checks each profile once before opening access.' },
       { q: 'Who is behind IRLY?', a: 'IRLY is published by ALF FASHION BRAND FZCO, a company based in Dubai. The team can be reached at getirly@gmail.com.' },
@@ -100,10 +101,11 @@ export const PRODUCT = [
     cover: 'brunch',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'IRLY, c’est quoi ? L’appli pour se faire des amis | IRLY',
     description: 'IRLY est une appli gratuite pour se faire des amis en vrai à Dubaï et aux Émirats : communautés, activités, chats de groupe. Pour qui, et ce que ce n’est pas.',
     h1: 'IRLY, c’est quoi ?',
-    lead: 'IRLY est une application gratuite pour se faire des amis dans la vraie vie : tu rejoins des communautés autour de tes centres d’intérêt, tu participes à des activités ou tu en organises, et tu discutes dans un chat de groupe avant la rencontre. Elle démarre à Dubaï, sa ville de lancement, et les autres émirats ouvrent en accès anticipé ; elle est en français et en anglais. Ce n’est pas une appli de rencontres amoureuses, et elle fonctionne aujourd’hui dans le navigateur ; les applications iOS et Android arrivent bientôt.',
+    lead: 'IRLY est une application gratuite pour se faire des amis dans la vraie vie : tu rejoins des communautés autour de tes centres d’intérêt, tu participes à des activités ou tu en organises, et tu discutes dans un chat de groupe avant la rencontre. Elle démarre à Dubaï, sa ville de lancement, et les autres émirats ouvrent en accès anticipé ; elle est en français et en anglais. Ce n’est pas une appli de rencontres amoureuses. Elle est sur l’App Store pour iPhone et fonctionne dans le navigateur ; l’application Android arrive bientôt.',
     sections: [
       {
         h2: 'IRLY en quelques lignes',
@@ -147,7 +149,7 @@ export const PRODUCT = [
       {
         h2: 'Où ça marche, et sur quel appareil',
         html: `<p>IRLY démarre à Dubaï, sa ville de lancement ; les autres émirats des Émirats arabes unis ouvrent en accès anticipé. À l’inscription, tu choisis ton émirat.</p>
-<p>Aujourd’hui, IRLY fonctionne dans le navigateur, en application web, à l’adresse getirly.com/app : sur téléphone, tablette ou ordinateur, sans rien installer. Les applications iOS et Android arrivent bientôt.</p>`,
+<p>IRLY est disponible sur l’<a href="https://apps.apple.com/app/id6821592549" rel="noopener">App Store</a> pour iPhone, gratuitement. Elle fonctionne aussi dans le navigateur, en application web, à l’adresse getirly.com/app : sur téléphone, tablette ou ordinateur, sans rien installer. L’application Android arrive bientôt.</p>`,
       },
       {
         h2: 'Prix et langues',
@@ -163,7 +165,7 @@ export const PRODUCT = [
     faq: [
       { q: 'IRLY est-elle gratuite ?', a: 'Oui, IRLY est gratuite. Un organisateur peut indiquer qu’une activité est payante quand elle a un coût propre, et la page de l’activité l’affiche avant que tu la rejoignes.' },
       { q: 'IRLY est-elle une appli de rencontres amoureuses ?', a: 'Non. IRLY est faite pour l’amitié : communautés, activités de groupe et chats de groupe. Elle n’est pas conçue pour les rencontres amoureuses.' },
-      { q: 'Où peut-on utiliser IRLY ?', a: 'IRLY démarre à Dubaï, sa ville de lancement ; les autres émirats ouvrent en accès anticipé. Elle fonctionne aujourd’hui dans le navigateur à l’adresse getirly.com/app, et les applications iOS et Android arrivent bientôt.' },
+      { q: 'Où peut-on utiliser IRLY ?', a: 'IRLY démarre à Dubaï, sa ville de lancement ; les autres émirats ouvrent en accès anticipé. Elle est disponible sur l’App Store pour iPhone et dans le navigateur à l’adresse getirly.com/app ; l’application Android arrive bientôt.' },
       { q: 'Dans quelles langues IRLY est-elle disponible ?', a: 'En français et en anglais. Tu choisis la langue dans les réglages de l’appli.' },
       { q: 'IRLY Girl, c’est quoi ?', a: 'IRLY Girl est un espace réservé aux femmes à l’intérieur d’IRLY, avec ses propres communautés et activités. L’équipe vérifie chaque profil une fois avant d’ouvrir l’accès.' },
       { q: 'Qui est derrière IRLY ?', a: 'IRLY est éditée par ALF FASHION BRAND FZCO, une société basée à Dubaï. L’équipe se contacte à getirly@gmail.com.' },
@@ -185,14 +187,15 @@ export const PRODUCT = [
     cover: 'volleyball',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'How IRLY Works: From Sign-Up to First Activity | IRLY',
     description: 'How IRLY works, screen by screen: choose your emirate, answer four steps, create your account, join communities, then join or create a first activity.',
     h1: 'How IRLY works',
-    lead: 'You open IRLY in your browser, choose your emirate, answer four short steps about yourself, create your account with your email, and join the communities suggested for you. From there you join an activity, or create one; its group chat opens, and you meet in real life. The whole path is described below, screen by screen.',
+    lead: 'You open IRLY, in the iPhone app or in your browser, choose your emirate, answer four short steps about yourself, create your account with your email, and join the communities suggested for you. From there you join an activity, or create one; its group chat opens, and you meet in real life. The whole path is described below, screen by screen.',
     sections: [
       {
         h2: '1. Choose where you are',
-        html: `<p>IRLY works today in the browser, at getirly.com/app, so there is nothing to install; iOS and Android apps are coming soon. After a short introduction, the first question is “Where are you going?”. Choose IRLY Emirates, then your emirate on the “Choose your emirate” screen. Dubai is the launch city.</p>
+        html: `<p>On iPhone, IRLY is on the <a href="https://apps.apple.com/app/id6821592549" rel="noopener">App Store</a>. It also works in the browser, at getirly.com/app, with nothing to install; the Android app is coming soon. After a short introduction, the first question is “Where are you going?”. Choose IRLY Emirates, then your emirate on the “Choose your emirate” screen. Dubai is the launch city.</p>
 <p>If you already have an account, the link “Already have an account? Sign in” is on that first screen.</p>`,
       },
       {
@@ -241,7 +244,7 @@ export const PRODUCT = [
       },
     ],
     faq: [
-      { q: 'Do I need to install anything to use IRLY?', a: 'No. IRLY works today in the browser at getirly.com/app, on a phone or a computer. iOS and Android apps are coming soon.' },
+      { q: 'Do I need to install anything to use IRLY?', a: 'No. IRLY works in the browser at getirly.com/app, on a phone or a computer. On iPhone you can also install the app from the App Store; the Android app is coming soon.' },
       { q: 'How do I create an IRLY account?', a: 'After the four steps about you, enter your email and a password of at least eight characters and tap “Create account”. You can also ask for a sign-in link by email instead of a password.' },
       { q: 'What does IRLY ask when I sign up?', a: 'Your emirate, your first name, your interests, a photo or an avatar, your age, a short bio, your country, your languages, your gender, and what you are looking for.' },
       { q: 'Do I have to join a community?', a: 'No. Communities are optional. IRLY suggests a few after sign-up, and you can join them, choose some, or skip the step and come back later.' },
@@ -264,14 +267,15 @@ export const PRODUCT = [
     cover: 'volleyball',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'Comment fonctionne IRLY ? Le guide pas à pas | IRLY',
     description: 'Comment fonctionne IRLY, écran par écran : choisir son émirat, répondre à quatre étapes, créer son compte, rejoindre des communautés, puis une activité.',
     h1: 'Comment fonctionne IRLY ?',
-    lead: 'Tu ouvres IRLY dans ton navigateur, tu choisis ton émirat, tu réponds à quatre courtes étapes sur toi, tu crées ton compte avec ton e-mail et tu rejoins les communautés qui te sont proposées. Ensuite, tu rejoins une activité ou tu en crées une ; son chat de groupe s’ouvre, et vous vous retrouvez en vrai. Tout le parcours est décrit ci-dessous, écran par écran.',
+    lead: 'Tu ouvres IRLY, dans l’app iPhone ou dans ton navigateur, tu choisis ton émirat, tu réponds à quatre courtes étapes sur toi, tu crées ton compte avec ton e-mail et tu rejoins les communautés qui te sont proposées. Ensuite, tu rejoins une activité ou tu en crées une ; son chat de groupe s’ouvre, et vous vous retrouvez en vrai. Tout le parcours est décrit ci-dessous, écran par écran.',
     sections: [
       {
         h2: '1. Choisir où tu es',
-        html: `<p>IRLY fonctionne aujourd’hui dans le navigateur, à l’adresse getirly.com/app : il n’y a rien à installer ; les applications iOS et Android arrivent bientôt. Après une courte introduction, la première question est « Tu vas où ? ». Choisis IRLY Emirates, puis ton émirat sur l’écran « Choisis ton émirat ». Dubaï est la ville de lancement.</p>
+        html: `<p>Sur iPhone, IRLY est sur l’<a href="https://apps.apple.com/app/id6821592549" rel="noopener">App Store</a>. Elle fonctionne aussi dans le navigateur, à l’adresse getirly.com/app, sans rien installer ; l’application Android arrive bientôt. Après une courte introduction, la première question est « Tu vas où ? ». Choisis IRLY Emirates, puis ton émirat sur l’écran « Choisis ton émirat ». Dubaï est la ville de lancement.</p>
 <p>Si tu as déjà un compte, le lien « Tu as déjà un compte ? Connecte-toi » se trouve sur ce premier écran.</p>`,
       },
       {
@@ -320,7 +324,7 @@ export const PRODUCT = [
       },
     ],
     faq: [
-      { q: 'Faut-il installer quelque chose pour utiliser IRLY ?', a: 'Non. IRLY fonctionne aujourd’hui dans le navigateur à l’adresse getirly.com/app, sur téléphone ou sur ordinateur. Les applications iOS et Android arrivent bientôt.' },
+      { q: 'Faut-il installer quelque chose pour utiliser IRLY ?', a: 'Non. IRLY fonctionne dans le navigateur à l’adresse getirly.com/app, sur téléphone ou sur ordinateur. Sur iPhone, tu peux aussi installer l’app depuis l’App Store ; l’application Android arrive bientôt.' },
       { q: 'Comment créer un compte IRLY ?', a: 'Après les quatre étapes sur toi, saisis ton e-mail et un mot de passe d’au moins huit caractères, puis touche « Créer le compte ». Tu peux aussi demander un lien de connexion par e-mail à la place du mot de passe.' },
       { q: 'Que demande IRLY à l’inscription ?', a: 'Ton émirat, ton prénom, tes centres d’intérêt, une photo ou un avatar, ton âge, une courte bio, ton pays, tes langues, ton genre, et ce que tu cherches.' },
       { q: 'Est-on obligé de rejoindre une communauté ?', a: 'Non. Les communautés sont facultatives. IRLY en propose quelques-unes après l’inscription : tu peux les rejoindre, en choisir certaines, ou passer l’étape et y revenir plus tard.' },
@@ -696,6 +700,7 @@ export const PRODUCT = [
     cover: 'dubaiMarina',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'IRLY vs Other Ways to Meet People in Dubai | IRLY',
     description: 'A fair comparison of IRLY with event platforms, messaging groups, dating apps with a friends mode, clubs, sport-booking apps and going out alone in Dubai.',
     h1: 'IRLY vs other ways to meet people in Dubai',
@@ -773,7 +778,7 @@ export const PRODUCT = [
         h2: 'Where IRLY is not the right tool',
         html: `<ul>
 <li><strong>If you want activity everywhere, today.</strong> IRLY is new. Depending on your interests and your area, you may find few communities or activities for now, and you may have to create the first one yourself.</li>
-<li><strong>If you want an app from a store.</strong> IRLY works in the browser for now, as a web app. iOS and Android apps are coming soon, but they are not there yet.</li>
+<li><strong>If you want an Android app from a store.</strong> IRLY is on the App Store for iPhone. On Android it works in the browser for now, as a web app: the Android app is coming soon, but it is not there yet.</li>
 <li><strong>If you are looking for a partner.</strong> IRLY is for friendship, not dating.</li>
 <li><strong>If you live outside the UAE.</strong> IRLY is centred on Dubai and the other emirates.</li>
 <li><strong>If you only want to book.</strong> To reserve a court or buy a ticket, a booking tool does it better.</li>
@@ -790,7 +795,7 @@ export const PRODUCT = [
       { q: 'Is IRLY better than other apps to meet people in Dubai?', a: 'Not for everyone. IRLY suits people who want friendship, small groups and shared interests. Event platforms, clubs or sport-booking apps are a better choice in other situations.' },
       { q: 'What is the difference between IRLY and a dating app?', a: 'IRLY is made for friendship and group activities, not for finding a partner. If you are looking for a relationship, a dating app is the right tool.' },
       { q: 'Should I use IRLY or join a club?', a: 'Both can go together. If a club or an association exists for your sport, language or profession, join it. IRLY can add small groups and plans around your other interests.' },
-      { q: 'What are the limits of IRLY?', a: 'IRLY is new, it works in the browser for now, it is centred on Dubai and the UAE, it exists in English and French only, and it is not made for dating.' },
+      { q: 'What are the limits of IRLY?', a: 'IRLY is new, it has an iPhone app but no Android app yet (on Android it works in the browser), it is centred on Dubai and the UAE, it exists in English and French only, and it is not made for dating.' },
       { q: 'Can I use several solutions at once?', a: 'Yes, and it is what most people do. Keep the two or three that really lead you to meet people in person.' },
     ],
     cta: { title: 'Want to see whether IRLY fits you?', body: 'Open IRLY in your browser, look at the communities around your interests, and judge for yourself.', label: 'Discover IRLY' },
@@ -809,6 +814,7 @@ export const PRODUCT = [
     cover: 'dubaiMarina',
     city: 'IRLY',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'Rencontrer du monde à Dubaï : IRLY et les autres | IRLY',
     description: 'Une comparaison honnête d’IRLY avec les plateformes d’événements, les groupes de messagerie, les applis de rencontres, les clubs et les applis de sport.',
     h1: 'IRLY et les autres façons de rencontrer du monde à Dubaï',
@@ -886,7 +892,7 @@ export const PRODUCT = [
         h2: 'Là où IRLY n’est pas le bon outil',
         html: `<ul>
 <li><strong>Si tu veux de l’activité partout, tout de suite.</strong> IRLY est récente. Selon tes centres d’intérêt et ton quartier, tu peux trouver peu de communautés ou d’activités pour l’instant, et devoir créer la première toi-même.</li>
-<li><strong>Si tu veux une appli à installer depuis un store.</strong> IRLY fonctionne pour l’instant dans le navigateur, en application web. Les applications iOS et Android arrivent bientôt, mais elles ne sont pas encore là.</li>
+<li><strong>Si tu veux une appli Android à installer depuis un store.</strong> IRLY est sur l’App Store pour iPhone. Sur Android, elle fonctionne pour l’instant dans le navigateur, en application web : l’application Android arrive bientôt, mais elle n’est pas encore là.</li>
 <li><strong>Si tu cherches un ou une partenaire.</strong> IRLY est faite pour l’amitié, pas pour les rencontres amoureuses.</li>
 <li><strong>Si tu vis hors des Émirats.</strong> IRLY est centrée sur Dubaï et les autres émirats.</li>
 <li><strong>Si tu veux seulement réserver.</strong> Pour réserver un terrain ou acheter un billet, un outil de réservation le fait mieux.</li>
@@ -903,7 +909,7 @@ export const PRODUCT = [
       { q: 'IRLY est-elle meilleure que les autres applis pour rencontrer du monde à Dubaï ?', a: 'Pas pour tout le monde. IRLY convient à ceux qui cherchent l’amitié, de petits groupes et des intérêts communs. Les plateformes d’événements, les clubs ou les applis de réservation sportive sont un meilleur choix dans d’autres situations.' },
       { q: 'Quelle différence entre IRLY et une appli de rencontres ?', a: 'IRLY est faite pour l’amitié et les activités de groupe, pas pour trouver un ou une partenaire. Si tu cherches une relation amoureuse, une appli de rencontres est le bon outil.' },
       { q: 'Vaut-il mieux utiliser IRLY ou rejoindre un club ?', a: 'Les deux vont ensemble. S’il existe un club ou une association pour ton sport, ta langue ou ton métier, rejoins-le. IRLY peut ajouter de petits groupes et des plans autour de tes autres centres d’intérêt.' },
-      { q: 'Quelles sont les limites d’IRLY ?', a: 'IRLY est récente, elle fonctionne pour l’instant dans le navigateur, elle est centrée sur Dubaï et les Émirats, elle n’existe qu’en français et en anglais, et elle n’est pas faite pour les rencontres amoureuses.' },
+      { q: 'Quelles sont les limites d’IRLY ?', a: 'IRLY est récente, elle a une app iPhone mais pas encore d’app Android (sur Android, elle fonctionne dans le navigateur), elle est centrée sur Dubaï et les Émirats, elle n’existe qu’en français et en anglais, et elle n’est pas faite pour les rencontres amoureuses.' },
       { q: 'Peut-on utiliser plusieurs solutions à la fois ?', a: 'Oui, et c’est ce que font la plupart des gens. Garde les deux ou trois qui t’amènent vraiment à voir des gens en vrai.' },
     ],
     cta: { title: 'Envie de voir si IRLY te convient ?', body: 'Ouvre IRLY dans ton navigateur, regarde les communautés autour de tes centres d’intérêt, et juge par toi-même.', label: 'Découvrir IRLY' },
@@ -922,6 +928,7 @@ export const PRODUCT = [
     cover: 'volleyball',
     city: 'Dubai',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'Things to Do in Dubai With Friends: Ideas by Moment | IRLY',
     description: 'Ideas for things to do in Dubai with friends: weekday evenings, weekend mornings, summer indoors, low budget, mixed tastes, and how to widen a small group.',
     h1: 'Things to do in Dubai with friends',
@@ -997,7 +1004,7 @@ export const PRODUCT = [
 <li><strong>Open your own plan.</strong> Say where you already talk, a building group, a team chat or a community, that there are places left.</li>
 <li><strong>Make it regular.</strong> People join more easily something that happens every week than a one-off.</li>
 </ul>
-<p>IRLY is one option for this: a free app, not a dating app, where you can publish your plan as an activity with a date, a neighbourhood and a number of spots, and where the people who join find themselves in its group chat. It works today in the browser, and iOS and Android apps are coming soon. See <a href="../../irly/create-an-activity/">how to organise an activity on IRLY</a>. For the wider picture, read <a href="../make-friends/">how to make friends in Dubai</a>.</p>`,
+<p>IRLY is one option for this: a free app, not a dating app, where you can publish your plan as an activity with a date, a neighbourhood and a number of spots, and where the people who join find themselves in its group chat. It is available on the App Store for iPhone and in the browser; the Android app is coming soon. See <a href="../../irly/create-an-activity/">how to organise an activity on IRLY</a>. For the wider picture, read <a href="../make-friends/">how to make friends in Dubai</a>.</p>`,
       },
     ],
     faq: [
@@ -1022,6 +1029,7 @@ export const PRODUCT = [
     cover: 'volleyball',
     city: 'Dubaï',
     published: '2026-11-12',
+    updated: '2026-11-15',
     title: 'Que faire à Dubaï entre amis ? Idées par moment | IRLY',
     description: 'Des idées de sorties entre amis à Dubaï : soir de semaine, matin de week-end, été en intérieur, petit budget, goûts différents, et comment agrandir le groupe.',
     h1: 'Que faire à Dubaï entre amis ?',
@@ -1097,7 +1105,7 @@ export const PRODUCT = [
 <li><strong>Ouvrir votre propre plan.</strong> Dites là où vous échangez déjà, un groupe d’immeuble, un chat d’équipe ou une communauté, qu’il reste des places.</li>
 <li><strong>Le rendre régulier.</strong> On rejoint plus volontiers ce qui a lieu chaque semaine qu’une sortie isolée.</li>
 </ul>
-<p>IRLY est une option pour ça : une appli gratuite, qui n’est pas une appli de rencontres amoureuses, où tu peux publier ton plan sous forme d’activité avec une date, un quartier et un nombre de places, et où ceux qui la rejoignent se retrouvent dans son chat de groupe. Elle fonctionne aujourd’hui dans le navigateur, et les applications iOS et Android arrivent bientôt. Voir <a href="../../irly/organiser-une-activite/">comment organiser une activité sur IRLY</a>. Pour la vue d’ensemble, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a>.</p>`,
+<p>IRLY est une option pour ça : une appli gratuite, qui n’est pas une appli de rencontres amoureuses, où tu peux publier ton plan sous forme d’activité avec une date, un quartier et un nombre de places, et où ceux qui la rejoignent se retrouvent dans son chat de groupe. Elle est disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt. Voir <a href="../../irly/organiser-une-activite/">comment organiser une activité sur IRLY</a>. Pour la vue d’ensemble, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a>.</p>`,
       },
     ],
     faq: [

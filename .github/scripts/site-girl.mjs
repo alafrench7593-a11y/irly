@@ -16,7 +16,8 @@
  *   shown through friends together (two women, friendship, never romance).
  *   The hero's views of Dubai, without people, are in site/img/hero.
  * - Features are described as they exist today: IRLY Match is coming soon, the
- *   iPhone and Android apps are coming soon (no store link exists), the app
+ *   iPhone app is on the App Store (the only store link), the Android app is
+ *   coming soon (no Google Play link exists), the app
  *   screens are real captures of the demo build (site/shots; the
  *   notifications screen is cut above a row that is not IRLY Girl's, see
  *   site/img/girl). Access follows the gender chosen at sign-up and is
@@ -29,6 +30,8 @@ import path from "node:path";
 const OUT = process.argv[2] || "dist/site";
 const SITE = "https://www.getirly.com";
 const APP_GIRL = "/app/girl";
+// The iPhone app on the App Store: the only store link (the Android app is not out).
+const APP_STORE = "https://apps.apple.com/app/id6821592549";
 const href = (lang) => (lang === "fr" ? "/fr/girl" : "/girl");
 const home = (lang) => (lang === "fr" ? "/fr/" : "/");
 const img = (k) => `/img/own/${k}-1200.jpg`;
@@ -172,12 +175,12 @@ const T = {
     navLabel: "Main",
     menu: "Menu",
     open: "Open IRLY Girl",
-    waitCta: "Get the apps first",
+    storeCta: "Download on the App Store",
     kicker: "Women only · Dubai",
     h1: ["Your next", "friendship", "starts here."],
     sub: "Meet your girls. Discover your city. Create real connections.",
     lead: "The women-only space inside IRLY: communities, activities, Live and chats, to grow your circle in Dubai.",
-    webNote: "Works in your browser today. iPhone and Android apps are coming soon.",
+    webNote: "On the App Store for iPhone, and in your browser. The Android app is coming soon.",
     illustrative: "Illustrative profiles — a preview of the IRLY Girl experience. They are not IRLY members.",
     hero: {
       phonesAlt: "IRLY Girl home screen with the Live now row",
@@ -281,19 +284,19 @@ const T = {
       ["Are the women on this page members?", "No. They are illustrative profiles that show what IRLY Girl looks like. Real members only appear inside the app, to other members."],
       ["Is it a dating app?", "No. IRLY Girl is about friendship, activities and networking between women."],
       ["How much does it cost?", "IRLY Girl is free. Some activities, like a brunch or a class, have a price set by the person who organises them."],
-      ["Where is it available?", "In Dubai and across the UAE, in your browser at getirly.com/app, in English and French. The iPhone and Android apps are coming soon."],
+      ["Where is it available?", "In Dubai and across the UAE, on the App Store for iPhone and in your browser at getirly.com/app, in English and French. The Android app is coming soon."],
     ],
     endT: ["Your next best friend might be", "one tap away."],
     endP: "Sign in with your IRLY account and open IRLY Girl.",
     wait: {
-      t: "Be first on iPhone and Android.",
-      p: "IRLY Girl already works in your browser. Leave your email and we’ll tell you when the apps are out.",
+      t: "Be first on Android.",
+      p: "IRLY Girl is in the iPhone app, on the App Store, and works in your browser. Leave your email and we’ll tell you when the Android app is out.",
       label: "Your email",
       ph: "Email",
       btn: "Notify me",
-      legal: "We’ll only use your email to tell you when the IRLY apps launch.",
+      legal: "We’ll only use your email to tell you when the IRLY Android app launches.",
       done1: "You’re on the list.",
-      done2: "We’ll let you know when the apps are out.",
+      done2: "We’ll let you know when the Android app is out.",
       errEmpty: "Enter your email.",
       errInvalid: "This email doesn’t look right.",
       errBusy: "Lots of sign-ups right now. Try again in a few minutes.",
@@ -319,12 +322,12 @@ const T = {
     navLabel: "Principale",
     menu: "Menu",
     open: "Ouvrir IRLY Girl",
-    waitCta: "Être prévenue des apps",
+    storeCta: "Télécharger sur l’App Store",
     kicker: "Réservé aux femmes · Dubaï",
     h1: ["Ta prochaine", "amitié", "commence ici."],
     sub: "Rencontre tes copines. Découvre ta ville. Crée de vrais liens.",
     lead: "L’espace d’IRLY réservé aux femmes : communautés, activités, Live et conversations, pour agrandir ton cercle à Dubaï.",
-    webNote: "Fonctionne déjà dans ton navigateur. Les apps iPhone et Android arrivent bientôt.",
+    webNote: "Sur l’App Store pour iPhone, et dans ton navigateur. L’app Android arrive bientôt.",
     illustrative: "Profils illustratifs — aperçu de l’expérience IRLY Girl. Ce ne sont pas des membres d’IRLY.",
     hero: {
       phonesAlt: "L’accueil d’IRLY Girl avec la rangée Live",
@@ -428,19 +431,19 @@ const T = {
       ["Les femmes de cette page sont-elles membres ?", "Non. Ce sont des profils illustratifs qui montrent à quoi ressemble IRLY Girl. Les vraies membres n’apparaissent que dans l’app, aux autres membres."],
       ["Est-ce une app de rencontres amoureuses ?", "Non. IRLY Girl est fait pour l’amitié, les activités et le networking entre femmes."],
       ["Combien ça coûte ?", "IRLY Girl est gratuit. Certaines activités, comme un brunch ou un cours, ont un prix fixé par la personne qui les organise."],
-      ["Où est-ce disponible ?", "À Dubaï et dans tous les Émirats, dans ton navigateur sur getirly.com/app, en français et en anglais. Les apps iPhone et Android arrivent bientôt."],
+      ["Où est-ce disponible ?", "À Dubaï et dans tous les Émirats, sur l’App Store pour iPhone et dans ton navigateur sur getirly.com/app, en français et en anglais. L’app Android arrive bientôt."],
     ],
     endT: ["Ta future meilleure amie n’est peut-être", "qu’à un clic."],
     endP: "Connecte-toi avec ton compte IRLY et ouvre IRLY Girl.",
     wait: {
-      t: "Sois parmi les premières sur iPhone et Android.",
-      p: "IRLY Girl marche déjà dans ton navigateur. Laisse ton e-mail et on te prévient à la sortie des apps.",
+      t: "Sois parmi les premières sur Android.",
+      p: "IRLY Girl est dans l’app iPhone, sur l’App Store, et marche dans ton navigateur. Laisse ton e-mail et on te prévient à la sortie de l’app Android.",
       label: "Ton e-mail",
       ph: "E-mail",
       btn: "Me prévenir",
-      legal: "Ton e-mail sert uniquement à te prévenir de la sortie des apps IRLY.",
+      legal: "Ton e-mail sert uniquement à te prévenir de la sortie de l’app Android IRLY.",
       done1: "Tu es sur la liste.",
-      done2: "On te prévient dès que les apps sont disponibles.",
+      done2: "On te prévient dès que l’app Android est disponible.",
       errEmpty: "Indique ton e-mail.",
       errInvalid: "Cet e-mail ne semble pas valide.",
       errBusy: "Beaucoup d’inscriptions en ce moment. Réessaie dans quelques minutes.",
@@ -846,7 +849,7 @@ function page(lang) {
         .join("")}</h1>
       <p class="sub">${esc(t.sub)}</p>
       <p class="lead">${esc(t.lead)}</p>
-      <div class="ctas"><a class="btn" href="${APP_GIRL}">${esc(t.open)}${icon("arrow")}</a><a class="btn ghost" href="#waitlist">${esc(t.waitCta)}</a></div>
+      <div class="ctas"><a class="btn" href="${APP_GIRL}">${esc(t.open)}${icon("arrow")}</a><a class="btn ghost" href="${APP_STORE}" target="_blank" rel="noopener">${esc(t.storeCta)}</a></div>
       <p class="note">${esc(t.webNote)}</p>
     </div>
     <div>
@@ -925,6 +928,7 @@ function page(lang) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FBF2F4">
 <meta name="color-scheme" content="light">
+<meta name="apple-itunes-app" content="app-id=6821592549">
 <title>${esc(t.title)}</title>
 <meta name="description" content="${esc(t.description)}">
 <link rel="canonical" href="${SITE + href(lang)}">
@@ -1204,7 +1208,7 @@ ${tourHtml}
     requestAnimationFrame(tick);
   }
 
-  // Waitlist for the iPhone and Android apps (the same list as the home page).
+  // Waitlist for the Android app (the same list as the home page).
   const form = document.getElementById('wl-form');
   if (form) {
     const M = ${JSON.stringify({ errEmpty: W.errEmpty, errInvalid: W.errInvalid, errBusy: W.errBusy, errNet: W.errNet })};

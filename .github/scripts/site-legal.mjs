@@ -118,6 +118,7 @@ function shell({ lang, page, title, description, h1, body, ld }) {
 <link rel="alternate" hreflang="x-default" href="${SITE + href('en', page)}">
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
+<meta name="apple-itunes-app" content="app-id=6821592549">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
