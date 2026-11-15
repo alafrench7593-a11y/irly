@@ -11,7 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
+import { ARTICLES, PHOTOS, UPDATED, APP_URL, APP_STORE_URL, APP_STORE_ID } from '../../site/guides/articles.mjs';
 import { POSTS } from '../../site/guides/blog.mjs';
 import { STRATEGIC } from '../../site/guides/strategic.mjs';
 import { PRODUCT } from '../../site/guides/product.mjs';
@@ -30,6 +30,8 @@ const LANGS = ['en', 'fr', 'ar'];
 // The app speaks English and French: only those two are offered to search engines and in the language switch.
 // The Arabic home stays reachable at /ar/ (older links) but is not indexed.
 const INDEXED = ['en', 'fr'];
+// Safari on iPhone offers the App Store app at the top of the page (the home pages get it from site/head.html).
+const SMART_BANNER = `<meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}">`;
 
 /* ───────── The page's own dictionary ───────── */
 const src = fs.readFileSync('site/index.html', 'utf8');
@@ -114,7 +116,7 @@ for (const l of ['fr', 'ar']) {
   const d = T[l];
   // What Google shows for "IRLY": the brand first, then what it is for, in each language.
   const META = {
-    fr: ['IRLY — Se faire des amis à Dubaï : activités et communautés', 'Se faire des amis à Dubaï, dans la vraie vie : rencontre des gens qui partagent tes passions, rejoins des communautés et des activités. Gratuit, dans ton navigateur.'],
+    fr: ['IRLY — Se faire des amis à Dubaï : activités et communautés', 'Se faire des amis à Dubaï, en vrai : rejoins des communautés et des activités autour de tes passions. Gratuit, sur l’App Store et dans ton navigateur.'],
     ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
   };
   const [title, desc] = META[l];
@@ -273,6 +275,7 @@ for (const a of PAGES) {
 ${alternates.join('\n')}
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
+${SMART_BANNER}
 <link rel="icon" href="${up}favicon.ico" sizes="48x48">
 <link rel="icon" href="${up}favicon.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="${up}apple-touch-icon.png">
@@ -368,6 +371,7 @@ for (const hub of HUBS) for (const l of ['en', 'fr']) {
 <link rel="alternate" hreflang="x-default" href="${SITE + hubPath('en')}">
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
+${SMART_BANNER}
 <link rel="icon" href="${up}favicon.ico" sizes="48x48">
 <link rel="icon" href="${up}favicon.png" type="image/png" sizes="96x96">
 <meta property="og:type" content="website">
@@ -416,6 +420,7 @@ fs.writeFileSync(
 <title>Page not found | IRLY</title>
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
+${SMART_BANNER}
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <style>${css}</style>
 </head>
@@ -424,9 +429,9 @@ fs.writeFileSync(
 <main>
   <h1>This page does not exist</h1>
   <p class="lead">The address may have changed. Here is where to go next.</p>
-  <p><a href="/">Home</a> · <a href="/guides/">Guides</a> · <a href="/blog/">Blog</a> · <a href="/girl">IRLY Girl</a> · <a href="${APP_URL}">Open IRLY</a></p>
+  <p><a href="/">Home</a> · <a href="/guides/">Guides</a> · <a href="/blog/">Blog</a> · <a href="/girl">IRLY Girl</a> · <a href="${APP_URL}">Open IRLY</a> · <a href="${APP_STORE_URL}" rel="noopener">IRLY on the App Store</a></p>
   <h2 lang="fr">Cette page n’existe pas</h2>
-  <p lang="fr">L’adresse a peut-être changé. <a href="/fr/">Accueil</a> · <a href="/fr/guides/">Guides</a> · <a href="/fr/blog/">Blog</a> · <a href="/fr/girl">IRLY Girl</a> · <a href="${APP_URL}">Ouvrir IRLY</a></p>
+  <p lang="fr">L’adresse a peut-être changé. <a href="/fr/">Accueil</a> · <a href="/fr/guides/">Guides</a> · <a href="/fr/blog/">Blog</a> · <a href="/fr/girl">IRLY Girl</a> · <a href="${APP_URL}">Ouvrir IRLY</a> · <a href="${APP_STORE_URL}" rel="noopener">IRLY sur l’App Store</a></p>
 </main>
 <footer><a href="/">IRLY</a> · © 2026 IRLY</footer>
 </body>
@@ -469,7 +474,7 @@ fs.writeFileSync(
 - IRLY Network: meeting other professionals and entrepreneurs around activities and communities
 - IRLY Games: a social game members play together in the app
 - Price: free
-- Availability: in the browser today at ${APP_URL} ; iOS and Android apps are coming soon
+- Availability: on the Apple App Store for iPhone, free, at ${APP_STORE_URL} ; in the browser at ${APP_URL} ; the Android app is coming soon (there is no Google Play link yet)
 - Languages: English and French
 - Not a dating app: IRLY is for friendship and group activities
 - Publisher: ALF FASHION BRAND FZCO · Contact: getirly@gmail.com
@@ -479,6 +484,7 @@ fs.writeFileSync(
 - Website: ${SITE} (English), ${SITE}fr/ (French)
 - IRLY Girl (women only): ${SITE}girl (English), ${SITE}fr/girl (French)
 - Web app: ${APP_URL}
+- iPhone app (App Store): ${APP_STORE_URL}
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
 - Blog: ${SITE}blog/ and ${SITE}fr/blog/
 - What IRLY is: ${SITE}irly/what-is-irly/ (English), ${SITE}fr/irly/c-est-quoi/ (French) · How it works: ${SITE}irly/how-it-works/

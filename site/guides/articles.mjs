@@ -1746,3 +1746,6 @@ export const ARTICLES = [
 ];
 
 export const APP_URL = app;
+/** The iPhone app on the App Store: the only store link (the Android app is not out). */
+export const APP_STORE_ID = '6821592549';
+export const APP_STORE_URL = `https://apps.apple.com/app/id${APP_STORE_ID}`;
