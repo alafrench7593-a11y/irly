@@ -94,6 +94,52 @@ for (const [label, path] of [
   else table((r.result ?? []).slice(-30), 30);
 }
 
+/* ───────── What this token may read, the machine's disk, the services, the API's response times ───────── */
+title('What this token may read (GET only, nothing is created)');
+for (const [label, path] of [
+  ['organisations', '/organizations'],
+  ['branches (staging copies) of this project', `/projects/${ref}/branches`],
+  ['read replicas / load balancers', `/projects/${ref}/config/database/pgbouncer`],
+]) {
+  const r = await get(path);
+  if (r.failed) console.log(`${label}: ${r.failed}`);
+  else if (Array.isArray(r)) console.log(`${label}: ${r.length} — ${JSON.stringify(r.map((x) => pick(x, ['name', 'plan', 'status', 'is_default', 'persistent'])))}`);
+  else console.log(`${label}: ${JSON.stringify(pick(r, ['pool_mode', 'default_pool_size', 'max_client_conn', 'pgbouncer_enabled', 'ignore_startup_parameters']))}`);
+}
+title('Services');
+{
+  const r = await get(`/projects/${ref}/health?services=db&services=pooler&services=realtime&services=rest&services=auth&services=storage`);
+  console.log(r.failed ?? JSON.stringify((Array.isArray(r) ? r : []).map((x) => pick(x, ['name', 'healthy', 'status']))));
+}
+title('Disk');
+for (const path of [`/projects/${ref}/config/disk`, `/projects/${ref}/config/disk/util`]) {
+  const r = await get(path);
+  console.log(r.failed ?? JSON.stringify(r));
+}
+/** The API gateway's own log of requests (path, status, time taken): counts and percentiles only. */
+async function logs(label, query, hours = 24) {
+  title(label);
+  const end = new Date();
+  const start = new Date(end.getTime() - hours * 3600 * 1000);
+  const r = await get(`/projects/${ref}/analytics/endpoints/logs.all?sql=${encodeURIComponent(query)}&iso_timestamp_start=${start.toISOString()}&iso_timestamp_end=${end.toISOString()}`);
+  if (r.failed) console.log(`could not read: ${r.failed}`);
+  else if (r.error) console.log(`could not read: ${cut(JSON.stringify(r.error), 300)}`);
+  else table(r.result ?? [], 40);
+}
+await logs(
+  'API response times, last 24 hours (gateway log)',
+  `select count(*) as requests, countif(r.status_code >= 500) as errors_5xx, countif(r.status_code = 429) as rate_limited, approx_quantiles(r.origin_time, 100)[offset(50)] as p50_ms, approx_quantiles(r.origin_time, 100)[offset(95)] as p95_ms, approx_quantiles(r.origin_time, 100)[offset(99)] as p99_ms, max(r.origin_time) as max_ms from edge_logs cross join unnest(metadata) as m cross join unnest(m.response) as r`,
+);
+await logs(
+  'Slowest API paths, last 24 hours (gateway log)',
+  `select regexp_replace(q.path, r'[0-9a-f]{8}-[0-9a-f-]{27}', ':id') as path, count(*) as requests, approx_quantiles(r.origin_time, 100)[offset(95)] as p95_ms, max(r.origin_time) as max_ms from edge_logs cross join unnest(metadata) as m cross join unnest(m.request) as q cross join unnest(m.response) as r group by 1 order by 3 desc limit 25`,
+);
+await logs(
+  'API requests per hour, last 7 days (gateway log)',
+  `select timestamp_trunc(t.timestamp, day) as day, count(*) as requests, countif(r.status_code >= 500) as errors_5xx from edge_logs as t cross join unnest(metadata) as m cross join unnest(m.response) as r group by 1 order by 1 desc limit 8`,
+  24 * 7,
+);
+
 /* ───────── The database ───────── */
 await sql('Server', `select current_setting('server_version') as version, current_setting('max_connections') as max_connections, current_setting('shared_buffers') as shared_buffers, current_setting('effective_cache_size') as effective_cache_size, current_setting('work_mem') as work_mem, current_setting('max_worker_processes') as workers, pg_size_pretty(pg_database_size(current_database())) as database_size, (select stats_reset from pg_stat_database where datname = current_database()) as stats_since`);
 await sql('Statement timeouts by role', `select rolname, rolconfig from pg_roles where rolname in ('anon', 'authenticated', 'authenticator', 'service_role', 'postgres') order by 1`);
