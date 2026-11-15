@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useIsFocused } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { slower, unanswered, usePoll } from './api';
 
 /**
  * A game shared in a community or on the Live
@@ -58,19 +60,28 @@ function ask(post: string): Promise<GameShare | null | undefined> {
   });
 }
 
+// A waiting game fills seat by seat; one that is full or running changes far less often.
 const REFRESH_MS = 8000;
+const REFRESH_SLOW_MS = 20_000;
 
 /** The shared game of a post, kept up to date while the card is shown; null when the post shares no game I may see. */
 export function useGameShare(post: string | null): { card: GameShare | null; loaded: boolean; reload: () => void } {
   const [card, setCard] = useState<GameShare | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [tick, setTick] = useState(0);
+  // For the refresh: when the read on its way was sent (0: none), and how much it slowed down after errors.
+  const sentAt = useRef(0);
+  const slow = useRef(1);
   useEffect(() => {
     if (!post) return;
     let live = true;
+    sentAt.current = Date.now();
     ask(post).then((c) => {
+      slow.current = c === undefined ? slower(slow.current) : 1;
+      if (!live) return;
+      sentAt.current = 0;
       // A failed read keeps the last card; the next refresh asks again.
-      if (!live || c === undefined) return;
+      if (c === undefined) return;
       setCard(c);
       setLoaded(true);
     });
@@ -80,11 +91,12 @@ export function useGameShare(post: string | null): { card: GameShare | null; loa
   }, [post, tick]);
   // A game that is over or cancelled no longer changes.
   const moving = card ? card.status === 'waiting' || card.status === 'full' || card.status === 'playing' : false;
-  useEffect(() => {
-    // Not read yet (the first request failed): keep asking.
-    if (!post || (loaded && !moving)) return;
-    const t = setInterval(() => setTick((n) => n + 1), REFRESH_MS);
-    return () => clearInterval(t);
-  }, [post, moving, loaded]);
+  // Only while the card's screen is the one shown and the app is in front (usePoll): a card on a tab
+  // behind another, or in a phone left in a pocket, asks nothing; it is read once when it is back.
+  // Not read yet (the first request failed): keep asking.
+  const focused = useIsFocused();
+  usePoll(Boolean(post) && focused && (!loaded || moving), card && card.status !== 'waiting' ? REFRESH_SLOW_MS : REFRESH_MS, slow, () => {
+    if (!unanswered(sentAt.current)) setTick((n) => n + 1);
+  });
   return { card, loaded, reload: () => setTick((n) => n + 1) };
 }
