@@ -24,6 +24,7 @@ import { hueOf } from '@/lib/format';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityWhen, offsetOf, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
+import { useOnScreen } from '@/lib/useOnScreen';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -471,10 +472,16 @@ export function useGirlFeed(cityId: string, moms: boolean) {
 
   useEffect(() => {
     load();
-    if (!supabase || !uid) return;
+  }, [load]);
+
+  // Only while this feed is on screen: every post of every community the member can read
+  // arrives here (no filter fits "the women-only ones"), and was checked against every
+  // member who had opened this page once, wherever she had gone since.
+  const onScreen = useOnScreen();
+  useEffect(() => {
+    if (!supabase || !uid || !onScreen) return;
     // New, edited or removed posts: the read rules decide what reaches us.
-    // That is every community the member can read (no filter fits "the
-    // women-only ones"): a burst of events is one reload, not one each.
+    // A burst of events is one reload, not one each.
     let soon: ReturnType<typeof setTimeout> | null = null;
     const later = () => {
       if (soon) clearTimeout(soon);
@@ -485,13 +492,13 @@ export function useGirlFeed(cityId: string, moms: boolean) {
     };
     const channel = liveChannel(`girl-feed-${cityId}-${moms ? 'moms' : 'all'}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, later)
-      // Listening: a post made before then is in no event.
+      // Listening (the first time, back on this screen, back in the app): a post made before then is in no event.
       .subscribe(whenListening(later));
     return () => {
       if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
-  }, [load, cityId, moms, uid]);
+  }, [load, cityId, moms, uid, onScreen]);
 
   return { posts, state, reload: load };
 }

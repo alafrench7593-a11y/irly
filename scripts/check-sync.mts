@@ -294,6 +294,8 @@ const server = {
   rpcs: {} as Record<string, (args: Record<string, unknown>) => unknown>,
   // Still a member of CONV (RLS: a former member reads neither the chat nor its messages).
   member: true,
+  // Chats I was added to since (they are in my inbox and in my list of chats).
+  added: [] as string[],
   // The next message inserts: 'offline' never reach the server; 'lost' are saved but the answer and the echo are lost (connection dropped).
   insertMode: null as null | 'offline' | 'lost',
 };
@@ -307,7 +309,7 @@ function answer<T>(name: string, value: () => T, onServer?: () => void): Promise
   });
 }
 const rows: Record<string, () => unknown> = {
-  my_conversations: () => [{ conversation_id: CONV, kind: 'group', title: 'Padel', other_user_id: null, other_name: null, last_body: 'hi', last_sender: BOB, last_at: new RealDate(EPOCH).toISOString(), unread: server.unread, ref_id: null, other_photo: null, photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Bob', archived: false }],
+  my_conversations: () => [CONV, ...server.added].map((conversation_id) => ({ conversation_id, kind: 'group', title: 'Padel', other_user_id: null, other_name: null, last_body: 'hi', last_sender: BOB, last_at: new RealDate(EPOCH).toISOString(), unread: server.unread, ref_id: null, other_photo: null, photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Bob', archived: false })),
   chat_members: () =>
     server.member
       ? [
@@ -335,7 +337,9 @@ function query(table: string) {
   const q: Record<string, unknown> = {};
   const chain = (...names: string[]) => names.forEach((n) => (q[n] = () => q));
   chain('select', 'is', 'gte', 'in', 'neq');
-  q.eq = (col: string, v: unknown) => (filters.push((r) => String(r[col]) === String(v)), q);
+  // The list of my chats (what the inbox names its channels with), not one chat's member row.
+  let mine = false;
+  q.eq = (col: string, v: unknown) => ((mine ||= table === 'conversation_members' && col === 'user_id'), filters.push((r) => String(r[col]) === String(v)), q);
   q.lt = (col: string, v: unknown) => (filters.push((r) => String(r[col]) < String(v)), q);
   q.or = (expr: string) => (filters.push(orFilter(expr)), q);
   q.order = (col: string, o?: { ascending?: boolean }) => (orders.push({ col, asc: o?.ascending ?? true }), q);
@@ -365,7 +369,7 @@ function query(table: string) {
       if (table === 'messages') return answered!;
       if (table === 'conversations')
         return { data: single ? (server.member ? { id: CONV, kind: 'group', title: 'Padel', community_id: null, activity_id: null, photo_path: null, activities: null, communities: null } : null) : [], error: null };
-      if (table === 'conversation_members') return { data: single ? { archived_at: null, role: 'member' } : [], error: null };
+      if (table === 'conversation_members') return { data: single ? { archived_at: null, role: 'member' } : mine ? [...(server.member ? [CONV] : []), ...server.added].map((conversation_id) => ({ conversation_id })) : [], error: null };
       return { data: single ? null : [], error: null };
     };
     return answer(`${table}.${op}`, value, onServer).then(ok, ko);
@@ -505,6 +509,7 @@ async function scenario(label: string, setup: (() => Promise<void>) | null, act:
   sync.resetSyncEchoes?.();
   server.unread = 0;
   server.member = true;
+  server.added = [];
   server.insertMode = null;
   server.messages = [{ id: 'm0', conversation_id: CONV, sender_id: BOB, kind: 'text', body: 'hi', created_at: new RealDate(EPOCH).toISOString() }];
   const mounted = [
@@ -829,6 +834,37 @@ await scenario('whole-second commit times: join, then Bob adds me to a group 0.3
   coarse = false;
 });
 await scenario('Bob joins my activity (nothing done here)', null, async () => {
+  // The row itself is Bob's: the app listens to its own participations only. The host (me) is
+  // told by the server (public.sync_signals, migration irly_realtime_scale), in the same transaction.
+  commit([
+    { table: 'activity_participants', event: 'INSERT', row: { activity_id: ACT, user_id: BOB, status: 'going' } },
+    { table: 'sync_signals', event: 'INSERT', row: { user_id: ME, kind: 'activities', ref: ACT } },
+  ]);
+});
+// The inbox names the chats it listens to. Added to a new one: it is named as soon as the inbox
+// shows it, and a message there is heard (inbox read, badge) like any other.
+await scenario('added to a new chat, then Bob writes there', null, async () => {
+  const NEW = '66666666-6666-4666-8666-666666666666';
+  server.added = [NEW];
+  commit([{ table: 'conversation_members', event: 'INSERT', row: { conversation_id: NEW, user_id: ME } }]);
+  await sleep(6_000);
+  const named = channels.some((c) => c.topic.includes('inbox-') && c.handlers.some((h) => h.table === 'messages' && (h.filter ?? '').includes(NEW)));
+  const everything = channels.some((c) => c.handlers.some((h) => h.table === 'messages' && !h.filter));
+  const before = requests.filter((r) => r === 'my_conversations').length;
+  const at = new RealDate(EPOCH + now).toISOString();
+  commit([
+    { table: 'messages', event: 'INSERT', row: { id: 'm-new', conversation_id: NEW, sender_id: BOB, created_at: at } },
+    { table: 'conversations', event: 'UPDATE', row: { id: NEW, kind: 'group', title: 'New', last_message_at: at } },
+  ]);
+  await sleep(8_000);
+  const after = requests.filter((r) => r === 'my_conversations').length;
+  // A message in a chat I am not in is not mine to hear.
+  commit([{ table: 'messages', event: 'INSERT', row: { id: 'm-else', conversation_id: '77777777-7777-4777-8777-777777777777', sender_id: BOB, created_at: at } }]);
+  await sleep(8_000);
+  const stranger = requests.filter((r) => r === 'my_conversations').length - after;
+  return [`named: ${named}`, `listens to every chat: ${everything}`, `inbox reads for the message: ${after - before}`, `inbox reads for a stranger's chat: ${stranger}`];
+});
+await scenario('Bob joins a plan that is not mine (nothing done here)', null, async () => {
   commit([{ table: 'activity_participants', event: 'INSERT', row: { activity_id: ACT, user_id: BOB, status: 'going' } }]);
 });
 
@@ -910,6 +946,11 @@ expect(
   'Bob following back right after my follow reloads his profile and friends (the friendship the server adds is not my write)',
 );
 expect(n('Bob joins my activity (nothing done here)', 'activities_list') === 1, "other people's changes still reload");
+expect(
+  notes('added to a new chat, then Bob writes there').join() === "named: true,listens to every chat: false,inbox reads for the message: 1,inbox reads for a stranger's chat: 0",
+  `added to a chat: the inbox names it, hears its next message (one read) and no chat of someone else (${notes('added to a new chat, then Bob writes there').join('; ')})`,
+);
+expect(n('Bob joins a plan that is not mine (nothing done here)', 'activities_list') === 0, "a stranger's join of a stranger's plan is not heard: no list reloads");
 expect(n('join activity, answer 1.6 s late', 'activities_list') === 1 && n('join activity, answer 1.6 s late', 'my_conversations') === 1, 'an echo heard before a slow answer waits for its reload (one reload)');
 expect(n('whole-second commit times: join, then Bob adds me to a group 0.3 s later', 'my_conversations') === 2, 'whole-second commit times never hide a change');
 expect(sync.stampMs('2026-10-15 09:00:01.5+04') === Date.UTC(2026, 9, 15, 5, 0, 1, 500) && Number.isNaN(sync.stampMs('soon')), 'commit times are read in any Postgres / ISO form');
