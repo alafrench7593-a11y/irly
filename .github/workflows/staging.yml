@@ -2,6 +2,10 @@ name: Staging copy
 
 # Reads, or creates, the staging copy of the Supabase project (a branch: its own database, apart from
 # production). The mode is the content of .github/staging.txt: « probe » only reads.
+# Modes: probe | create | adopt | schema (scripts/staging.mjs),
+#   seed-small | seed-medium | seed-large (scripts/staging-seed.mjs: fictitious members on the staging branch),
+#   load-100 | load-500 | load-1000 | load-5000 | load-10000 (scripts/staging-load.mjs: one stage of load on it).
+# The seed and the load refuse any project but the staging branch (scripts/staging-lib.mjs).
 # Needs the SUPABASE_ACCESS_TOKEN secret (the database deploy's).
 
 on:
@@ -17,16 +21,73 @@ concurrency:
   group: staging
   cancel-in-progress: false
 
+env:
+  K6_VERSION: v1.3.0
+  # sha256 of k6-v1.3.0-linux-amd64.tar.gz, as published in the release's checksums file.
+  K6_SHA256: 84d26fc1f7bc03e02f2e016b3b1b20c032e05dfe461fca82de4e3a6ebe72ddbd
+
 jobs:
   staging:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Mode
+        id: mode
+        run: |
+          mode="$(tr -d '[:space:]' < .github/staging.txt)"
+          case "$mode" in
+            probe|create|adopt|schema) kind=copy ;;
+            seed-small|seed-medium|seed-large) kind=seed ;;
+            load-100|load-500|load-1000|load-5000|load-10000) kind=load ;;
+            *) echo "unknown mode: $mode"; exit 1 ;;
+          esac
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+          echo "arg=${mode#*-}" >> "$GITHUB_OUTPUT"
+      - name: The guard refuses production
+        run: node scripts/test-staging-guard.mjs
       - name: Staging
+        if: steps.mode.outputs.kind == 'copy'
+        timeout-minutes: 10
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: node scripts/staging.mjs "$(tr -d '[:space:]' < .github/staging.txt)"
+        run: node scripts/staging.mjs "${{ steps.mode.outputs.mode }}"
+      - name: Seed the staging branch (fictitious members)
+        if: steps.mode.outputs.kind == 'seed'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/staging-seed.mjs --size "${{ steps.mode.outputs.arg }}"
+      - name: k6 (pinned release, checksum verified)
+        if: steps.mode.outputs.kind == 'load'
+        run: |
+          set -euo pipefail
+          file="k6-${K6_VERSION}-linux-amd64.tar.gz"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$file" "https://github.com/grafana/k6/releases/download/${K6_VERSION}/$file"
+          echo "${K6_SHA256}  $RUNNER_TEMP/$file" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/k6"
+          tar -xzf "$RUNNER_TEMP/$file" -C "$RUNNER_TEMP/k6" --strip-components=1
+          "$RUNNER_TEMP/k6/k6" version
+          echo "K6_BIN=$RUNNER_TEMP/k6/k6" >> "$GITHUB_ENV"
+      - name: Load the staging branch (one stage)
+        if: steps.mode.outputs.kind == 'load'
+        timeout-minutes: 30
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # Thousands of sockets: the open-file limit of this shell (and of k6, its child) is raised first.
+          sudo prlimit --pid $$ --nofile=262144:262144 || ulimit -n "$(ulimit -Hn)"
+          sudo sysctl -q -w net.ipv4.ip_local_port_range="1024 65535" || true
+          echo "open files: $(ulimit -n)"
+          node scripts/staging-load.mjs --users "${{ steps.mode.outputs.arg }}"
+      - name: Results (numbers only)
+        if: always() && steps.mode.outputs.kind == 'load'
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-load-${{ steps.mode.outputs.arg }}
+          path: ${{ runner.temp }}/irly-load/
+          if-no-files-found: ignore
+          retention-days: 14
