@@ -53,6 +53,26 @@ console.log('\n## Staging branches');
 const branches = await call('GET', `/projects/${ref}/branches`);
 console.log(branches.failed ?? JSON.stringify((Array.isArray(branches) ? branches : []).map((b) => pick(b, BRANCH))));
 
+if (mode === 'probe') {
+  const staging = Array.isArray(branches) ? branches.find((b) => b.name === 'staging' && b.is_default === false && b.project_ref !== ref) : null;
+  if (staging) {
+    console.log('\n## Who owns what on the staging branch (read only)');
+    const who = await call('POST', `/projects/${staging.project_ref}/database/query`, {
+      query: `select current_user as runs_as, session_user as session, (select rolsuper from pg_roles where rolname = current_user) as superuser,
+        (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r') as public_table_owners,
+        (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'private' and c.relkind = 'r') as private_table_owners,
+        (select string_agg(r.rolname, ', ') from pg_roles r where pg_has_role(current_user, r.oid, 'MEMBER') and r.rolname not like 'pg_%') as member_of`,
+      read_only: true,
+    });
+    console.log(who.failed ?? JSON.stringify(who[0]));
+    const live = await call('POST', `/projects/${ref}/database/query`, {
+      query: `select (select string_agg(distinct pg_get_userbyid(c.relowner), ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r') as public_table_owners`,
+      read_only: true,
+    });
+    console.log('production:', live.failed ?? JSON.stringify(live[0]));
+  }
+}
+
 if (mode === 'create') {
   console.log('\n## Creating the staging branch');
   const existing = Array.isArray(branches) ? branches.find((b) => b.name === 'staging') : null;
