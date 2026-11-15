@@ -114,9 +114,21 @@ export function useMemberProfile(userId: string) {
   const space = useAppSpace();
   const key = `${uid}|${userId}|${space}`;
 
+  // One read at a time: a refresh asked while a read is on its way (the app's catch-up, once per
+  // group of realtime channels that start listening; a follow) becomes ONE more read after it.
+  // Starting over each time threw away the answer on its way: on a slow network, with the
+  // channels becoming ready one after the other, the page stayed on its spinner until they all were.
+  const running = useRef<{ key: string; again: boolean } | null>(null);
+  const again = useRef<() => void>(() => undefined);
   const load = useCallback(() => {
     if (!supabase || !uid) return;
+    if (running.current?.key === key) {
+      running.current.again = true;
+      return;
+    }
     const n = ++seq.current;
+    const mine = { key, again: false };
+    running.current = mine;
     Promise.all([sb().rpc('public_profile', { p_user: userId }), rpcInSpace(sb(), 'member_communities', { p_user: userId }, space)])
       .then(([p, c]) => {
         if (n !== seq.current) return;
@@ -170,13 +182,23 @@ export function useMemberProfile(userId: string) {
         const error = /fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load';
         // What is kept under the error is this person's own (a refresh that failed), never the previous person's.
         setState((s) => (s.for === key ? { ...s, error } : { for: key, profile: null, communities: [], posts: [], error }));
+      })
+      .finally(() => {
+        // Another person, another space or the page closed meanwhile: that read is not this one's to follow.
+        if (running.current !== mine) return;
+        running.current = null;
+        if (mine.again) again.current();
       });
   }, [uid, userId, key, space]);
+  useEffect(() => {
+    again.current = load;
+  }, [load]);
 
   useEffect(() => {
     load();
     return () => {
       seq.current += 1;
+      running.current = null;
     };
   }, [load]);
   // A follow anywhere (yours, theirs, on another device), a new photo or name.

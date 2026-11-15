@@ -99,10 +99,14 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
     if (a) track(a.format === 'event' ? 'EVENT_VIEW' : 'ACTIVITY_VIEW', { category: a.categoryId });
   }, [a?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Never a bare spinner: on a slow answer the page still says what it is (as the place and community pages do).
   if (auth === 'unknown') {
     return (
       <Centered>
         <ActivityIndicator />
+        <Text variant="body" tone="secondary" align="center">
+          Loading the activity…
+        </Text>
       </Centered>
     );
   }
@@ -121,6 +125,9 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
     return (
       <Centered>
         <ActivityIndicator color={t.c.text} />
+        <Text variant="body" tone="secondary" align="center">
+          Loading the activity…
+        </Text>
       </Centered>
     );
   }

@@ -411,6 +411,10 @@ function ProfileSkeleton({ heroH }: { heroH: number }) {
             <Shimmer key={w} glint={glint} width={w} height={34} radius={17} />
           ))}
         </View>
+        {/* Never shapes alone: on a slow answer the page still says what it is (as the place and community pages do). */}
+        <Text variant="body" tone="secondary" align="center">
+          Loading this profile…
+        </Text>
       </View>
       <PageHeader title="" />
     </View>

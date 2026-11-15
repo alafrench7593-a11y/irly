@@ -121,8 +121,12 @@ function SignedOut() {
 function SessionLoading() {
   const t = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.c.bg }}>
+    // Never a bare spinner: on a slow answer the page still says what it is (as the place and community pages do).
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: t.c.bg }}>
       <ActivityIndicator color={t.c.text} />
+      <Text variant="body" tone="secondary" align="center">
+        Loading the conversation…
+      </Text>
     </View>
   );
 }
@@ -498,7 +502,14 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
         >
-          {thread.loading ? <ActivityIndicator color={t.c.text} /> : null}
+          {thread.loading ? (
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <ActivityIndicator color={t.c.text} />
+              <Text variant="body" tone="secondary" align="center">
+                Loading the conversation…
+              </Text>
+            </View>
+          ) : null}
           {thread.error ? (
             <View style={{ alignItems: 'center', gap: 12 }}>
               <Text variant="body" tone="secondary" align="center">
