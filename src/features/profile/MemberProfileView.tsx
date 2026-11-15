@@ -170,9 +170,13 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
       </Centered>
     );
   if (loading)
+    // Never a bare spinner: on a slow answer the page still says what it is (as the place and community pages do).
     return (
       <Centered onBack={onBack}>
         <ActivityIndicator color={t.c.text} />
+        <Text variant="body" tone="secondary" align="center">
+          Loading this profile…
+        </Text>
       </Centered>
     );
   // A refresh that failed behind a profile already shown keeps it on screen.

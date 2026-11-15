@@ -4518,6 +4518,9 @@ export const fr: Record<string, string> = {
   'Your earlier version is already live': 'Ta version précédente est déjà en ligne',
   'Your account is deleted. Remaining files are removed from our servers automatically, usually within the hour.': 'Ton compte est supprimé. Les fichiers restants sont effacés automatiquement de nos serveurs, en général dans l’heure.',
   'Loading this place…': 'Chargement du lieu…',
+  'Loading this profile…': 'Chargement du profil…',
+  'Loading the activity…': 'Chargement de l’activité…',
+  'Loading the conversation…': 'Chargement de la conversation…',
 
   // IRLY Girl community creation, Girl messages, demo, photo viewer (audit 2026-10-19).
   '{city} Mamans': 'Mamans de {city}',
