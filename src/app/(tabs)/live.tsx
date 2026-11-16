@@ -18,6 +18,7 @@ import { LivePhoto } from '@/features/live/LivePhoto';
 import { useAccount } from '@/features/auth/account';
 import { bumpIrl, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl, type ServerIrlPost } from '@/features/server/social';
 import { outcomeOf, type LivePhase } from '@/features/live/livePublish';
+import { LIVE_TEXT_MAX, POST_TEXT_MAX, textLimit } from '@/features/live/liveFaces';
 import { createPost, MAX_PHOTOS, pickPhotos, removePost, useDrafts, type DraftMedia } from '@/features/posts/posts';
 import { PostCard, PostCardSkeleton, type PostOption } from '@/features/posts/PostCard';
 import { PostMedia } from '@/features/posts/PostMedia';
@@ -561,8 +562,11 @@ function EditLive({ value, onClose }: { value: { id: string; body: string } | nu
       title="Edit your Live"
     >
       <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[2] }}>
-        <TextInput value={text} onChangeText={setText} multiline maxLength={160} autoFocus style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]} accessibilityLabel={a11y('Your Live')} />
-        <Button label="Save" icon="check" full loading={busy} disabled={!text.trim()} onPress={save} />
+        <View style={styles.field}>
+          <TextInput value={text} onChangeText={setText} multiline maxLength={LIVE_TEXT_MAX} autoFocus style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]} accessibilityLabel={a11y('Your Live')} />
+          <TextCount text={text} max={LIVE_TEXT_MAX} />
+        </View>
+        <Button label="Save" icon="check" full loading={busy} disabled={!text.trim() || text.length > LIVE_TEXT_MAX} onPress={save} />
       </View>
     </Sheet>
   );
@@ -649,6 +653,10 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   // composer while publishing hides it: the publish goes on and says how it ended.
   const [phase, setPhase] = useState<LivePhase>('draft');
   const busy = phase === 'publishing';
+  // A Live holds 160 characters, a community post 2000 (the server's own limits). Words written
+  // for a community, or a draft of them, can be longer than a Live: nothing is cut, it says so.
+  const max = community ? POST_TEXT_MAX : LIVE_TEXT_MAX;
+  const tooLong = textLimit(text, max).over;
   const account = useAccount();
   // Answers can arrive after the screen is gone (sign-out, navigation): no state is set then.
   const mounted = useRef(true);
@@ -847,6 +855,8 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
 
   const submit = async () => {
     if ((!text.trim() && !media) || sending.current) return;
+    // Never sent to be refused: the words stay as they are, to be shortened.
+    if (tooLong) return toast(tx('Too long: {max} characters at most', { max }), 'x', 'live');
     if (account && community) return submitToCommunity(community);
     if (!account) {
       post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, where), areaId: where });
@@ -970,17 +980,22 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             <Text variant="label">Add a photo</Text>
           </PressableScale>
         ) : null}
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={tx('Write something…')}
-          placeholderTextColor={t.c.textTertiary}
-          multiline
-          maxLength={community ? 2000 : 160}
-          editable={!busy}
-          style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
-          accessibilityLabel={a11y('Write something…')}
-        />
+        <View style={styles.field}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder={tx('Write something…')}
+            placeholderTextColor={t.c.textTertiary}
+            multiline
+            // Already past the limit (see tooLong): no cap, so it can be edited down on every platform.
+            maxLength={tooLong ? undefined : max}
+            editable={!busy}
+            style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
+            accessibilityLabel={a11y('Write something…')}
+            testID="live-text"
+          />
+          <TextCount text={text} max={max} />
+        </View>
         {photos.length > 1 ? (
           <Animated.View entering={FadeIn}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
@@ -1067,9 +1082,31 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => !busy && setOpenUp(!openUp)} />
           </View>
         ) : null}
-        <Button label="Publish" icon="send" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />
+        <Button label="Publish" icon="send" full haptic={false} loading={busy} disabled={(!text.trim() && !media) || tooLong} onPress={submit} />
       </SheetScrollView>
     </Sheet>
+  );
+}
+
+/**
+ * How much of the limit is used, under a field, as the activity form shows
+ * it: only near the limit. Past it, the limit is said in words.
+ */
+function TextCount({ text, max }: { text: string; max: number }) {
+  const t = useTheme();
+  const { length, count, over } = textLimit(text, max);
+  if (!count) return null;
+  return (
+    <View style={styles.count}>
+      {over ? (
+        <Text variant="caption" color={t.c.live} style={{ flex: 1 }} accessibilityLiveRegion="polite" testID="live-too-long">
+          {tx('Too long: {max} characters at most', { max })}
+        </Text>
+      ) : null}
+      <Text variant="caption" tone={over ? undefined : 'tertiary'} color={over ? t.c.live : undefined} align="right" style={over ? undefined : { flex: 1 }} raw testID="live-count">
+        {length} / {max}
+      </Text>
+    </View>
   );
 }
 
@@ -1098,7 +1135,10 @@ const styles = StyleSheet.create({
   friendText: { gap: 1, maxWidth: 120 },
   friendTextWide: { gap: 1, flex: 1 },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
-  input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
+  // Long words scroll inside the field: it never pushes Publish off the sheet.
+  input: { minHeight: 96, maxHeight: 220, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
+  field: { gap: 6 },
+  count: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   addPhoto: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
