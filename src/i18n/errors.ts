@@ -394,6 +394,16 @@ export const SERVER_ERRORS: Record<string, string> = {
   'only the owner or a co-admin in charge of settings can edit the community': 'Only the owner or a co-admin in charge of settings can edit the community',
   'rules have 4000 characters at most': 'Rules have 4000 characters at most',
   "the texts of IRLY's official communities are set by IRLY": 'The texts of IRLY’s official communities are set by IRLY',
+  // Editing an activity (20261122000000_irly_activity_edit).
+  'people joined this plan: its space and community stay as they are': 'People have joined: its space and community can no longer change',
+  'This activity was cancelled': 'This activity was cancelled',
+  'nothing to change': GENERIC,
+  'The title is too long (80 characters at most)': 'The title is too long (80 characters at most)',
+  'The description is too long (1000 characters at most)': 'The description is too long (1000 characters at most)',
+  'The place is too long (200 characters at most)': 'The place is too long (200 characters at most)',
+  'unknown neighbourhood': 'Choose a neighbourhood',
+  'Spots: between 2 and 1000, or none for unlimited': 'Spots: between 2 and 1000, or unlimited',
+  'A price cannot be negative': 'A price cannot be negative',
 };
 
 /**

@@ -37,6 +37,36 @@ export type CreatePreset = {
    * post by the same member within 2 minutes (a double tap).
    */
   sourcePostId?: string;
+  /**
+   * Opened from an activity's page by its host (« Edit »): the same form, on its
+   * last two steps (when and where, then people, price, photo, description),
+   * filled with the activity as it is; « Save changes » instead of « Create ».
+   * Its space, community, event, visibility and category are not on the form:
+   * they stay as they are (the server refuses them too, public.update_activity).
+   */
+  edit?: EditActivity;
+};
+
+/** The activity being edited, as its page shows it. */
+export type EditActivity = {
+  id: string;
+  title: string;
+  description: string | null;
+  categoryId: string;
+  subId: string | null;
+  cityId: string;
+  areaId: string;
+  placeName: string | null;
+  startsAt: number;
+  endsAt: number | null;
+  priceMinor: number;
+  currency: string;
+  capacity: number | null;
+  /** People going now (the host included): the spots cannot go under it. */
+  going: number;
+  girlOnly: boolean;
+  /** The photo shown today (a viewable link), or null for the app's photo of its subject. */
+  coverUrl: string | null;
 };
 
 type CreateState = {
@@ -60,6 +90,11 @@ export const useCreateStore = create<CreateState>((set) => ({
 /** Opens the composer, growing from `origin` when given, starting from `preset`. */
 export function openCreate(origin?: { x: number; y: number } | null, preset?: CreatePreset | null) {
   useCreateStore.getState().show(origin, preset);
+}
+
+/** Opens the composer on an existing activity (its host's « Edit »). */
+export function openEditActivity(activity: EditActivity, origin?: { x: number; y: number } | null) {
+  openCreate(origin, { edit: activity, cityId: activity.cityId });
 }
 
 /** What a post card hands to « Create an activity ». */

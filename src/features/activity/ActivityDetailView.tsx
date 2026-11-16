@@ -1,14 +1,15 @@
 import { webLink } from '@/config/app';
 import { useRouter } from 'expo-router';
 import { cityDayKey, cityWhen } from '@/lib/time';
-import { t as tx, formatNumber } from '@/i18n';
+import { t as tx } from '@/i18n';
+import { formatAmount } from '@/lib/format';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
-import { Field, IconButton } from '@/components/ui/Controls';
+import { IconButton } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -25,8 +26,7 @@ import { isContentStaff, useStaffRole } from '@/features/admin/api';
 import { setActivityCover } from '@/features/server/covers';
 import { cancelServerActivity, deleteServerActivity, icsFor, joinServerActivity, leaveServerActivity, updateServerActivity, useServerActivity } from '@/features/server/activities';
 import { Sheet } from '@/components/ui/Sheet';
-import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
-import { instants, problemOf, whenFrom, type When } from '@/features/create/when';
+import { openEditActivity } from '@/features/create/createStore';
 import { confirm } from '@/lib/confirm';
 import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, openDirect, useEngagement } from '@/features/server/engage';
@@ -290,7 +290,7 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
           <Fact index={0} icon="clock" text={when(a.startsAt, a.endsAt, a.cityId)} />
           <Fact index={1} icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
           <Fact index={2} icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
-          <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${formatNumber(a.priceMinor / 100)}` : tx('Free')} />
+          <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${formatAmount(a.priceMinor / 100)}` : tx('Free')} />
           {a.creatorName ? <Fact index={4} icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
           {a.communityId && card?.communityName ? (
             // Its origin community (one activity, shown there too): one tap back to it.
@@ -394,12 +394,37 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
       </View>
       {hosting ? (
         <HostSheet
-          // Its fields start from this activity: another activity gets a fresh sheet.
           key={a.id}
           visible={managing}
           onClose={() => setManaging(false)}
           a={a}
           over={over}
+          onEdit={() => {
+            setManaging(false);
+            // After the sheet has left: the form grows over the page, filled with the activity as it is now.
+            setTimeout(
+              () =>
+                openEditActivity({
+                  id: a.id,
+                  title: a.title,
+                  description: a.description,
+                  categoryId: a.categoryId,
+                  subId: a.subId,
+                  cityId: a.cityId,
+                  areaId: a.areaId,
+                  placeName: a.placeName,
+                  startsAt: a.startsAt,
+                  endsAt: a.endsAt,
+                  priceMinor: a.priceMinor,
+                  currency: a.currency,
+                  capacity: a.capacity,
+                  going: a.going,
+                  girlOnly: a.girlOnly,
+                  coverUrl: a.coverUrl,
+                }),
+              250,
+            );
+          }}
           onCancelled={() => {
             toast('Cancelled. Participants were notified', 'check', 'brand');
             refresh();
@@ -415,90 +440,24 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
 }
 
 /**
- * The organiser's tools: edit (name, place, description), cancel, delete.
- * One write to the server; every screen showing the activity (lists, map,
- * calendar, chat title, search) follows through the sync channel.
+ * The organiser's tools: edit, cancel, delete. « Edit » opens the creation form
+ * on this activity (features/create, edit mode); every screen showing it
+ * (lists, map, calendar, chat title, search) follows through the sync channel.
  */
-function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean; cityId: string; startsAt: number; endsAt: number | null; priceMinor: number; currency: string; capacity: number | null; going: number }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
-  const [title, setTitle] = useState(a.title);
-  const [place, setPlace] = useState(a.placeName ?? '');
-  const [about, setAbout] = useState(a.description ?? '');
-  // Price (0: free) and spots (empty: unlimited), as on the creation form.
-  const [price, setPrice] = useState(a.priceMinor ? String(a.priceMinor / 100) : '');
-  const [spots, setSpots] = useState(a.capacity ? String(a.capacity) : '');
-  // Date and time read back in the activity's city time, as they were saved.
-  const city = CITIES[a.cityId as CityId] ?? CITIES.dubai;
-  const [when, setWhen] = useState<When>(() => whenFrom(a.startsAt, a.endsAt, city.utcOffset));
-  const [picking, setPicking] = useState(false);
-  // Set once a time is confirmed in the picker: other edits never move the activity.
-  const [timeChanged, setTimeChanged] = useState(false);
-  const [saving, setSaving] = useState(false);
+function HostSheet({ visible, onClose, a, over, onEdit, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; cancelled: boolean }; over: boolean; onEdit: () => void; onCancelled: () => void; onDeleted: () => void }) {
   // Cancel / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
   const ending = useBusy<'cancel' | 'delete'>();
-  const save = async () => {
-    if (saving || title.trim().length < 3) return;
-    const moved = instants(when, city.utcOffset);
-    const problem = timeChanged ? problemOf(when, city.utcOffset, Date.now()) : null;
-    if (problem) {
-      toast(problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start', 'calendar', 'brand');
-      return;
-    }
-    const priceValue = price.trim() ? Number(price.replace(',', '.')) : 0;
-    const spotsValue = spots.trim() ? Math.round(Number(spots)) : null;
-    if (!Number.isFinite(priceValue) || priceValue < 0) {
-      toast('Enter a price, or leave it empty for free', 'banknote', 'brand');
-      return;
-    }
-    if (spotsValue !== null && (!Number.isFinite(spotsValue) || spotsValue < Math.max(2, a.going) || spotsValue > 1000)) {
-      toast(tx('Spots: between {min} and 1000, or empty for unlimited', { min: Math.max(2, a.going) }), 'users', 'brand');
-      return;
-    }
-    setSaving(true);
-    try {
-      await updateServerActivity(a.id, {
-        title,
-        placeName: place.trim() || null,
-        description: about.trim() || null,
-        priceMinor: Math.round(priceValue * 100),
-        capacity: spotsValue,
-        ...(timeChanged ? { startsAt: moved.startsAt, endsAt: moved.endsAt } : {}),
-      });
-      haptic('success');
-      toast('Saved. Everyone sees the new version', 'check', 'brand');
-      onClose();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
-    } finally {
-      setSaving(false);
-    }
-  };
   return (
     <Sheet visible={visible} onClose={onClose} title="Your activity" subtitle="You organise it" scroll>
       <View style={{ gap: 12, paddingBottom: 12 }}>
-        <Field value={title} onChangeText={setTitle} placeholder="Name" accessibilityLabel="Name" maxLength={80} />
-        <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />
-        <Field value={about} onChangeText={setAbout} placeholder="Description" accessibilityLabel="Description" multiline maxLength={1000} />
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Field value={price} onChangeText={(v) => setPrice(v.replace(/[^0-9.,]/g, '').slice(0, 9))} placeholder={tx('Price in {currency} (empty: free)', { currency: a.currency })} accessibilityLabel="Price" icon="banknote" keyboardType="decimal-pad" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Field value={spots} onChangeText={(v) => setSpots(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder={tx('Spots (empty: unlimited)')} accessibilityLabel="Spots" icon="users" keyboardType="number-pad" />
-          </View>
-        </View>
-        <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} />
-        <DateTimePicker
-          visible={picking}
-          onClose={() => setPicking(false)}
-          value={when}
-          onConfirm={(w) => {
-            setWhen(w);
-            setTimeChanged(true);
-          }}
-          utcOffset={city.utcOffset}
-          cityName={city.name}
-        />
-        <Button label="Save changes" icon="check" full loading={saving} disabled={saving || title.trim().length < 3} onPress={save} />
+        {!a.cancelled && !over ? (
+          <Button label="Edit" icon="edit" full haptic="select" disabled={ending.busy !== null} onPress={onEdit} />
+        ) : (
+          // The server refuses it too (public.update_activity): what people saw is what stays.
+          <Text variant="caption" tone="secondary" align="center">
+            {a.cancelled ? 'A cancelled activity can no longer be edited.' : 'This activity is over: it can no longer be edited.'}
+          </Text>
+        )}
         {!a.cancelled && !over ? (
           <Button
             label="Cancel activity"

@@ -8,7 +8,8 @@ import { Photo } from '@/components/visual/Photo';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { ActivityCard, ActivityCardState } from '@/features/server/activityCards';
-import { formatNumber, t as tx } from '@/i18n';
+import { t as tx } from '@/i18n';
+import { formatAmount } from '@/lib/format';
 import { cityWhen } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -37,7 +38,7 @@ export function cardPlace(c: Pick<ActivityCard, 'placeName' | 'areaId' | 'cityId
   return c.placeName && c.placeName !== area ? `${c.placeName} · ${area}` : area;
 }
 
-export const cardPrice = (c: Pick<ActivityCard, 'priceMinor' | 'currency'>) => (c.priceMinor ? `${c.currency} ${formatNumber(c.priceMinor / 100)}` : tx('Free'));
+export const cardPrice = (c: Pick<ActivityCard, 'priceMinor' | 'currency'>) => (c.priceMinor ? `${c.currency} ${formatAmount(c.priceMinor / 100)}` : tx('Free'));
 
 export const cardGoing = (c: Pick<ActivityCard, 'going' | 'capacity'>) =>
   c.capacity ? tx('{n}/{max} going', { n: c.going, max: c.capacity }) : `${c.going} ${tx('going')}`;
