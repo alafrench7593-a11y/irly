@@ -645,8 +645,30 @@ export async function cancelServerActivity(activityId: string): Promise<void> {
   changed('activities', 'inbox');
 }
 
-/** The host edits a plan: every screen showing it (lists, map, calendar, chat) gets the new version. */
-export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; endsAt?: Date | null; priceMinor?: number; capacity?: number | null; /** An IRLY library photo link, or null for the app's photo. */ libraryCover?: string | null }): Promise<void> {
+/** What the host may change on a plan (public.update_activity): only what is given is changed. */
+export type ActivityPatch = {
+  title?: string;
+  description?: string | null;
+  placeName?: string | null;
+  areaId?: string;
+  startsAt?: Date;
+  endsAt?: Date | null;
+  /** 0: free. In the activity's own currency, which never changes. */
+  priceMinor?: number;
+  /** null: unlimited. Never under the number of people going (the server checks). */
+  capacity?: number | null;
+  /** An IRLY library photo link, or null for the app's photo. */
+  libraryCover?: string | null;
+  /** One of her own uploads (covers.stageCover): its stored path. */
+  coverPath?: string;
+};
+
+/**
+ * The host edits a plan: every screen showing it (lists, map, calendar, chat) gets the new version.
+ * The server holds the rules (public.update_activity): only its creator, not once it is over or
+ * cancelled, capacity never under the people going; a new time or place tells them, once.
+ */
+export async function updateServerActivity(activityId: string, patch: ActivityPatch): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const row: Record<string, unknown> = {};
   if (patch.title !== undefined) row.title = patch.title.trim().slice(0, 80);
@@ -658,10 +680,18 @@ export async function updateServerActivity(activityId: string, patch: { title?: 
   if (patch.priceMinor !== undefined) row.price_minor = patch.priceMinor;
   if (patch.capacity !== undefined) row.capacity = patch.capacity;
   if (patch.libraryCover !== undefined) row.cover_path = patch.libraryCover;
-  // .select: row level security can match no row without any error (not the host), and nothing was saved.
-  const { data, error } = await supabase.from('activities').update(row).eq('id', activityId).select('id');
-  if (error) throw new Error(activityError(error.message));
-  if (!data?.length) throw new Error('Only the host can edit this activity');
+  if (patch.coverPath !== undefined) row.cover_path = patch.coverPath;
+  if (!Object.keys(row).length) return;
+  const { error } = await supabase.rpc('update_activity', { p_activity: activityId, p_patch: row });
+  if (error && (error.code === 'PGRST202' || error.code === '42883')) {
+    // A server that does not have update_activity yet: the row itself, under the host's own rule, as before.
+    // .select: row level security can match no row without any error (not the host), and nothing was saved.
+    const direct = await supabase.from('activities').update(row).eq('id', activityId).select('id');
+    if (direct.error) throw new Error(activityError(direct.error.message));
+    if (!direct.data?.length) throw new Error('Only the host can edit this activity');
+  } else if (error) {
+    throw new Error(/activity not found/i.test(error.message) ? 'Only the host can edit this activity' : activityError(error.message));
+  }
   changed('activities', 'inbox');
 }
 

@@ -13,6 +13,12 @@ export function formatPrice(amount: number, currency: City['currency']): string 
   return `AED ${formatNumber(amount)}`;
 }
 
+/**
+ * An amount of money: whole amounts as they are (« 120 »), the others always
+ * with their two decimals (« 37.50 », « 37,50 » in French), never « 37.5 ».
+ */
+export const formatAmount = (amount: number): string => formatNumber(amount, Number.isInteger(amount) ? undefined : 2);
+
 /** A count shown short: 860, 1.2k (« 1,2k » in French), 12k. */
 export function formatCount(n: number): string {
   if (n >= 10_000) return `${Math.round(n / 1000)}k`;

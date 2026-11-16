@@ -19,8 +19,8 @@ import { useAccount } from '@/features/auth/account';
 import { demoName, useDemoActivities } from '@/features/girl/demo';
 import { openHero } from '@/features/hero/heroStore';
 import { useServerActivities, type ServerActivity } from '@/features/server/activities';
-import { t as tx, useLang, formatNumber } from '@/i18n';
-import { formatPrice } from '@/lib/format';
+import { t as tx, useLang } from '@/i18n';
+import { formatAmount, formatPrice } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { useAppSpace } from '@/state/appSpace';
@@ -118,7 +118,7 @@ function fromServer(a: ServerActivity, viewer: CityId, demo: boolean): HomeActiv
     cityId: city.id,
     startsAt: a.startsAt,
     place: placeLabel(viewer, a.cityId, a.areaId, a.placeName),
-    price: a.priceMinor ? `${a.currency} ${formatNumber(a.priceMinor / 100)}` : tx('Free'),
+    price: a.priceMinor ? `${a.currency} ${formatAmount(a.priceMinor / 100)}` : tx('Free'),
     going: a.going,
     capacity: a.capacity,
     joined: a.joined,

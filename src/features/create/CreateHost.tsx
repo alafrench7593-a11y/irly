@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Image } from 'expo-image';
-import { a11y, t as tx, formatNumber } from '@/i18n';
+import { a11y, t as tx } from '@/i18n';
 import { ActivityIndicator, BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -29,7 +29,8 @@ import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/features/server/activities';
+import { createServerActivity, updateServerActivity, useGeocoderOn, useMyCommunityOptions, type ActivityPatch } from '@/features/server/activities';
+import { formatAmount } from '@/lib/format';
 import { useAccount } from '@/features/auth/account';
 import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
@@ -39,8 +40,9 @@ import { useAppSpace } from '@/state/appSpace';
 import { lastLibraryPhoto, rememberLibraryPhoto } from './lastPhoto';
 import { libraryFor, libraryKindOf, surprise } from './photoLibrary';
 import { PhotoLibrarySheet } from './PhotoLibrarySheet';
-import { useCreateStore, type CreateFormat } from './createStore';
-import { clockLabel, instants, localPlanDay, problemOf, type When } from './when';
+import { useCreateStore, type CreateFormat, type EditActivity } from './createStore';
+import { parsePrice, priceMax, priceText, type PriceProblem } from './price';
+import { clockLabel, instants, localPlanDay, problemOf, whenFrom, type When } from './when';
 
 const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'public', label: 'Public' },
@@ -49,13 +51,34 @@ const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'invite', label: 'Invite only' },
 ];
 const BUTTON = 52;
+/** The time at a tap (not during render), as in the date picker. */
+const clockNow = () => Date.now();
 
 /** Suggested prices in the destination's currency. */
 const PRICES: Record<'AED' | 'IDR', number[]> = {
   AED: [25, 50, 80, 150, 300],
   IDR: [50_000, 100_000, 250_000, 500_000, 1_000_000],
 };
-export const formatPrice = (n: number, currency: string) => (n ? `${currency} ${formatNumber(n)}` : tx('Free'));
+export const formatPrice = (n: number, currency: string) => (n ? `${currency} ${formatAmount(n)}` : tx('Free'));
+
+/** An amount as an example in the member's own way of writing numbers: « 37.50 », « 37,50 » in French. */
+const priceExample = (currency: string) => (currency === 'IDR' ? '50000' : formatAmount(37.5));
+
+/** Why a typed price is refused, said under the field. */
+function priceProblemText(problem: PriceProblem, currency: string): string {
+  switch (problem) {
+    case 'negative':
+      return tx('A price cannot be negative');
+    case 'decimals':
+      return tx('Two decimals at most, for example {example}', { example: priceExample(currency) });
+    case 'whole-only':
+      return tx('Whole amounts only in {currency}, for example {example}', { currency, example: priceExample(currency) });
+    case 'too-high':
+      return tx('The highest price is {max}', { max: `${currency} ${formatAmount(priceMax(currency))}` });
+    default:
+      return tx('Numbers only, for example {example}', { example: priceExample(currency) });
+  }
+}
 
 const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
   activity: { title: 'What do you want to do?', cta: 'Create activity' },
@@ -74,7 +97,13 @@ type Pick = { categoryId: CategoryKey; sub?: CatalogSub; activity?: CatalogActiv
  * drew it for the member), her own photo, or none (the app's photo of the
  * category). Shown big before publishing; never swapped behind her back.
  */
-type PhotoChoice = { type: 'library'; url: string; kind: string; auto: boolean } | { type: 'own'; uri: string } | { type: 'none' };
+type PhotoChoice = { type: 'library'; url: string; kind: string; auto: boolean } | { type: 'own'; uri: string } | { type: 'none' } | /** Editing: the photo it has today, untouched. */ { type: 'kept' };
+
+/** The activity being edited, as the form's pick: its own name, in its category (which stays as it is). */
+function editPick(edit: EditActivity): Pick {
+  const categoryId = (edit.categoryId in CATEGORY_BY_ID ? edit.categoryId : 'entertainment') as CategoryKey;
+  return { categoryId, sub: CATEGORY_BY_ID[categoryId].subs.find((x) => x.id === edit.subId), custom: edit.title };
+}
 
 /** The longest description the server keeps (activities.description). */
 const DESCRIPTION_MAX = 1000;
@@ -146,6 +175,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const cityId = preset?.cityId && preset.cityId in CITIES ? (preset.cityId as CityId) : myCity;
   const city = CITIES[cityId];
   const postPlan = useStore((s) => s.postPlan);
+  // Editing an activity (its host's « Edit »): the same form from « when and where », filled with it; nothing is created.
+  const edit = preset?.edit;
+  const firstStep = edit ? 2 : 0;
+  const offset = city.utcOffset ?? 4;
+  // The price stays in the activity's own currency.
+  const currency = edit?.currency ?? city.currency;
 
   const format: CreateFormat = preset?.format ?? 'session';
   const presetCategory = preset?.categoryId ? CATEGORY_BY_ID[preset.categoryId] : undefined;
@@ -153,28 +188,51 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // From a chat message: its words are the activity's name (a custom one), the member goes on to the date and place.
   const presetTitle = preset?.title?.trim().slice(0, 80);
   const [pick, setPick] = useState<Pick | null>(
-    presetTitle && presetTitle.length >= 3
-      ? { categoryId: presetCategory?.id ?? guessCategory(presetTitle), custom: presetTitle }
-      : presetCategory
-        ? { categoryId: presetCategory.id, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset?.activityId) }
-        : null,
+    edit
+      ? editPick(edit)
+      : presetTitle && presetTitle.length >= 3
+        ? { categoryId: presetCategory?.id ?? guessCategory(presetTitle), custom: presetTitle }
+        : presetCategory
+          ? { categoryId: presetCategory.id, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset?.activityId) }
+          : null,
   );
-  const [step, setStep] = useState(presetTitle && presetTitle.length >= 3 ? 2 : presetCategory ? (presetSub ? 2 : 1) : 0);
-  const [paid, setPaid] = useState(false);
-  const [price, setPrice] = useState(PRICES[city.currency][1]);
-  const [unlimited, setUnlimited] = useState(false);
+  const [step, setStep] = useState(edit ? 2 : presetTitle && presetTitle.length >= 3 ? 2 : presetCategory ? (presetSub ? 2 : 1) : 0);
+  const [paid, setPaid] = useState(Boolean(edit?.priceMinor));
+  // The price as typed (« 37,50 »): a suggested amount fills it, the member can type any other.
+  const suggested: number[] = PRICES[currency as keyof typeof PRICES] ?? [];
+  const [priceInput, setPriceInput] = useState(edit?.priceMinor ? priceText(edit.priceMinor) : String(suggested[1] ?? ''));
+  const typedPrice = parsePrice(paid ? priceInput : '', currency);
+  const price = typedPrice.ok ? typedPrice.amount : 0;
+  const priceProblem = typedPrice.ok ? null : typedPrice.problem;
+  // Editing: never fewer spots than the people already going.
+  const minSpots = Math.max(2, edit?.going ?? 0);
+  const maxSpots = edit ? 1000 : 60;
+  const [unlimited, setUnlimited] = useState(edit ? edit.capacity == null : false);
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
   // No date or time is chosen for the member: they pick both (in the city's time) before publishing.
   // From an IRLY event (« Go together »): its date and time, editable.
-  const [when, setWhen] = useState<When | null>(preset?.when ?? null);
+  // Editing: its date and time read back in the activity's city time, as they were saved.
+  const [savedWhen] = useState<When | null>(() => (edit ? whenFrom(edit.startsAt, edit.endsAt, offset) : null));
+  const [when, setWhen] = useState<When | null>(savedWhen ?? preset?.when ?? null);
   const [picking, setPicking] = useState(false);
   // Re-read every minute: a time picked earlier that has passed since is shown, never moved.
   const now = useNow();
-  const whenProblem = when ? problemOf(when, city.utcOffset ?? 4, now) : null;
+  // Editing: other changes never move the activity. Only a start that was changed must be in the future
+  // (an activity under way keeps its start; its end can still move).
+  const startChanged = Boolean(savedWhen && when && (when.day !== savedWhen.day || when.start.h !== savedWhen.start.h || when.start.m !== savedWhen.start.m));
+  const endChanged = Boolean(savedWhen && when && (when.end?.h !== savedWhen.end?.h || when.end?.m !== savedWhen.end?.m));
+  const whenProblem = !when ? null : !edit ? problemOf(when, offset, now) : startChanged ? problemOf(when, offset, now) : endChanged ? problemOf(when, offset, 0) : null;
   // No neighbourhood is chosen for the member either (it used to be the first one, Deira, silently).
   // From an IRLY event: its neighbourhood (when the city lists it).
-  const [area, setArea] = useState<string | null>(preset?.areaId && city.areas.some((a) => a.id === preset.areaId) ? preset.areaId : null);
+  const [area, setArea] = useState<string | null>(edit ? edit.areaId : preset?.areaId && city.areas.some((a) => a.id === preset.areaId) ? preset.areaId : null);
+  // Editing: the place as written on the activity (« Kite Beach, court 3 »). Left as the neighbourhood's
+  // name (what the form saves when none is given), it follows a change of neighbourhood.
+  const [placeEdit, setPlaceEdit] = useState(edit?.placeName ?? '');
+  const chooseArea = (next: string) => {
+    if (edit && area && placeEdit.trim() === areaName(city, area)) setPlaceEdit(areaName(city, next));
+    setArea(next);
+  };
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
   const [communityId, setCommunityId] = useState<string | null>(preset?.communityId ?? null);
@@ -185,16 +243,19 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // Optional: an exact address, so the activity can appear on the map once the server matched it.
   const geocoderOn = useGeocoderOn();
   const [address, setAddress] = useState('');
-  const [spots, setSpots] = useState(6);
-  const [description, setDescription] = useState(() => (preset?.description ?? '').slice(0, DESCRIPTION_MAX));
+  const [spots, setSpots] = useState(edit ? (edit.capacity ?? Math.max(6, minSpots)) : 6);
+  const [description, setDescription] = useState(() => (edit?.description ?? preset?.description ?? '').slice(0, DESCRIPTION_MAX));
   // The name as published: the activity's own by default, the member may rewrite it.
   const [titleEdit, setTitleEdit] = useState<string | null>(null);
   const signedIn = Boolean(useAccount());
   // IRLY Girl: the same form, in the Girl look, and the activity is for women only.
-  const girlSpace = useAppSpace() === 'girl';
+  // Editing: the activity's own space, which never changes.
+  const appSpace = useAppSpace();
+  const girlSpace = edit ? edit.girlOnly : appSpace === 'girl';
   // The photo: an IRLY library photo (drawn at random for the type until the member chooses), her own, or none.
   // From an IRLY event: the event's own photo (an IRLY library photo), until she picks another.
-  const [photoChoice, setPhotoChoice] = useState<PhotoChoice | null>(() => (preset?.cover ? { type: 'library', url: preset.cover, kind: '', auto: false } : null));
+  // Editing: the photo it has today, until she picks another.
+  const [photoChoice, setPhotoChoice] = useState<PhotoChoice | null>(() => (edit ? { type: 'kept' } : preset?.cover ? { type: 'library', url: preset.cover, kind: '', auto: false } : null));
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [upload, setUpload] = useState<'idle' | 'uploading' | 'failed'>('idle');
   const cover = photoChoice?.type === 'own' ? photoChoice.uri : null;
@@ -265,12 +326,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (step > 0) setStep(step - 1);
+      if (step > firstStep) setStep(step - 1);
       else hide();
       return true;
     });
     return () => sub.remove();
-  }, [step, hide]);
+  }, [step, firstStep, hide]);
 
   const circle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(p.value, [0, 1], [BUTTON / D, 1], Extrapolation.CLAMP) }],
@@ -307,7 +368,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     choosePhoto({ type: 'library', url, kind, auto: false });
   };
   const defaultPhoto = pick ? photo(ideaPhoto(pick.categoryId, pick.custom ?? pick.activity?.label ?? '', place, pick.sub?.id), 900, undefined, true) : undefined;
-  const previewUri = photoChoice?.type === 'library' ? photoChoice.url : photoChoice?.type === 'own' ? photoChoice.uri : defaultPhoto;
+  const previewUri = photoChoice?.type === 'library' ? photoChoice.url : photoChoice?.type === 'own' ? photoChoice.uri : photoChoice?.type === 'kept' ? (edit?.coverUrl ?? defaultPhoto) : defaultPhoto;
 
   const chooseCategory = (id: CategoryKey) => {
     setPick({ categoryId: id });
@@ -353,15 +414,98 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // One tap, one activity: a second tap before the button shows « Publishing… » is ignored.
   const sending = useRef(false);
   const router = useRouter();
+  // Editing: only what changed is sent (public.update_activity). The server holds the rules: its host only,
+  // not once it is over or cancelled, never fewer spots than the people going; a new time or place tells them.
+  const saveEdit = async () => {
+    if (!edit || publishing || sending.current) return;
+    if (finalTitle.length < 3) {
+      toast(tx('Give the activity a name (3 characters or more)'), 'edit', 'brand');
+      return;
+    }
+    // Checked again at the tap, as when creating: a new start picked earlier may have passed since.
+    const problem = whenProblem ?? (when && startChanged ? problemOf(when, offset, clockNow()) : null);
+    if (!when || problem) {
+      toast(tx(!when ? 'Pick a date and a start time' : problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start'), 'calendar', 'brand');
+      setStep(2);
+      return;
+    }
+    if (!area) {
+      toast(tx('Choose a neighbourhood'), 'pin', 'brand');
+      setStep(2);
+      return;
+    }
+    if (priceProblem) {
+      toast(priceProblemText(priceProblem, currency), 'banknote', 'brand');
+      return;
+    }
+    if (!unlimited && spots < minSpots) {
+      toast(tx('Spots: between {min} and 1000, or empty for unlimited', { min: minSpots }), 'users', 'brand');
+      return;
+    }
+    const patch: ActivityPatch = {};
+    if (finalTitle !== edit.title) patch.title = finalTitle;
+    const about = description.trim() || null;
+    if (about !== (edit.description?.trim() || null)) patch.description = about;
+    const placeName = placeEdit.trim() || null;
+    if (placeName !== (edit.placeName ?? null)) patch.placeName = placeName;
+    if (area !== edit.areaId) patch.areaId = area;
+    if (startChanged || endChanged) {
+      const moved = instants(when, offset);
+      if (startChanged) patch.startsAt = moved.startsAt;
+      patch.endsAt = moved.endsAt;
+    }
+    const capacity = unlimited ? null : spots;
+    if (capacity !== edit.capacity) patch.capacity = capacity;
+    const minor = typedPrice.ok ? typedPrice.minor : 0;
+    if (minor !== edit.priceMinor) patch.priceMinor = minor;
+    const libraryCover = photoChoice?.type === 'library' ? photoChoice.url : null;
+    if (libraryCover) patch.libraryCover = libraryCover;
+    else if (photoChoice?.type === 'none' && edit.coverUrl) patch.libraryCover = null;
+    // Nothing changed: nothing is sent, nobody is told.
+    if (!Object.keys(patch).length && !cover) {
+      hide();
+      return;
+    }
+    sending.current = true;
+    setPublishing(true);
+    try {
+      // Her own photo: usually uploaded already (as when creating); claimed before waiting.
+      const pending = cover ? stage(cover) : null;
+      if (cover && staged.current?.uri === cover) staged.current.sent = true;
+      if (pending) patch.coverPath = await pending;
+      await updateServerActivity(edit.id, patch);
+      // The photo now belongs to the activity: closing the form must not remove it.
+      if (staged.current?.uri === cover) staged.current = null;
+      if (libraryCover && kind) rememberLibraryPhoto(kind, libraryCover);
+      haptic('success');
+      toast('Saved. Everyone sees the new version', 'check', 'brand');
+      hide();
+    } catch (e) {
+      // As when creating: a clear refusal frees the staged photo, an unanswered try may have saved it.
+      if (cover && staged.current?.uri === cover) {
+        if (refusedForSure(e) && !staged.current.unsure) staged.current.sent = false;
+        else staged.current.unsure = true;
+      }
+      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+    } finally {
+      sending.current = false;
+      setPublishing(false);
+    }
+  };
+
   const post = async () => {
     if (!pick || !title || publishing || sending.current) return;
     if (finalTitle.length < 3) {
       toast(tx('Give the activity a name (3 characters or more)'), 'edit', 'brand');
       return;
     }
-    const offset = city.utcOffset ?? 4;
+    // A typed price that cannot be read is never published as free.
+    if (priceProblem) {
+      toast(priceProblemText(priceProblem, currency), 'banknote', 'brand');
+      return;
+    }
     // Checked again at the tap: a time picked earlier may have passed while the form stayed open.
-    const problem = when ? problemOf(when, offset, Date.now()) : null;
+    const problem = when ? problemOf(when, offset, clockNow()) : null;
     if (!when || problem) {
       toast(tx(!when ? 'Pick a date and a start time' : problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start'), 'calendar', 'brand');
       setStep(2);
@@ -374,7 +518,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     }
     const { startsAt, endsAt } = instants(when, offset);
     // Kept on this phone (signed out): the plan stores words ("Tomorrow", "Friday"), at most a week ahead.
-    const day = localPlanDay(when, Date.now(), offset);
+    const day = localPlanDay(when, clockNow(), offset);
     if (!signedIn && !day) {
       toast(tx('Sign in to plan more than a week ahead'), 'calendar', 'brand');
       return;
@@ -399,7 +543,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       spots: unlimited ? 0 : spots,
       areaId: area,
       format,
-      price: paid ? price : 0,
+      price,
       currency: city.currency,
     };
     // The photo exactly as previewed: the library photo chosen, her own photo, or none.
@@ -481,15 +625,25 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       <Animated.View style={[StyleSheet.absoluteFill, { paddingTop: insets.top + space[6] }, content]}>
         <Ambient variant="hero" />
         <View style={styles.head}>
-          {step > 0 ? (
+          {step > firstStep ? (
             <PressableScale haptic="select" scaleTo={0.9} onPress={() => setStep(step - 1)} accessibilityLabel="Previous step" style={styles.back} hitSlop={8}>
               <Icon name="chevronLeft" size={22} color={t.c.text} />
             </PressableScale>
           ) : null}
           <Text variant="overline" tone="secondary">
-            {tx('Step {n} / {total}', { n: step + 1, total: 4 })}{category ? ` · ${tx(category.label)}` : ''}
+            {tx('Step {n} / {total}', { n: step + 1 - firstStep, total: 4 - firstStep })}{category ? ` · ${tx(category.label)}` : ''}
           </Text>
         </View>
+        {edit ? (
+          // Editing: said on both steps, with the activity's name as it is today.
+          <View style={styles.origin} accessibilityLabel={tx('Editing {name}', { name: edit.title })}>
+            <GlassLayer radius={radius.pill} level="thin" />
+            <Icon name="edit" size={14} color={t.c.text} />
+            <Text variant="caption" raw numberOfLines={1} style={{ flexShrink: 1 }}>
+              {tx('Editing {name}', { name: edit.title })}
+            </Text>
+          </View>
+        ) : null}
         {preset?.eventKey && preset.eventTitle ? (
           // Made from an IRLY event: the event it is for, on every step.
           <View style={styles.origin} accessibilityLabel={tx('For the event {name}', { name: preset.eventTitle })}>
@@ -677,7 +831,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   When and where?
                 </Text>
               </Animated.View>
-              {pick?.custom ? (
+              {pick?.custom && !edit ? (
                 <Animated.View entering={enter.rise(1)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
                     Category · suggested by IRLY, change it if needed
@@ -693,7 +847,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <Text variant="overline" tone="secondary">
                   When
                 </Text>
-                <WhenField value={when} utcOffset={city.utcOffset ?? 4} onPress={() => setPicking(true)} invalid={Boolean(whenProblem)} />
+                <WhenField value={when} utcOffset={offset} onPress={() => setPicking(true)} invalid={Boolean(whenProblem)} />
                 {whenProblem ? (
                   <Text variant="caption" tone="critical">
                     {whenProblem === 'past' ? tx('This time has already passed in {city}. Pick a later time.', { city: city.name }) : 'The end must be after the start.'}
@@ -702,27 +856,35 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <Text variant="caption" tone="secondary">
                     {tx('Pick a date and a start time ({city} time)', { city: city.name })}
                   </Text>
+                ) : edit && edit.going > 1 && (startChanged || endChanged) ? (
+                  <Text variant="caption" tone="secondary">
+                    The people going will be told about the new time.
+                  </Text>
                 ) : null}
-                <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={city.utcOffset ?? 4} cityName={city.name} />
+                <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={offset} cityName={city.name} />
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
                   {place ? tx('Meeting point near {place}', { place }) : 'Where'}
                 </Text>
-                <AreaPicker cityId={city.id} value={area} onChange={setArea} />
+                <AreaPicker cityId={city.id} value={area} onChange={chooseArea} />
+                {edit ? <Field value={placeEdit} onChangeText={(v) => setPlaceEdit(v.slice(0, 120))} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} /> : null}
               </Animated.View>
-              <Animated.View entering={enter.rise(4)} style={styles.block}>
-                <Text variant="overline" tone="secondary">
-                  Who can see it
-                </Text>
-                <View style={styles.wrap}>
-                  {PRIVACY.map((x) => (
-                    <Chip key={x.id} size="sm" label={x.label} selected={privacy === x.id} onPress={() => setPrivacy(x.id)} />
-                  ))}
-                </View>
-              </Animated.View>
+              {/* Editing: who can see it and its community stay as they were when people joined. */}
+              {edit ? null : (
+                <Animated.View entering={enter.rise(4)} style={styles.block}>
+                  <Text variant="overline" tone="secondary">
+                    Who can see it
+                  </Text>
+                  <View style={styles.wrap}>
+                    {PRIVACY.map((x) => (
+                      <Chip key={x.id} size="sm" label={x.label} selected={privacy === x.id} onPress={() => setPrivacy(x.id)} />
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
               {/* Made from a community's post: it stays in that community (the server checks it too), named above. */}
-              {signedIn && myCommunities.length && !(preset?.sourcePostId && preset.communityId) ? (
+              {!edit && signedIn && myCommunities.length && !(preset?.sourcePostId && preset.communityId) ? (
                 <Animated.View entering={enter.rise(5)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
                     In a community (optional)
@@ -735,7 +897,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   </View>
                 </Animated.View>
               ) : null}
-              {geocoderOn ? (
+              {geocoderOn && !edit ? (
                 <Animated.View entering={enter.rise(6)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
                     Exact address (optional)
@@ -782,24 +944,30 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(1)} style={[styles.block, styles.wrap, { justifyContent: 'center' }]}>
-                {[2, 4, 10, 50].map((n) => (
+                {[2, 4, 10, 50].filter((n) => n >= minSpots).map((n) => (
                   <Chip key={n} size="sm" label={`${n}`} selected={!unlimited && spots === n} onPress={() => { setUnlimited(false); setSpots(n); }} />
                 ))}
                 <Chip size="sm" label="Unlimited" selected={unlimited} onPress={() => setUnlimited(true)} />
               </Animated.View>
               <Animated.View entering={enter.rise(1)} style={[styles.block, styles.stepperRow, unlimited ? { opacity: 0.35 } : null]} pointerEvents={unlimited ? 'none' : 'auto'}>
-                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.max(2, n - 1))} style={styles.stepBtn} accessibilityLabel="Fewer spots">
+                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.max(minSpots, n - 1))} style={styles.stepBtn} accessibilityLabel="Fewer spots">
                   <GlassLayer radius={28} level="thin" />
                   <Icon name="minus" size={22} color={t.c.text} />
                 </PressableScale>
                 <Text variant="displayXL" style={{ minWidth: 90 }} align="center">
                   {spots}
                 </Text>
-                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.min(60, n + 1))} style={styles.stepBtn} accessibilityLabel="More spots">
+                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.min(maxSpots, n + 1))} style={styles.stepBtn} accessibilityLabel="More spots">
                   <GlassLayer radius={28} level="thin" />
                   <Icon name="plus" size={22} color={t.c.text} />
                 </PressableScale>
               </Animated.View>
+              {edit && edit.going > 1 ? (
+                // Editing: why the spots stop there (the server refuses fewer, too).
+                <Text variant="caption" tone="secondary" align="center" raw style={styles.spotsNote}>
+                  {tx('{n} going: no fewer than {n} spots', { n: edit.going })}
+                </Text>
+              ) : null}
               <Animated.View entering={enter.rise(2)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
                   Price
@@ -809,10 +977,41 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <Chip size="sm" label="Paid" icon="banknote" selected={paid} onPress={() => setPaid(true)} />
                 </View>
                 {paid ? (
-                  <Animated.View entering={FadeIn.duration(motion.fast)} style={styles.wrap}>
-                    {PRICES[city.currency].map((n) => (
-                      <Chip key={n} size="sm" label={formatPrice(n, city.currency)} selected={price === n} onPress={() => setPrice(n)} />
-                    ))}
+                  <Animated.View entering={FadeIn.duration(motion.fast)} style={{ gap: 10 }}>
+                    <View style={styles.wrap}>
+                      {suggested.map((n) => (
+                        <Chip key={n} size="sm" label={formatPrice(n, currency)} selected={typedPrice.ok && price === n} onPress={() => setPriceInput(String(n))} />
+                      ))}
+                    </View>
+                    {/* Any amount, typed by hand: what is typed stays as typed (never rewritten under the finger), and is checked below. */}
+                    <Field
+                      value={priceInput}
+                      onChangeText={setPriceInput}
+                      placeholder={tx('Another amount in {currency}', { currency })}
+                      accessibilityLabel="Price"
+                      icon="banknote"
+                      keyboardType="decimal-pad"
+                      inputMode="decimal"
+                      returnKeyType="done"
+                      autoCorrect={false}
+                      maxLength={14}
+                      invalid={Boolean(priceProblem)}
+                      testID="create-price"
+                      trailing={
+                        <Text variant="label" tone="secondary" raw>
+                          {currency}
+                        </Text>
+                      }
+                    />
+                    {priceProblem ? (
+                      <Text variant="caption" tone="critical" raw>
+                        {priceProblemText(priceProblem, currency)}
+                      </Text>
+                    ) : (
+                      <Text variant="caption" tone="secondary" raw>
+                        {price ? tx('Each person pays {price}', { price: formatPrice(price, currency) }) : tx('Empty or 0: the activity is free')}
+                      </Text>
+                    )}
                   </Animated.View>
                 ) : null}
               </Animated.View>
@@ -843,10 +1042,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                             : tx('Your photo')
                         : photoChoice?.type === 'library'
                           ? tx('IRLY library')
-                          : tx('IRLY photo of the category')}
+                          : photoChoice?.type === 'kept' && edit?.coverUrl
+                            ? tx('Current photo')
+                            : tx('IRLY photo of the category')}
                     </Text>
                   </View>
-                  {photoChoice && photoChoice.type !== 'none' ? (
+                  {photoChoice && photoChoice.type !== 'none' && !(photoChoice.type === 'kept' && !edit?.coverUrl) ? (
                     <PressableScale haptic="select" disabled={publishing} onPress={() => choosePhoto({ type: 'none' })} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel={tx('Remove the photo')} hitSlop={8}>
                       <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
                     </PressableScale>
@@ -901,7 +1102,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {finalTitle || title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {when ? whenText(when, city.utcOffset ?? 4, now) : tx('Time to pick')} · {place ?? (area ? areaName(city, area) : tx('Neighbourhood to pick'))} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {when ? whenText(when, offset, now) : tx('Time to pick')} · {(edit ? placeEdit.trim() || undefined : place) ?? (area ? areaName(city, area) : tx('Neighbourhood to pick'))} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(price, currency)}
+                    {edit ? null : ` · ${tx(PRIVACY.find((x) => x.id === privacy)?.label ?? '')}`}
                   </Text>
                 </View>
               </Animated.View>
@@ -923,7 +1125,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             {step < 3 ? (
               <Button label="Next" iconRight="arrowRight" full disabled={!canNext} haptic="select" onPress={() => setStep(step + 1)} />
             ) : (
-              <Button label={publishing ? 'Publishing…' : FORMAT[format].cta} icon="send" full haptic={false} loading={publishing} disabled={publishing} onPress={post} />
+              <Button label={edit ? (publishing ? 'Saving…' : 'Save changes') : publishing ? 'Publishing…' : FORMAT[format].cta} icon={edit ? 'check' : 'send'} full haptic={false} loading={publishing} disabled={publishing} onPress={edit ? saveEdit : post} />
             )}
           </View>
         ) : null}
@@ -1000,6 +1202,7 @@ const styles = StyleSheet.create({
   result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.lg, overflow: 'hidden' },
   dot: { width: 10, height: 10, borderRadius: 5 },
   custom: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed' },
+  spotsNote: { paddingHorizontal: space.gutter, marginTop: -space[3] },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
   stepBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   desc: { minHeight: 90, borderRadius: radius.md, padding: 14, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },

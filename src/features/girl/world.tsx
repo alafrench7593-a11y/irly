@@ -19,8 +19,8 @@ import { DEMO } from '@/config/app';
 import { demoPhoto, useDemoEngagement, useDemoGirlFeed } from './demo';
 import type { ServerActivity } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
-import { t as tx, formatNumber } from '@/i18n';
-import { hueOf } from '@/lib/format';
+import { t as tx } from '@/i18n';
+import { formatAmount, hueOf } from '@/lib/format';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityWhen, offsetOf, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
@@ -316,7 +316,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
             {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })}
           </Text>
           <Text variant="caption" color={girl.inkSoft}>
-            {a.priceMinor === 0 ? tx('Free') : `${formatNumber(a.priceMinor / 100, 0)} ${a.currency}`}
+            {a.priceMinor === 0 ? tx('Free') : `${formatAmount(a.priceMinor / 100)} ${a.currency}`}
           </Text>
         </View>
       </View>
@@ -384,7 +384,7 @@ const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a
           </Text>
         </View>
         <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-          {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })} · {a.priceMinor === 0 ? tx('Free') : `${formatNumber(a.priceMinor / 100, 0)} ${a.currency}`}
+          {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })} · {a.priceMinor === 0 ? tx('Free') : `${formatAmount(a.priceMinor / 100)} ${a.currency}`}
         </Text>
       </View>
     </PressableScale>
