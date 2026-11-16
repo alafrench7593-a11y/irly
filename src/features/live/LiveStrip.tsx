@@ -15,14 +15,14 @@ import { enter } from '@/motion/enter';
 import { useServerIrl } from '@/features/server/social';
 import { useCityId, useStore } from '@/state/store';
 import { useLives } from './liveStore';
-
-/** One face of "Live now": a member's Live on the server, or one of this phone (demo, not yet sent). */
-type LiveFace = { key: string; name: string; text: string; hue: number; photo?: string; userId?: string; friend: boolean };
+import { groupLiveFaces, type LiveEntry, type LiveFace } from './liveFaces';
 
 /**
  * Everyone live right now, as IRL shows them: the members' Lives from the
  * server (the same feed as the IRL tab, Realtime included, so a Live you
  * post shows here at once), then the ones only this phone has. Newest first.
+ * One face per member: a member who posted several Lives is still one face
+ * (groupLiveFaces), never the same profile twice.
  */
 export function useLiveFaces(): LiveFace[] {
   const cityId = useCityId();
@@ -31,14 +31,15 @@ export function useLiveFaces(): LiveFace[] {
   const me = useStore((s) => s.profile.name) || tx('You');
   const connections = useStore((s) => s.connections);
   return useMemo(() => {
-    const server: LiveFace[] = [...posts]
+    const server: LiveEntry[] = [...posts]
       .sort((a, b) => b.createdAt - a.createdAt)
-      .map((p) => ({ key: p.id, name: p.mine ? me : p.firstName, text: p.body, hue: (p.authorId.charCodeAt(0) * 37) % 360, userId: p.authorId, friend: p.friend }));
-    const local: LiveFace[] = lives.map((l) => {
+      // A post signed IRLY is IRLY's face, apart from the same person's own Lives. Mine: one face with the ones only this phone has.
+      .map((p) => ({ id: p.id, author: p.asIrly ? `irly:${p.authorId}` : p.mine ? 'me' : p.authorId, at: p.createdAt, name: p.mine ? me : p.firstName, text: p.body, hue: (p.authorId.charCodeAt(0) * 37) % 360, userId: p.authorId, friend: p.friend }));
+    const local: LiveEntry[] = lives.map((l) => {
       const p = l.authorId === 'me' ? undefined : findPerson(l.authorId);
-      return { key: l.id, name: p?.name ?? me, text: l.text, hue: p?.hue ?? 0, photo: p?.photo, friend: connections[l.authorId] === 'connected' };
+      return { id: l.id, author: l.authorId, at: l.postedAt, name: p?.name ?? me, text: l.text, hue: p?.hue ?? 0, photo: p?.photo, friend: connections[l.authorId] === 'connected' };
     });
-    return [...server, ...local];
+    return groupLiveFaces([...server, ...local]);
   }, [posts, lives, me, connections]);
 }
 

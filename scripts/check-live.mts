@@ -6,6 +6,7 @@
 // journal entry, and a Live is never published twice.
 import { LivePublishError, outcomeOf, runPublish, settlePending, isAnswer, isMissingFunction, type PendingLive, type AbandonAnswer } from '../src/features/live/livePublish.ts';
 import { feedRatio, FEED_MAX_RATIO, FEED_MIN_RATIO, mediaKey, mediaRatio } from '../src/features/live/liveRatio.ts';
+import { groupLiveFaces, LIVE_TEXT_MAX, POST_TEXT_MAX, textLimit, type LiveEntry } from '../src/features/live/liveFaces.ts';
 
 let failed = 0;
 let passed = 0;
@@ -296,7 +297,37 @@ function pure() {
   check(mediaKey('https://x.supabase.co/storage/v1/object/sign/irl-media/u1/a.jpg?token=1') === 'irl-media/u1/a.jpg' && mediaKey('file:///tmp/a.jpg') === 'file:///tmp/a.jpg', 'mediaKey: a signed link and a local file');
 }
 
+/** "Live now": one face per member, whatever the number of Lives, none dropped. */
+function faces() {
+  const live = (id: string, author: string, at: number, text = id, friend = false): LiveEntry => ({ id, author, at, name: author.toUpperCase(), text, hue: 0, userId: author === 'me' ? undefined : author, friend });
+  // The owner's case: Bea posted three Lives, Dina one, in between. Newest first, as the feed gives them.
+  const feed = [live('b3', 'bea', 40), live('d1', 'dina', 30), live('b2', 'bea', 20), live('b1', 'bea', 10)];
+  const g = groupLiveFaces(feed);
+  check(g.length === 2 && g.map((f) => f.key).join() === 'bea,dina', 'three Lives by one member and one by another: two faces, newest member first');
+  check(g[0].lives.map((l) => l.id).join() === 'b1,b2,b3' && g[1].lives.length === 1, 'her three Lives are behind her face, oldest first, none dropped');
+  check(g[0].text === 'b3', 'the face says her latest Live');
+  check(new Set(g.map((f) => f.key)).size === g.length, 'keys are unique (one per member)');
+  const two = groupLiveFaces([live('b2', 'bea', 20), live('b1', 'bea', 10)]);
+  check(two.length === 1 && two[0].lives.length === 2, 'two Lives by one member: one face');
+  // Posted one after the other, then reloaded: whatever the order the entries come in, the result is the same people.
+  const shuffled = groupLiveFaces([live('b1', 'bea', 10), live('d1', 'dina', 30), live('b3', 'bea', 40), live('b2', 'bea', 20)]);
+  check(shuffled.length === 2 && shuffled[0].text === 'b3' && shuffled[0].lives.map((l) => l.id).join() === 'b1,b2,b3', 'order of arrival does not change who is shown, nor her latest');
+  // My own: the server's copies and the ones only this phone has are one face; the same Live twice counts once.
+  const mine = groupLiveFaces([live('m2', 'me', 50), live('m1', 'me', 45), live('m2', 'me', 50), live('local', 'me', 5)]);
+  check(mine.length === 1 && mine[0].lives.map((l) => l.id).join() === 'local,m1,m2', 'my Lives (sent, and on this phone): one face, each once');
+  check(groupLiveFaces([live('x', 'bea', 1, 'x', false), live('y', 'bea', 2, 'y', true)])[0].friend, 'a member I follow stays one I follow');
+  check(groupLiveFaces([]).length === 0, 'nobody live: no face');
+  const total = groupLiveFaces(feed).reduce((n, f) => n + f.lives.length, 0);
+  check(total === feed.length, 'every Live is kept');
+  // Limits, as the server holds them (irl_posts_body_check: 160; community_posts: 2000).
+  check(LIVE_TEXT_MAX === 160 && POST_TEXT_MAX === 2000, 'limits match the server');
+  check(!textLimit('a'.repeat(80), 160).count && textLimit('a'.repeat(81), 160).count, 'a Live shows its count from half the limit');
+  check(!textLimit('a'.repeat(1800), 2000).count && textLimit('a'.repeat(1801), 2000).count, 'a community post shows its count in the last 200');
+  check(!textLimit('a'.repeat(160), 160).over && textLimit('a'.repeat(161), 160).over && textLimit('a'.repeat(300), 160).length === 300, 'at the limit: fine; one more: over');
+}
+
 pure();
+faces();
 await scenarios();
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

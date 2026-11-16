@@ -20,6 +20,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MyPlan } from '@/state/store';
 import { rememberRatio } from '@/features/live/liveRatio';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
+import { LIVE_TEXT_MAX } from '@/features/live/liveFaces';
+import { t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { useAppSpace } from '@/state/appSpace';
 
@@ -354,6 +356,16 @@ async function uploadIrlFile(path: string, uri: string, type: string, onProgress
   }
 }
 
+/**
+ * A refusal of a Live, in the member's words. A text over the server's limit
+ * (irl_posts_body_check) is said as that limit, so the member knows what to
+ * change, instead of « some details are not valid ».
+ */
+function liveRefusal(message: string, body: string): string {
+  if (/irl_posts_body_check/.test(message) && body.length > LIVE_TEXT_MAX) return tx('Too long: {max} characters at most', { max: LIVE_TEXT_MAX });
+  return friendlyError(message);
+}
+
 /** "Anyone can join": the activity the Live makes, saved with it (never before, never without it). */
 export type LiveActivityPlan = { plan: Omit<MyPlan, 'id' | 'createdAt'>; at: Date };
 
@@ -466,7 +478,7 @@ export async function postServerIrl(input: {
     const { data, error } = await sb.rpc('post_live', { p_post: full, p_activity: activity });
     if (!error && data) return data as SavedLive;
     if (error && isMissingFunction(error)) return saveLegacy(sb, uid, full, input.activity ?? null);
-    throw new LivePublishError(friendlyError(error?.message ?? 'Could not post'), error && isAnswer(error) ? 'refused' : 'unknown');
+    throw new LivePublishError(liveRefusal(error?.message ?? 'Could not post', input.body), error && isAnswer(error) ? 'refused' : 'unknown');
   };
   const row = await runPublish<SavedLive>(
     { postId: id, uid, files, body: input.body, activity: Boolean(input.activity), at: Date.now(), prior: input.prior },
@@ -569,16 +581,17 @@ async function saveLegacy(sb: SupabaseClient, uid: string, post: Record<string, 
       const { data: again } = await sb.from('irl_posts').select('id, created_at, visibility, activity_id').eq('id', id).eq('author_id', uid).maybeSingle();
       if (again) return { ...(again as Omit<SavedLive, 'replayed'>), replayed: true };
     }
-    if (!isAnswer(insert.error)) throw new LivePublishError(friendlyError(insert.error.message), 'unknown');
+    const refusal = liveRefusal(insert.error.message, String(post.body ?? ''));
+    if (!isAnswer(insert.error)) throw new LivePublishError(refusal, 'unknown');
     // Refused: the activity made for it goes too (or the Live is settled later, never left half done).
     if (activityId) {
       try {
         await legacyAbandon(sb, uid, id);
       } catch {
-        throw new LivePublishError(friendlyError(insert.error.message), 'unknown');
+        throw new LivePublishError(refusal, 'unknown');
       }
     }
-    throw new LivePublishError(friendlyError(insert.error.message), 'refused');
+    throw new LivePublishError(refusal, 'refused');
   }
   if (!row) throw new LivePublishError('Could not post', 'unknown');
   row = row as Omit<SavedLive, 'replayed'>;
@@ -707,8 +720,10 @@ export async function editServerIrl(id: string, body: string): Promise<void> {
   if (!supabase) return;
   const text = body.trim();
   if (!text) throw new Error('Write something');
-  const { error } = await supabase.rpc('edit_live_post', { p_id: id, p_body: text.slice(0, 160) });
-  if (error) throw new Error(friendlyError(error.message));
+  // Never cut without a word: the editor holds the limit; a longer text is refused here.
+  if (text.length > LIVE_TEXT_MAX) throw new Error(tx('Too long: {max} characters at most', { max: LIVE_TEXT_MAX }));
+  const { error } = await supabase.rpc('edit_live_post', { p_id: id, p_body: text });
+  if (error) throw new Error(liveRefusal(error.message, text));
   bumpIrl();
 }
 
