@@ -1551,4 +1551,154 @@ export const POSTS = [
       { label: 'Bali pour les digital nomads : communauté et coworking', path: 'fr/bali/digital-nomads/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-summer-dubai-social-life',
+    path: 'blog/summer-dubai-social-life/',
+    city: 'Dubai',
+    published: '2026-11-16',
+    title: 'Summer in Dubai: Keeping a Social Life Going | IRLY',
+    description: 'Summer in Dubai empties the calendar as many residents travel. How to keep a social life: find who is staying, move plans indoors, keep one weekly slot.',
+    h1: 'Summer in Dubai: keeping a social life when many people travel',
+    lead: 'Yes, you can keep a social life through a Dubai summer, but not by waiting for the usual plans to come back. From roughly June to September many residents travel and the heat moves life indoors and into the evening, so the people who stay have to find each other. Find out who is around, switch to plans that suit the season, and keep one fixed slot a week.',
+    sections: [
+      {
+        h2: 'What changes between June and September',
+        html: `<p>Two things happen at once. The heat and humidity take away most of what was easy in winter: the beach walk, the terrace, the picnic, the outdoor run at a civilised hour. And a good part of your circle leaves, some for a fortnight, some for most of the season, especially families once school is out.</p>
+<p>Group chats go quiet, regular sessions pause or shrink, and a plan that used to gather six people now has two. It can feel as if the city has emptied. It has not: plenty of people stay, for work or by choice, and many of them are looking at the same blank calendar. Summer is less a dead season than a smaller one, and small groups are where acquaintances turn into friends.</p>`,
+      },
+      {
+        h2: 'Find out who is staying, before everyone scatters',
+        html: `<p>Most people guess who will be around, and guess low. Ask instead, in May or early June, while everyone still answers.</p>
+<ul>
+<li><strong>Ask in each group you belong to.</strong> “Who is here in July and August?” in the chat of your run group, your class or your team.</li>
+<li><strong>Note the dates.</strong> Absences overlap less than you expect: someone gone in July is back in August, when someone else leaves.</li>
+<li><strong>Look beyond your close circle.</strong> The colleague or neighbour you only say hello to may be here all summer. The quiet season is a good excuse: “Everyone I know is away, fancy a coffee?”</li>
+<li><strong>Start a summer chat.</strong> A small group of those who stay, with one rule: someone posts a plan, whoever is free joins.</li>
+</ul>`,
+      },
+      {
+        h2: 'Move plans indoors and to the edges of the day',
+        html: `<p>What keeps working:</p>
+<ul>
+<li><strong>Indoor sport:</strong> a climbing wall, indoor padel or football, a gym class.</li>
+<li><strong>Anything around a table:</strong> board games, a quiz, a cooking or pottery class, a long breakfast.</li>
+<li><strong>Air-conditioned culture:</strong> a museum, an exhibition, a film followed by a meal, so there is time to talk about it.</li>
+<li><strong>Walking indoors:</strong> a lap or two of a large mall with one other person, early, before it gets busy, then a coffee.</li>
+<li><strong>Late evenings and early mornings:</strong> after sunset the city comes back to life, and a late dinner or a dessert replaces the afternoon coffee. Groups that stay outdoors usually meet around sunrise; even then it is hot and humid, so keep it short, take water and stop if you feel unwell.</li>
+</ul>
+<p>Check with each venue or group what continues in summer, because timetables change. Our guide to <a href="../../dubai/make-friends/">making friends in Dubai</a> has a passage on indoor places in summer, and the <a href="../../dubai/group-activities/">15 group activities to meet people</a> give formats, many of which move indoors without trouble.</p>`,
+      },
+      {
+        h2: 'Lower the bar: two people is a plan',
+        html: `<p>In winter a plan can wait until enough people confirm. In summer that plan never happens. Change the rule.</p>
+<ul>
+<li><strong>Go ahead with two.</strong> One person and a fixed time is enough.</li>
+<li><strong>Keep one slot every week.</strong> The same evening, the same kind of plan, announced in the summer chat. People drop in when they are in town, and nobody has to organise from scratch.</li>
+<li><strong>Invite people home.</strong> A dinner, a film, a board game, each guest bringing a dish. Keep this for people you already know; with someone new, start in a public place.</li>
+<li><strong>Be the one who proposes.</strong> The usual organisers are often among those away. The group is waiting for somebody to speak first. <a href="../start-small-group-weekly-walk-book-club/">How to start a small group yourself</a> covers the practical side.</li>
+</ul>`,
+      },
+      {
+        h2: 'Meet the others who stayed',
+        html: `<p>If nearly all your circle has gone, look for people in the same position. Communities and clubs that run all year keep a core of regulars through the summer, and newcomers arrive in every season: someone who landed in July knows nobody and is glad of an invitation. Ask your gym, your class or your building what continues, and say yes to the smaller sessions.</p>
+<p>Apps and online groups are another route, useful when your usual channels have gone silent. IRLY is one of them: an app to meet people who share your interests and do things together in real life, not a dating app. You join communities by interest, which puts you straight into their chat, and any member can create an activity with a date, a time and a neighbourhood, and choose how many people can come. It is free, available on the App Store for iPhone and in the browser; the Android app is coming soon. <a href="../../irly/how-it-works/">How IRLY works</a> describes the steps. Whichever route you take, the test is the same: does it lead to a real plan this week?</p>`,
+      },
+      {
+        h2: 'Keep the thread with those away, and prepare September',
+        html: `<p>A photo, a voice note, a “how is the holiday going?” every couple of weeks keeps the thread and makes the return natural. Fix a date for early September before they go: a dinner already in the diary is something to look forward to on both sides. And if you are the one leaving for part of the summer, say when you are back and propose the first plan yourself.</p>
+<p>A quiet month is normal; weeks of low mood are something else. If you feel down most days, sleep badly or no longer want to see anyone, talk to a doctor or a mental health professional. <a href="../../dubai/lonely/">Lonely in Dubai: what actually helps</a> goes further, and <a href="../lonely-weekends-dubai/">lonely on weekends in Dubai</a> deals with the empty Saturday, which summer makes more frequent.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is Dubai empty in summer?', a: 'No. Many residents travel, often for several weeks, but plenty stay for work or by choice. The city is quieter, and most of what happens moves indoors and after sunset.' },
+      { q: 'Where can I meet people in Dubai in summer?', a: 'Indoors: sports halls, climbing walls, classes, board game evenings, museums, and groups that run all year. Ask each one whether it continues in summer, since schedules often change.' },
+      { q: 'When does social life pick up again in Dubai?', a: 'Usually from September, when schools reopen and travellers come back. Outdoor plans return more gradually, as the heat eases through the autumn.' },
+      { q: 'Is summer a bad time to arrive in Dubai and make friends?', a: 'It is slower, not bad. Groups are smaller, so you speak to the same people several times, and you already know a few faces when the others return in September.' },
+    ],
+    cta: { title: 'Staying in Dubai this summer?', body: 'Join a community around what you like, or create an activity and see who is around.', label: 'Join a community' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Meet new people in Dubai: 15 group activities', path: 'dubai/group-activities/' },
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
+      { label: 'How to start a small group yourself', path: 'blog/start-small-group-weekly-walk-book-club/' },
+      { label: 'Working from home in Dubai and feeling isolated', path: 'blog/working-from-home-dubai-isolated/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-summer-dubai-social-life',
+    path: 'fr/blog/ete-dubai-vie-sociale/',
+    city: 'Dubaï',
+    published: '2026-11-16',
+    title: 'Été à Dubaï : garder une vie sociale malgré les départs | IRLY',
+    description: 'L’été à Dubaï, beaucoup de résidents partent et l’agenda se vide. Garde une vie sociale : repère qui reste, passe en intérieur, tiens un créneau fixe.',
+    h1: 'Été à Dubaï : garder une vie sociale quand beaucoup de gens partent',
+    lead: 'Oui, on peut garder une vie sociale pendant l’été à Dubaï, à condition de ne pas attendre que les plans habituels reviennent. De juin à septembre environ, beaucoup de résidents voyagent et la chaleur déplace la vie en intérieur et en soirée : ceux qui restent doivent se trouver. Repère qui est là, passe à des plans adaptés à la saison et garde un créneau fixe par semaine.',
+    sections: [
+      {
+        h2: 'Ce qui change entre juin et septembre',
+        html: `<p>Deux choses arrivent en même temps. La chaleur et l’humidité retirent presque tout ce qui était simple en hiver : la balade sur la plage, la terrasse, le pique-nique, le footing à une heure raisonnable. Et une bonne partie de ton cercle s’en va, pour quinze jours ou pour presque toute la saison, surtout les familles une fois l’école finie.</p>
+<p>Les groupes de discussion se taisent, les séances régulières s’arrêtent ou se réduisent, et le plan qui réunissait six personnes n’en compte plus que deux. On croit la ville vidée. Elle ne l’est pas : beaucoup de gens restent, pour le travail ou par choix, et regardent le même agenda désert. L’été n’est pas une saison morte, c’est une saison en petit comité, et c’est en petit comité que les connaissances deviennent des amis.</p>`,
+      },
+      {
+        h2: 'Repère qui reste, avant que tout le monde se disperse',
+        html: `<p>On devine qui sera là, et on se trompe presque toujours à la baisse. Pose plutôt la question, dès mai ou début juin, tant que tout le monde répond encore.</p>
+<ul>
+<li><strong>Demande dans chacun de tes groupes.</strong> « Qui est là en juillet et en août ? » dans la conversation de ton groupe de course, de ton cours ou de ton équipe.</li>
+<li><strong>Note les dates.</strong> Les absences se chevauchent moins qu’on ne le croit : celui qui part en juillet revient en août, quand un autre s’en va.</li>
+<li><strong>Regarde au-delà de tes proches.</strong> Le collègue ou la voisine que tu te contentes de saluer passe peut-être tout l’été ici. La saison creuse fournit le prétexte : « Tous mes amis sont partis, ça te dit un café ? »</li>
+<li><strong>Crée une conversation d’été.</strong> Un petit groupe de ceux qui restent, avec une seule règle : quelqu’un propose un plan, vient qui peut.</li>
+</ul>`,
+      },
+      {
+        h2: 'Passe en intérieur, tôt le matin ou tard le soir',
+        html: `<p>Ce qui continue de marcher :</p>
+<ul>
+<li><strong>Le sport en salle :</strong> un mur d’escalade, du padel ou du foot en intérieur, un cours collectif.</li>
+<li><strong>Tout ce qui se passe autour d’une table :</strong> jeux de société, quiz, cours de cuisine ou de poterie, long petit-déjeuner.</li>
+<li><strong>La culture climatisée :</strong> un musée, une exposition, un film suivi d’un repas, pour avoir le temps d’en parler.</li>
+<li><strong>La marche en intérieur :</strong> un ou deux tours d’un grand centre commercial à deux, tôt, avant l’affluence, puis un café.</li>
+<li><strong>Le soir tard et le matin tôt :</strong> après le coucher du soleil, la ville se ranime, et un dîner tardif ou un dessert remplace le café de l’après-midi. Les groupes qui restent dehors se retrouvent en général vers le lever du soleil ; même à cette heure-là, il fait chaud et humide : fais court, prends de l’eau et arrête-toi au moindre malaise.</li>
+</ul>
+<p>Vérifie auprès de chaque lieu ou de chaque groupe ce qui est maintenu l’été : les horaires changent. Notre guide pour <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> consacre un passage aux lieux en intérieur l’été, et les <a href="../../dubai/activites-de-groupe/">15 activités de groupe pour rencontrer du monde</a> donnent des formats dont beaucoup se transposent en intérieur.</p>`,
+      },
+      {
+        h2: 'Place la barre moins haut : à deux, c’est déjà un plan',
+        html: `<p>En hiver, un plan peut attendre d’avoir assez de confirmations. En été, ce plan-là n’a jamais lieu. Change de règle.</p>
+<ul>
+<li><strong>Maintiens le plan à deux.</strong> Une personne et une heure fixée suffisent.</li>
+<li><strong>Garde un créneau chaque semaine.</strong> Le même soir, le même genre de plan, annoncé dans la conversation d’été. Chacun passe quand il est en ville, et personne n’a à tout réorganiser.</li>
+<li><strong>Invite chez toi.</strong> Un dîner, un film, un jeu de société, chacun apporte un plat. Réserve cela aux personnes que tu connais déjà ; avec quelqu’un de nouveau, commence par un lieu public.</li>
+<li><strong>Sois celui ou celle qui propose.</strong> Les organisateurs habituels font souvent partie des absents. Le groupe attend que quelqu’un se lance. <a href="../creer-un-petit-groupe-balade-club-lecture/">Lancer ton propre petit groupe</a> détaille la marche à suivre.</li>
+</ul>`,
+      },
+      {
+        h2: 'Rencontre ceux qui sont restés',
+        html: `<p>Si presque tout ton cercle est parti, cherche des personnes dans la même situation. Les communautés et les clubs qui tournent toute l’année gardent un noyau d’habitués pendant l’été, et des nouveaux arrivent en toute saison : quelqu’un qui a atterri en juillet ne connaît personne et accueille volontiers une invitation. Demande à ta salle de sport, à ton cours ou dans ta résidence ce qui continue, et dis oui aux séances en effectif réduit.</p>
+<p>Les applications et les groupes en ligne sont une autre piste, utile quand tes canaux habituels sont muets. IRLY en fait partie : une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble en vrai, pas une application de rencontres amoureuses. Tu rejoins des communautés par centre d’intérêt, ce qui te fait entrer directement dans leur conversation, et chaque membre peut créer une activité avec une date, une heure et un quartier, et choisir combien de personnes peuvent venir. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt. <a href="../../irly/comment-ca-marche/">Comment fonctionne IRLY</a> décrit les étapes. Quelle que soit la piste, un seul critère : débouche-t-elle sur un vrai plan cette semaine ?</p>`,
+      },
+      {
+        h2: 'Garde le contact avec ceux qui sont partis, et prépare septembre',
+        html: `<p>Une photo, un message vocal, un « alors, ces vacances ? » toutes les deux semaines suffisent à entretenir le lien et rendent le retour naturel. Fixez une date début septembre avant leur départ : un dîner déjà noté, c’est de quoi se réjouir des deux côtés. Et si c’est toi qui pars une partie de l’été, annonce ta date de retour et propose toi-même le premier plan.</p>
+<p>Un mois calme, c’est normal ; des semaines de moral en berne, c’est autre chose. Si tu n’as pas le moral presque tous les jours, si tu dors mal ou si tu n’as plus envie de voir personne, parles-en à un médecin ou à un professionnel de santé mentale. <a href="../../dubai/solitude/">Se sentir seul à Dubaï : ce qui aide vraiment</a> va plus loin, et <a href="../week-end-seul-dubai/">seul le week-end à Dubaï</a> traite du samedi vide, plus fréquent en été.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Dubaï est-elle vide en été ?', a: 'Non. Beaucoup de résidents voyagent, souvent plusieurs semaines, mais beaucoup restent aussi, pour le travail ou par choix. La ville est plus calme, et l’essentiel se passe en intérieur et après le coucher du soleil.' },
+      { q: 'Où rencontrer du monde à Dubaï en été ?', a: 'En intérieur : salles de sport, murs d’escalade, cours, soirées jeux de société, musées, et groupes actifs toute l’année. Demande à chacun s’il continue l’été, car les horaires changent souvent.' },
+      { q: 'Quand la vie sociale reprend-elle à Dubaï ?', a: 'En général à partir de septembre, avec la rentrée scolaire et le retour des voyageurs. Les plans en plein air reviennent plus progressivement, à mesure que la chaleur retombe à l’automne.' },
+      { q: 'L’été est-il un mauvais moment pour arriver à Dubaï et se faire des amis ?', a: 'C’est plus lent, pas mauvais. Les groupes sont plus petits, tu parles donc plusieurs fois aux mêmes personnes, et tu connais déjà quelques visages quand les autres reviennent en septembre.' },
+    ],
+    cta: { title: 'Tu restes à Dubaï cet été ?', body: 'Rejoins une communauté autour de ce que tu aimes, ou crée une activité et vois qui est là.', label: 'Rejoindre une communauté' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
+      { label: 'Lancer ton propre petit groupe', path: 'fr/blog/creer-un-petit-groupe-balade-club-lecture/' },
+      { label: 'Télétravail à Dubaï : quand on se sent isolé', path: 'fr/blog/teletravail-dubai-isolement/' },
+    ],
+  },
 ];
