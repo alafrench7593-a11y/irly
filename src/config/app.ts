@@ -42,7 +42,7 @@ export const APP = {
   /** Minimum age to use IRLY (checked at signup and on the server). */
   minimumAge: 18,
   /** Public web address of the app (links people share). */
-  webUrl: 'https://alafrench7593-a11y.github.io/irly',
+  webUrl: 'https://www.getirly.com/app',
 } as const;
 
 /** Versions and dates of the legal texts shown in the app. */
