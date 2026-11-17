@@ -179,38 +179,70 @@ export const POSTS = [
     path: 'blog/introvert-make-friends-dubai/',
     city: 'Dubai',
     published: '2026-11-05',
+    updated: '2026-11-17',
     title: 'Making Friends in Dubai as an Introvert: A Quieter Way | IRLY',
-    description: 'You do not need big parties to make friends in Dubai. As an introvert, small groups, shared activities and repeated meetings work better, and cost less energy.',
+    description: 'You do not need big parties to make friends in Dubai. As an introvert, small groups, shared activities and repeated meetings work better and cost less energy.',
     h1: 'Making friends in Dubai as an introvert: a quieter way in',
     lead: 'If crowded events drain you, you can still build real friendships in Dubai. The quieter way in is small groups, a shared activity that does the talking for you, and seeing the same people again and again rather than meeting many people once.',
     sections: [
       {
-        h2: 'Pick small, structured settings',
+        h2: 'Pick small settings where the subject is already there',
         html: `<p>Large mixers reward people who enjoy talking to strangers for hours. Introverts usually do better where there is a task and a small group:</p>
 <ul>
 <li><strong>A class or workshop</strong> with the same people every week: a language, cooking, drawing, a craft.</li>
 <li><strong>A sport in small numbers:</strong> a doubles game, a climbing session, a running group that splits by pace.</li>
 <li><strong>A book club or a board game night,</strong> where the conversation has a topic from the start.</li>
+<li><strong>A walk or a hike at an easy pace,</strong> where you talk side by side and a silence bothers nobody.</li>
 </ul>
-<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has more ideas.</p>`,
+<p>You can talk about the recipe, the route or the game in progress, and the personal questions come later, when you feel like it. Before you sign up, check two things: how many people are expected, and whether there is an end time. Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has more ideas.</p>`,
       },
       {
-        h2: 'Let repetition do the work',
-        html: `<p>Friendship grows from seeing the same faces regularly, not from one long conversation. Go back to the same session three or four times before deciding if it works. By then people know your name, small talk is easier, and a coffee after feels natural instead of forced.</p>`,
+        h2: 'Arrive with a role or a task',
+        html: `<p>The hardest minutes are the first ones, when everyone is standing around and nothing has started. A small job makes them disappear. Offer to help the organiser set up, keep the score, bring the game. A role gives you a reason to say a word to each person, and a reason to step away again.</p>
+<p>Two more ways to make the start lighter:</p>
+<ul>
+<li><strong>Message the group or the organiser beforehand.</strong> You arrive already knowing one name, and someone expects you.</li>
+<li><strong>Arrive a little early.</strong> It sounds backwards, but greeting three people as they come in is easier than walking into a circle of fifteen that has already formed.</li>
+</ul>
+<p>You do not need a great opening line. A question about the activity is enough: “Is this your first time?” or “How long have you been coming?”. Our post on <a href="../what-to-say-start-conversation-activity/">what to say to start a conversation at an activity</a> has more of these.</p>`,
       },
       {
-        h2: 'Protect your energy',
+        h2: 'Let repetition do the work, then go one-to-one',
+        html: `<p>Friendship grows from seeing the same faces regularly, not from one long conversation. Go back to the same session three or four times before deciding if it works. By then people know your name, small talk is easier, and a coffee after feels natural instead of forced.</p>
+<p>In a regular group nobody expects you to shine on the first evening; coming back is what counts. Once you feel at ease with one or two people, suggest something for two: a coffee before the next class, a walk after the session. Name a day and a time, so that the answer is simple.</p>`,
+      },
+      {
+        h2: 'Budget your energy across the week',
         html: `<ul>
 <li><strong>One social plan or two a week is enough.</strong> Regular beats intense.</li>
-<li><strong>Give yourself an exit.</strong> Decide in advance how long you stay; leaving after an hour is fine.</li>
-<li><strong>Prefer one-to-one follow-ups.</strong> A coffee with one person from the group often builds more than another big evening.</li>
+<li><strong>Look at the whole week.</strong> If a working day is full of meetings, do not put your class on that evening. In Dubai, crossing the city at rush hour before an activity costs energy too: close to home or to the office, you will find it easier to go back.</li>
+<li><strong>Give yourself an exit.</strong> Decide in advance how long you stay; leaving after an hour is fine. Say so when you arrive (“I can stay until eight”) and nobody will be surprised. Make your own way there, so that you can leave when you want.</li>
 <li><strong>Plan quiet time after.</strong> Recharging is part of the plan, not a failure.</li>
-</ul>`,
+</ul>
+<p>An hour in which you were really there does more for a friendship than three hours spent watching the door.</p>`,
       },
       {
-        h2: 'Make the first step small',
-        html: `<p>You do not need a great opening line. A question about the activity is enough: “Is this your first time?” or “How long have you been coming?”. If you prefer, message the group before the first session so you already know one name when you arrive. For more, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
+        h2: 'Say no to the loud plan, and suggest a quieter one',
+        html: `<p>Sooner or later someone invites you to the thing you dread: a brunch for thirty, a packed night out. Saying yes to everything wears you down; answer with a bare no several times in a row and the invitations stop. The useful answer comes in two parts: a clear no to the format, and a yes to the person.</p>
+<ul>
+<li>“Big nights out are not my thing, but I would love a coffee this week. Thursday after work?”</li>
+<li>“I will sit the party out. Are you coming to the class on Tuesday? We could get something to eat after.”</li>
+</ul>
+<p>You owe nobody a long explanation, or an apology for the way you work.</p>
+<p>If the quiet format you are looking for does not exist near you, you can create it: our post on <a href="../start-small-group-weekly-walk-book-club/">starting a small group yourself</a> explains how. To find people for it, there are colleagues, neighbours, community groups and apps. IRLY is one of them: an app to meet people who share your interests and do things together in real life, not a dating app. Any member can create an activity and choose how many people can come, from two upwards, and joining an activity opens its chat, so you can say hello in writing before you arrive. It is free, available on the App Store for iPhone and in the browser; the Android app is coming soon.</p>`,
       },
+      {
+        h2: 'When a first meet-up drains you',
+        html: `<p>You went, you talked, and you came home flat. That is tiredness, and it says little about the evening itself. Wait until the next day to judge it, then ask yourself two questions. Was there one person I would be glad to see again? And was it the people who tired me, or the format: the noise, the length, the size of the group?</p>
+<p>If it was the format, change the format and keep the habit: a smaller group, a shorter session, a morning instead of an evening. If there was one good conversation, send that person a short message the next day; it is easier in writing, and the thread is not broken.</p>
+<p>Introversion is a temperament; there is nothing to correct. If what holds you back feels more like fear than tiredness, for example dread that lasts for days or things you want to do and give up on, talk to a doctor or a mental health professional. For the wider picture, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is it harder to make friends in Dubai as an introvert?', a: 'Not harder, but different. Dubai is a city where many people come from somewhere else and are building a circle too. What changes for an introvert is the route: small regular groups and one-to-one meetings in place of big evenings.' },
+      { q: 'Should I tell people that I am an introvert?', a: 'You do not have to. Saying what you like is more useful than a label: “I prefer small groups” or “I am better one-to-one” tells people which invitations to send you.' },
+      { q: 'What if I keep cancelling at the last minute?', a: 'Make the plan smaller rather than dropping it: a shorter session, a group where you already know one person, a morning when you have more energy. If you do cancel, tell the organiser early and suggest another date.' },
+      { q: 'Is it easier to get to know people by message first?', a: 'Writing first can take the edge off a first meeting, but a friendship is built by seeing each other. Keep the messages short, and use them to fix a date rather than to replace it.' },
     ],
     cta: { title: 'Prefer small groups?', body: 'Find an activity this week with a few people who share your interests, in real life.', label: 'Find my people' },
     related: [
@@ -228,38 +260,70 @@ export const POSTS = [
     path: 'fr/blog/introverti-se-faire-des-amis-dubai/',
     city: 'Dubaï',
     published: '2026-11-05',
+    updated: '2026-11-17',
     title: 'Se faire des amis à Dubaï quand on est introverti | IRLY',
     description: 'Pas besoin de grandes soirées pour se faire des amis à Dubaï. Introverti, les petits groupes et les rencontres répétées marchent mieux, et fatiguent moins.',
     h1: 'Se faire des amis à Dubaï quand on est introverti : une approche plus calme',
     lead: 'Si les soirées bondées t’épuisent, tu peux quand même construire de vraies amitiés à Dubaï. L’approche plus calme : des petits groupes, une activité qui parle à ta place, et revoir les mêmes personnes plutôt que d’en rencontrer beaucoup une seule fois.',
     sections: [
       {
-        h2: 'Choisis des cadres petits et structurés',
+        h2: 'Choisis de petits formats où le sujet est déjà là',
         html: `<p>Les grandes soirées de networking avantagent ceux qui aiment parler à des inconnus pendant des heures. Les introvertis sont souvent plus à l’aise avec une activité et un petit groupe :</p>
 <ul>
 <li><strong>Un cours ou un atelier</strong> avec les mêmes personnes chaque semaine : une langue, la cuisine, le dessin, un loisir créatif.</li>
 <li><strong>Un sport en petit nombre :</strong> un match en double, une séance d’escalade, un groupe de course réparti par allure.</li>
 <li><strong>Un club de lecture ou une soirée jeux de société,</strong> où la conversation a un sujet dès le départ.</li>
+<li><strong>Une balade ou une randonnée tranquille,</strong> où l’on parle côte à côte et où un silence ne gêne personne.</li>
 </ul>
-<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées.</p>`,
+<p>Tu peux parler de la recette, de l’itinéraire ou de la partie en cours, et les questions personnelles viennent plus tard, quand tu en as envie. Avant de t’inscrire, regarde deux choses : combien de personnes sont attendues, et s’il y a une heure de fin. Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées.</p>`,
       },
       {
-        h2: 'Laisse la répétition faire le travail',
-        html: `<p>L’amitié naît du fait de revoir régulièrement les mêmes visages, pas d’une seule longue conversation. Retourne trois ou quatre fois à la même séance avant de juger. À ce moment-là, on connaît ton prénom, les échanges sont plus simples, et un café après devient naturel au lieu d’être forcé.</p>`,
+        h2: 'Arrive avec un rôle ou une tâche',
+        html: `<p>Le plus dur, ce sont les premières minutes, quand tout le monde est debout et que rien n’a commencé. Une petite mission les fait disparaître. Propose à l’organisateur de l’aider à installer, tiens les scores, apporte le jeu. Un rôle te donne une raison de dire un mot à chacun, et une raison de t’éloigner ensuite.</p>
+<p>Deux autres façons d’alléger l’arrivée :</p>
+<ul>
+<li><strong>Écris au groupe ou à l’organisateur avant.</strong> Tu arrives en connaissant déjà un prénom, et quelqu’un t’attend.</li>
+<li><strong>Arrive un peu en avance.</strong> Ça paraît illogique, mais saluer trois personnes au fil des arrivées est plus simple que d’entrer dans un cercle de quinze déjà formé.</li>
+</ul>
+<p>Pas besoin d’une phrase d’accroche brillante. Une question sur l’activité suffit : « C’est ta première fois ? » ou « Tu viens depuis longtemps ? ». Notre article <a href="../quoi-dire-pour-lancer-une-conversation-activite/">quoi dire pour lancer une conversation pendant une activité</a> en propose d’autres.</p>`,
       },
       {
-        h2: 'Protège ton énergie',
+        h2: 'Laisse la répétition faire le travail, puis passe au tête-à-tête',
+        html: `<p>L’amitié naît du fait de revoir régulièrement les mêmes visages, pas d’une seule longue conversation. Retourne trois ou quatre fois à la même séance avant de juger. À ce moment-là, on connaît ton prénom, les échanges sont plus simples, et un café après devient naturel au lieu d’être forcé.</p>
+<p>Dans un groupe régulier, personne n’attend que tu brilles le premier soir : ce qui compte, c’est de revenir. Quand tu te sens à l’aise avec une ou deux personnes, propose quelque chose à deux : un café avant le prochain cours, une balade après la séance. Donne un jour et une heure, la réponse sera plus simple.</p>`,
+      },
+      {
+        h2: 'Gère ton énergie sur la semaine',
         html: `<ul>
 <li><strong>Un ou deux plans par semaine suffisent.</strong> La régularité vaut mieux que l’intensité.</li>
-<li><strong>Prévois une sortie.</strong> Décide à l’avance combien de temps tu restes ; partir au bout d’une heure, c’est bien.</li>
-<li><strong>Privilégie les suites en tête-à-tête.</strong> Un café avec une personne du groupe construit souvent plus qu’une nouvelle grande soirée.</li>
+<li><strong>Regarde la semaine entière.</strong> Si une journée de travail est remplie de réunions, ne cale pas ton cours ce soir-là. À Dubaï, traverser la ville aux heures de pointe avant une activité coûte aussi de l’énergie : près de chez toi ou du bureau, tu y retourneras plus facilement.</li>
+<li><strong>Prévois ta sortie.</strong> Décide à l’avance combien de temps tu restes ; partir au bout d’une heure, c’est très bien. Annonce-le en arrivant (« je reste jusqu’à vingt heures ») et personne ne s’étonnera. Viens par tes propres moyens, pour repartir quand tu veux.</li>
 <li><strong>Garde du calme après.</strong> Recharger fait partie du plan, ce n’est pas un échec.</li>
-</ul>`,
+</ul>
+<p>Une heure où tu étais vraiment là fait plus pour une amitié que trois heures passées à guetter la porte.</p>`,
       },
       {
-        h2: 'Fais un premier pas tout petit',
-        html: `<p>Pas besoin d’une phrase d’accroche brillante. Une question sur l’activité suffit : « C’est ta première fois ? » ou « Tu viens depuis longtemps ? ». Si tu préfères, écris au groupe avant la première séance pour connaître déjà un prénom en arrivant. Pour aller plus loin, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
+        h2: 'Dis non au plan bruyant, et propose plus calme',
+        html: `<p>Tôt ou tard, on t’invite à ce que tu redoutes : un brunch à trente, une soirée bondée. Dire oui à tout t’use ; réponds non tout court plusieurs fois de suite, et les invitations s’arrêtent. La réponse utile tient en deux temps : un non clair au format, un oui à la personne.</p>
+<ul>
+<li>« Les grosses soirées, ce n’est pas mon truc, mais un café cette semaine me ferait plaisir. Jeudi après le travail ? »</li>
+<li>« Je passe mon tour pour la fête. Tu viens au cours mardi ? On pourrait manger un morceau après. »</li>
+</ul>
+<p>Tu ne dois à personne une longue explication, ni des excuses pour ta façon de fonctionner.</p>
+<p>Si le format calme que tu cherches n’existe pas près de chez toi, tu peux le créer : notre article <a href="../creer-un-petit-groupe-balade-club-lecture/">lancer ton propre petit groupe</a> explique comment. Pour trouver des participants, il y a les collègues, les voisins, les groupes communautaires et les applications. IRLY en fait partie : une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble en vrai, pas une application de rencontres amoureuses. Chaque membre peut créer une activité et choisir combien de personnes peuvent venir, à partir de deux, et rejoindre une activité ouvre son chat : tu peux dire bonjour par écrit avant d’arriver. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt.</p>`,
       },
+      {
+        h2: 'Quand une première rencontre te vide',
+        html: `<p>Tu y es allé, tu as parlé, et tu rentres à plat. C’est de la fatigue, et elle ne dit pas grand-chose de la soirée elle-même. Attends le lendemain pour juger, puis pose-toi deux questions. Y avait-il une personne que j’aurais plaisir à revoir ? Et qu’est-ce qui m’a fatigué : les gens, ou le format, c’est-à-dire le bruit, la durée, la taille du groupe ?</p>
+<p>Si c’est le format, change de format et garde l’habitude : un groupe plus petit, une séance plus courte, un matin au lieu d’un soir. S’il y a eu une bonne conversation, envoie un petit message à cette personne le lendemain ; par écrit c’est plus facile, et le fil n’est pas rompu.</p>
+<p>L’introversion est un tempérament : il n’y a rien à corriger. Si ce qui te retient ressemble plus à de la peur qu’à de la fatigue, par exemple une appréhension qui dure des jours ou des envies auxquelles tu renonces, parles-en à un médecin ou à un professionnel de santé mentale. Pour une vue d’ensemble, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Est-ce plus difficile de se faire des amis à Dubaï quand on est introverti ?', a: 'Pas plus difficile, mais différent. Dubaï est une ville où beaucoup de gens viennent d’ailleurs et cherchent eux aussi à se faire un cercle. Ce qui change pour un introverti, c’est le chemin : des petits groupes réguliers et des tête-à-tête à la place des grandes soirées.' },
+      { q: 'Faut-il dire aux autres que je suis introverti ?', a: 'Rien ne t’y oblige. Dire ce que tu aimes est plus utile qu’une étiquette : « je préfère les petits groupes » ou « je suis plus à l’aise à deux » indique aux autres quelles invitations t’envoyer.' },
+      { q: 'Que faire si j’annule souvent à la dernière minute ?', a: 'Réduis le plan au lieu d’y renoncer : une séance plus courte, un groupe où tu connais déjà quelqu’un, un matin où tu as plus d’énergie. Si tu annules quand même, préviens l’organisateur tôt et propose une autre date.' },
+      { q: 'Est-ce plus simple de faire connaissance par message d’abord ?', a: 'Écrire d’abord peut rendre la première rencontre moins intimidante, mais une amitié se construit en se voyant. Garde des messages courts, et sers-t’en pour fixer une date plutôt que pour la remplacer.' },
     ],
     cta: { title: 'Tu préfères les petits groupes ?', body: 'Trouve une activité cette semaine avec quelques personnes qui partagent tes centres d’intérêt, en vrai.', label: 'Trouver mes gens' },
     related: [
