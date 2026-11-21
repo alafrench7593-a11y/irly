@@ -33,6 +33,8 @@ import { shareNative, useEngagement } from '@/features/server/engage';
 import { isManager, useCommunityHeader, useMyRights } from '@/features/community/governance';
 import { CommunityFacts, MemberList } from '@/features/community/CommunityPageParts';
 import { AboutSheet } from '@/features/community/AboutSheet';
+import { ApplyGate, PrivateWall } from '@/features/community/Applications';
+import { useCommunityAccess } from '@/features/community/applications';
 import { Agenda, type AgendaItem } from '@/features/community/Agenda';
 import { ChatInvite, ChatPane } from '@/features/community/ChatPane';
 import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
@@ -133,6 +135,8 @@ function CommunityScreen() {
   // What I may do here (community_my_rights) and the header's real numbers (community_header).
   const { rights: my } = useMyRights(id);
   const { header } = useCommunityHeader(id);
+  // Open, or private by application: how it is joined and where my own request stands.
+  const { access } = useCommunityAccess(id);
   const [busy, setBusy] = useState(false);
   // Leave / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
   const owner = useBusy<'leave' | 'delete'>();
@@ -294,6 +298,9 @@ function CommunityScreen() {
     }
   };
 
+  // A private community I am not a member of: its page, and nothing of what its members share.
+  const byApplication = !c.isMember && access?.access === 'application';
+  const locked = !c.isMember && Boolean(access?.isPrivate) && access?.canRead === false;
   const canModerate = c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate;
   const openComposer = (body = '') => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } });
 
@@ -307,7 +314,7 @@ function CommunityScreen() {
       <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
       <View style={[styles.pad, { gap: 6 }]}>
         <Text variant="overline" tone="accent">
-          {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+          {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null, access?.isPrivate ? tx('Private · By application') : null].filter(Boolean).join(' · ')}
         </Text>
         <Text variant="displayM" raw={!c.official}>{c.name}</Text>
         {c.tagline ? (
@@ -373,7 +380,14 @@ function CommunityScreen() {
           </>
         ) : (
           <View style={{ flex: 1 }}>
-            <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
+            {/* How it is joined is not known yet: no « Join » that the server would refuse. */}
+            {access === null ? (
+              <Button label="Join the community" icon="users" full loading onPress={() => undefined} />
+            ) : byApplication ? (
+              <ApplyGate communityId={c.id} communityName={c.name} access={access} />
+            ) : (
+              <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
+            )}
           </View>
         )}
         <IconButton icon="share" label={tx('Share')} onPress={() => void shareNative({ type: 'community', id: c.id, title: c.name }).catch(() => undefined)} />
@@ -548,7 +562,14 @@ function CommunityScreen() {
       />
     );
 
-  const panels = (
+  const panels = locked ? (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerH + 12, paddingBottom: insets.bottom + 60, gap: space[5] }}>
+      {split ? null : hero}
+      <View style={styles.pad}>
+        <PrivateWall pending={access?.application?.status === 'pending'} />
+      </View>
+    </ScrollView>
+  ) : (
     <View style={{ flex: 1 }}>
       <TabPanel active={tab === 'posts'}>{posts}</TabPanel>
       <TabPanel active={tab === 'chat'}>{chat}</TabPanel>
@@ -584,7 +605,7 @@ function CommunityScreen() {
         title={c.name}
         right={
           <View style={styles.row}>
-            <IconButton icon="search" label={tx('Search in the community')} onPress={() => router.push({ pathname: '/community/search/[id]', params: { id: c.id, name: c.name } })} />
+            {locked ? null : <IconButton icon="search" label={tx('Search in the community')} onPress={() => router.push({ pathname: '/community/search/[id]', params: { id: c.id, name: c.name } })} />}
             <IconButton icon="book" label={tx('About')} onPress={() => setAbout(true)} />
           </View>
         }
@@ -602,6 +623,7 @@ function CommunityScreen() {
           { icon: 'users', text: c.members === 1 ? tx('1 member') : tx('{n} members', { n: header?.members ?? c.members }) },
           { icon: 'pin', text: city.name },
           ...(c.girlOnly ? [{ icon: 'shield' as const, text: tx('Women only: every member is checked by IRLY Girl.') }] : []),
+          ...(access?.isPrivate ? [{ icon: 'lock' as const, text: tx('Private: people ask to join and the team accepts them. Only members see what is shared here.') }] : []),
           { icon: 'message', text: tx('Members post, plan activities and talk in the community chat.') },
         ]}
         onReport={() => (setAbout(false), openReport({ kind: 'community', id: c.id }))}

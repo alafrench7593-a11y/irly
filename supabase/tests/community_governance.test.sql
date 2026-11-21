@@ -150,8 +150,14 @@ select pg_temp.check(pg_temp.fails($q$select public.community_ban('c6a00000-0000
   'co-admin: cannot ban another co-admin');
 select pg_temp.check(pg_temp.fails($q$select public.community_kick('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000003', 'rival')$q$) = '42501',
   'co-admin: cannot kick another co-admin');
-select pg_temp.check(pg_temp.fails($q$select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000003', 'member')$q$) = '42501',
-  'co-admin: cannot demote another co-admin');
+-- Since 20261123000000 a co-admin in charge of roles may name and remove co-admins
+-- (community_applications.test.sql); one without that permission still may not.
+select pg_temp.as_user('c6a00000-0000-0000-0000-000000000003');
+select pg_temp.check(pg_temp.fails($q$select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000002', 'member')$q$) = '42501',
+  'co-admin without the roles permission: cannot demote another co-admin');
+select pg_temp.check(pg_temp.fails($q$select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000009', 'co_admin')$q$) = '42501',
+  'co-admin without the roles permission: cannot name a co-admin');
+select pg_temp.as_user('c6a00000-0000-0000-0000-000000000002');
 select pg_temp.check(pg_temp.fails($q$select public.community_restrict('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000003', now() + interval '1 day', 'rival')$q$) = '42501',
   'co-admin: cannot restrict another co-admin');
 select pg_temp.check(pg_temp.fails($q$select public.community_set_permissions('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000002', '{"stats": true}')$q$) = '42501',
@@ -160,9 +166,7 @@ select pg_temp.check(pg_temp.fails($q$select public.community_set_permissions('c
   'co-admin: nor another co-admin''s');
 select pg_temp.check(pg_temp.fails($q$select public.community_transfer_ownership('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000002')$q$) = '42501',
   'co-admin: cannot transfer ownership');
-select pg_temp.check(pg_temp.fails($q$select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000009', 'co_admin')$q$) = '42501',
-  'co-admin: cannot name a co-admin');
--- What her roles permission does allow: moderators.
+-- What her roles permission allows: moderators (and, since 20261123000000, co-admins).
 select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000009', 'moderator');
 select public.community_set_role('c6a00000-0000-0000-0000-0000000000c1', 'c6a00000-0000-0000-0000-000000000009', 'member');
 select pg_temp.as_admin();

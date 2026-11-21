@@ -14,6 +14,8 @@ import { toast } from '@/components/ui/Toast';
 import { CATEGORIES } from '@/data/catalog/categories';
 import { CITIES } from '@/data/destinations';
 import { useAccount } from '@/features/auth/account';
+import { AccessPicker } from '@/features/community/AccessPicker';
+import { QUESTION_MIN, type CommunityAccessMode } from '@/features/community/applications';
 import { createServerCommunity } from '@/features/server/activities';
 import { haptic } from '@/motion/haptics';
 import { useAppSpace } from '@/state/appSpace';
@@ -43,7 +45,11 @@ export default function NewCommunity() {
   const [busy, setBusy] = useState(false);
   // A second tap before the first one re-rendered must not send a second request.
   const sending = useRef(false);
-  const valid = name.trim().length >= 3;
+  // Open (as always), or private: people ask to join and the team accepts them.
+  const [access, setAccess] = useState<CommunityAccessMode>('open');
+  const [questions, setQuestions] = useState<string[]>([]);
+  const asked = questions.map((q) => q.trim()).filter(Boolean);
+  const valid = name.trim().length >= 3 && (access === 'open' || asked.every((q) => q.length >= QUESTION_MIN));
 
   const create = async () => {
     if (!valid || sending.current) return;
@@ -55,9 +61,10 @@ export default function NewCommunity() {
     sending.current = true;
     setBusy(true);
     try {
-      const { conversationId: conv } = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly });
+      const { conversationId: conv, accessError } = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly, access, questions: asked });
       haptic('success');
-      toast(tx("{name} is live. You're its owner", { name: name.trim() }), 'users', 'brand');
+      if (accessError) toast('Your community is live, but still open. Make it private in Manage → Community settings.', 'lock', 'live');
+      else toast(tx("{name} is live. You're its owner", { name: name.trim() }), 'users', 'brand');
       router.replace(conv ? `/messages/${conv}` : '/messages');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create the community', 'x', 'live');
@@ -132,6 +139,10 @@ export default function NewCommunity() {
             <Switch value={girlOnly} disabled={inGirl} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y('IRLY Girl community')} />
           </Animated.View>
         ) : null}
+        <View style={{ gap: 8 }}>
+          <Text variant="label">Who can join</Text>
+          <AccessPicker access={access} onAccess={setAccess} questions={questions} onQuestions={setQuestions} disabled={busy} />
+        </View>
         <Button label="Create community" icon="users" full loading={busy} disabled={!valid} onPress={create} />
       </View>
     </Page>

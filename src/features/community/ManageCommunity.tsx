@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
@@ -22,6 +22,8 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { ApplicationsSection } from './Applications';
+import { OPEN_ACCESS, useCommunityAccess, type CommunityAccess } from './applications';
 import { MemberList, ROLE_LABEL } from './CommunityPageParts';
 import { useCommunity, useCommunityActivities, type CommunityActivity } from './data';
 import {
@@ -56,9 +58,11 @@ import { SettingsSection } from './CommunitySettings';
  * (community_my_rights). The server decides; refusals are shown in words.
  */
 
-type Section = 'members' | 'roles' | 'moderation' | 'activities' | 'stats' | 'history' | 'settings';
-const SECTIONS: { key: Section; label: string; allowed: (r: MyRights) => boolean }[] = [
+type Section = 'members' | 'applications' | 'roles' | 'moderation' | 'activities' | 'stats' | 'history' | 'settings';
+const SECTIONS: { key: Section; label: string; allowed: (r: MyRights, a: CommunityAccess) => boolean }[] = [
   { key: 'members', label: 'Members', allowed: (r) => r.canManageMembers || r.canModerate },
+  // A private community's requests (and those still waiting after it opened again), for who answers them.
+  { key: 'applications', label: 'Applications', allowed: (_r, a) => a.canReview && (a.access === 'application' || (a.pending ?? 0) > 0) },
   { key: 'roles', label: 'Roles', allowed: (r) => r.canRoles },
   { key: 'moderation', label: 'Moderation', allowed: (r) => r.canModerate || r.canManageMembers },
   { key: 'activities', label: 'Activities', allowed: (r) => r.canModerate },
@@ -83,9 +87,14 @@ export function ManageCommunityScreen({ id }: { id: string }) {
   const account = useAccount();
   const { detail: c } = useCommunity(id);
   const { rights, loading, error, reload } = useMyRights(id);
-  const allowed = SECTIONS.filter((s) => s.allowed(rights));
+  const { access: loadedAccess } = useCommunityAccess(id);
+  const access = loadedAccess ?? OPEN_ACCESS;
+  const allowed = SECTIONS.filter((s) => s.allowed(rights, access));
+  // A notification of a new request opens here on « Applications » (?section=applications).
+  const { section: wanted } = useLocalSearchParams<{ section?: string }>();
   const [picked, setPicked] = useState<Section | null>(null);
-  const section = allowed.find((s) => s.key === picked)?.key ?? allowed[0]?.key ?? null;
+  const asked = picked ?? (SECTIONS.some((s) => s.key === wanted) ? (wanted as Section) : null);
+  const section = allowed.find((s) => s.key === asked)?.key ?? allowed[0]?.key ?? null;
   const reduced = useReducedMotion();
 
   return (
@@ -129,11 +138,12 @@ export function ManageCommunityScreen({ id }: { id: string }) {
           <>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.pad, { gap: 8 }]}>
               {allowed.map((s) => (
-                <Chip key={s.key} label={tx(s.label)} selected={section === s.key} onPress={() => setPicked(s.key)} />
+                <Chip key={s.key} label={s.key === 'applications' && access.pending ? `${tx(s.label)} · ${access.pending}` : tx(s.label)} selected={section === s.key} onPress={() => setPicked(s.key)} />
               ))}
             </ScrollView>
             <Animated.View key={section} entering={reduced ? undefined : FadeIn.duration(180)} style={{ gap: space[4] }}>
               {section === 'members' ? <MembersSection communityId={id} rights={rights} /> : null}
+              {section === 'applications' ? <ApplicationsSection communityId={id} /> : null}
               {section === 'roles' ? <RolesSection communityId={id} communityName={c?.name ?? ''} rights={rights} /> : null}
               {section === 'moderation' ? <ModerationSection communityId={id} /> : null}
               {section === 'activities' ? <ActivitiesSection communityId={id} cityId={c?.cityId ?? 'dubai'} /> : null}
@@ -588,6 +598,9 @@ function StatsSection({ communityId }: { communityId: string }) {
 
 const ACTION_LABEL: [RegExp, string][] = [
   [/transfer/i, 'Ownership transferred'],
+  [/application\.accept/i, 'Application accepted'],
+  [/application\.refuse/i, 'Application refused'],
+  [/community\.access/i, 'Access changed'],
   [/perm/i, 'Permissions changed'],
   [/role/i, 'Role changed'],
   [/unban/i, 'Ban lifted'],

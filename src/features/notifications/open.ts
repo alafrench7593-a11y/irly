@@ -130,7 +130,13 @@ export function destinationOf(n: NotificationLike, now = Date.now()): Destinatio
     case 'COMMUNITY_ANNOUNCEMENT':
     case 'COMMUNITY_POST':
     case 'COMMUNITY_INVITATION':
+    case 'COMMUNITY_ROLE':
+    case 'COMMUNITY_APPLICATION_ACCEPTED':
+    case 'COMMUNITY_APPLICATION_REFUSED':
       return community(p.community_id);
+    case 'COMMUNITY_APPLICATION':
+      // The team's queue: « Manage → Applications ».
+      return isId(p.community_id) ? { href: `/community/manage/${p.community_id}?section=applications`, fallback: '/communities', check: { table: 'communities', id: p.community_id } } : { href: '/communities' };
     case 'IRLY_POST_CREATED':
       // A Live lasts 24 hours: an ended one has nothing to open.
       return now - n.createdAt >= LIVE_TTL_MIN * 60_000 ? null : { href: '/live' };
