@@ -522,7 +522,8 @@ select pg_temp.check((select count(*) from public.community_applications where u
 -- The push texts of the three notifications (never the fallback).
 select pg_temp.as_admin();
 select pg_temp.check((select (private.push_text(n, 'fr')).body like 'Ned demande à rejoindre%' and (private.push_text(n, 'en')).url like '/community/manage/%'
-  from public.notifications n where kind = 'COMMUNITY_APPLICATION' and user_id = 'ca900000-0000-0000-0000-000000000001' limit 1),
+  from public.notifications n where kind = 'COMMUNITY_APPLICATION' and user_id = 'ca900000-0000-0000-0000-000000000001'
+    and payload ->> 'from' = 'ca900000-0000-0000-0000-000000000005' order by created_at limit 1),
   'push: the team reads who asks, and lands on the applications');
 select pg_temp.check((select (private.push_text(n, 'fr')).body like 'Ta candidature est acceptée%' and (private.push_text(n, 'en')).url = '/c/ca900000-0000-0000-0000-0000000000c1'
   from public.notifications n where kind = 'COMMUNITY_APPLICATION_ACCEPTED' and user_id = 'ca900000-0000-0000-0000-000000000005' limit 1),
