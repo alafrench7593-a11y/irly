@@ -59,7 +59,8 @@ const active = (s: Sanction, now: number) => s.kind !== 'warning' && (s.until ==
 export function MemberSheet({ communityId, member, rights, myId, onClose, onDone }: { communityId: string; member: Member | null; rights: MyRights; myId: string | null; onClose: () => void; onDone?: () => void }) {
   return (
     <Sheet visible={Boolean(member)} onClose={onClose} title={tx('Manage this member')} scroll>
-      {member ? <Body key={member.userId} communityId={communityId} member={member} rights={rights} myId={myId} onClose={onClose} onDone={onDone} /> : null}
+      {/* A sheet pads nothing itself: the actions keep the header's margin. */}
+      <View style={styles.sheet}>{member ? <Body key={member.userId} communityId={communityId} member={member} rights={rights} myId={myId} onClose={onClose} onDone={onDone} /> : null}</View>
     </Sheet>
   );
 }
@@ -160,7 +161,7 @@ function Body({ communityId, member, rights, myId, onClose, onDone }: { communit
         ) : null}
         <View style={[styles.notice, { borderColor: DESTRUCTIVE.includes(step) ? t.c.live : t.c.line }]}>
           <Text variant="bodyS" tone="secondary">
-            {sentence(step, name, permanent ? null : until)}
+            {sentence(step, name, permanent ? null : until, member.role === 'co_admin')}
           </Text>
         </View>
         {error ? (
@@ -177,7 +178,7 @@ function Body({ communityId, member, rights, myId, onClose, onDone }: { communit
   const rows: { action: Action; icon: IconName; label: string; show: boolean; danger?: boolean }[] = [
     { action: 'coadmin', icon: 'award', label: 'Name co-admin', show: can.makeCoAdmin },
     { action: 'moderator', icon: 'shield', label: 'Name moderator', show: can.makeModerator },
-    { action: 'member', icon: 'user', label: 'Remove role', show: can.removeRole },
+    { action: 'member', icon: 'user', label: member.role === 'co_admin' ? 'Remove the co-admin role' : 'Remove role', show: can.removeRole },
     { action: 'warn', icon: 'flag', label: 'Warn', show: can.warn },
     { action: 'restrict', icon: 'clock', label: 'Restrict temporarily', show: can.restrict && !restricted },
     { action: 'unrestrict', icon: 'check', label: 'Lift the restriction', show: can.restrict && restricted },
@@ -324,15 +325,15 @@ const DONE: Record<Action, string> = {
   unrestrict: 'Restriction lifted',
 };
 
-function sentence(a: Action, name: string, until: number | null): string {
+function sentence(a: Action, name: string, until: number | null, wasCoAdmin = false): string {
   const date = until === null ? '' : untilText(until);
   switch (a) {
     case 'coadmin':
-      return tx('{name} becomes co-admin. You choose their permissions in Roles.', { name });
+      return tx('{name} becomes co-admin and can at once: manage members and answer applications, moderate posts, the chat and activities, publish announcements and see the statistics. Changing roles or the community’s settings stays off until the owner allows it in Roles.', { name });
     case 'moderator':
       return tx('{name} becomes moderator: they can moderate posts, the chat and activities.', { name });
     case 'member':
-      return tx('{name} stays a member, without a role.', { name });
+      return wasCoAdmin ? tx('{name} is a member again and loses every co-admin permission at once.', { name }) : tx('{name} stays a member, without a role.', { name });
     case 'warn':
       return tx('{name} gets a warning with your reason. It stays in their record for this community.', { name });
     case 'restrict':
@@ -349,6 +350,7 @@ function sentence(a: Action, name: string, until: number | null): string {
 }
 
 const styles = StyleSheet.create({
+  sheet: { paddingHorizontal: space.gutter + 4, paddingBottom: space[6] },
   who: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   action: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderRadius: radius.lg, overflow: 'hidden' },

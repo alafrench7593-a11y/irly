@@ -370,6 +370,18 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return { icon: 'heartHandshake', title: 'You joined a community', body: tx('Its chat is in Messages') };
       case 'COMMUNITY_INVITATION':
         return { icon: 'heartHandshake', title: tx('{name} invited you to {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: tx('Open the community') };
+      case 'COMMUNITY_APPLICATION':
+        return { icon: 'userPlus', title: tx('{name} asks to join {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: tx('Read the request and answer it') };
+      case 'COMMUNITY_APPLICATION_ACCEPTED':
+        return { icon: 'userCheck', title: tx('You are in: {community}', { community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: tx('Your request was accepted · View the community') };
+      case 'COMMUNITY_APPLICATION_REFUSED':
+        return { icon: 'x', title: tx('Your request to join {community} was not accepted', { community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: '' };
+      case 'COMMUNITY_ROLE':
+        return {
+          icon: 'award',
+          title: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY',
+          body: tx(p.role === 'co_admin' ? 'You are now a co-admin of this community' : p.role === 'moderator' ? 'You are now a moderator of this community' : 'Your role in this community changed'),
+        };
       case 'COMMUNITY_ANNOUNCEMENT':
         return { icon: 'megaphone', title: tx('Announcement · {name}', { name: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: p.body ?? '' };
       case 'COMMUNITY_POST':

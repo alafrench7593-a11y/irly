@@ -19,6 +19,7 @@ import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { displayCommunityName } from '@/features/community/name';
+import { isApplicationRequired } from '@/features/community/applications';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
 import { CommunityStats } from '@/features/community/discovery/CommunityStats';
 import { fromDemo, fromSummary, inSpace, sortLocally, useDirectory, useDirectorySort, useFavorites, type DirectoryCommunity } from '@/features/community/discovery/directory';
@@ -564,7 +565,16 @@ function Row({
     setBusy(true);
     joinCommunity(id)
       .then(() => toast(tx('You joined {name}', { name })))
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
+      .catch((e) => {
+        const message = e instanceof Error ? e.message : 'Could not join';
+        // Private, by application: its page has « Request to join ».
+        if (isApplicationRequired(message)) {
+          toast('This community is private: ask to join from its page', 'lock', 'brand');
+          router.push(`/c/${id}`);
+          return;
+        }
+        toast(message, 'x', 'live');
+      })
       .finally(() => setBusy(false));
   };
   const leave = () => {

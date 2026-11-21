@@ -32,6 +32,8 @@ import { GButton, GChip, GField, GIconWell, useGirlMotion, Wrap } from "@/featur
 import { setCommunityCover } from "@/features/server/covers";
 import { usePhotoSource } from "@/components/ui/PhotoSourceSheet";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import { AccessPicker } from "@/features/community/AccessPicker";
+import { QUESTION_MIN, type CommunityAccessMode } from "@/features/community/applications";
 import { createServerCommunity } from "@/features/server/activities";
 import { Photo } from "@/components/visual/Photo";
 import { t as tx, a11y } from "@/i18n";
@@ -105,7 +107,11 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
     [here],
   );
   const trimmed = name.trim();
-  const valid = trimmed.length >= NAME_MIN;
+  // Open (as always), or private: women ask to join and the team accepts them.
+  const [access, setAccess] = useState<CommunityAccessMode>("open");
+  const [questions, setQuestions] = useState<string[]>([]);
+  const asked = questions.map((q) => q.trim()).filter(Boolean);
+  const valid = trimmed.length >= NAME_MIN && (access === "open" || asked.every((q) => q.length >= QUESTION_MIN));
   const missingMoms = moms && womenOnly && valid && !/moms?|mamans?/i.test(trimmed);
 
   // Library or camera from the shared photo sheet; cropped 16:10 and sent with the community (setCommunityCover).
@@ -138,14 +144,17 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
     setError(null);
     setBusy("create");
     try {
-      const { id } = await createServerCommunity({
+      const { id, accessError } = await createServerCommunity({
         name: trimmed,
         cityId,
         tagline,
         description: about,
         categoryId: category,
         girlOnly: womenOnly,
+        access,
+        questions: asked,
       });
+      if (accessError) toast(tx("Your community is live, but still open. Make it private in Manage → Community settings."), "lock", "live");
       // The photo goes up once the community exists; if it fails, the community stays and the photo can be added from its page.
       if (photo) {
         setBusy("photo");
@@ -458,6 +467,10 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
                   onPress={() => setWomenOnly(false)}
                 />
               </View>
+            </Field>
+
+            <Field n="7" label={tx("How people join")}>
+              <AccessPicker access={access} onAccess={setAccess} questions={questions} onQuestions={setQuestions} disabled={busy !== null} />
             </Field>
 
             {error ? (

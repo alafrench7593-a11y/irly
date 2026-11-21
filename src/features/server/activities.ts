@@ -438,7 +438,17 @@ function communityError(m: string): string {
 }
 
 /** Creates the community (or gets back the one this same request already made) and returns its id and the id of its chat. */
-export async function createServerCommunity(input: { name: string; cityId: string; tagline?: string; description?: string; categoryId?: string; girlOnly?: boolean }): Promise<{ id: string; conversationId: string }> {
+export async function createServerCommunity(input: {
+  name: string;
+  cityId: string;
+  tagline?: string;
+  description?: string;
+  categoryId?: string;
+  girlOnly?: boolean;
+  /** Private, by application (with up to three questions for applicants). Left out: open, as before. */
+  access?: 'open' | 'application';
+  questions?: string[];
+}): Promise<{ id: string; conversationId: string; accessError?: string }> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const sb = supabase;
   const { data: session } = await sb.auth.getSession();
@@ -458,9 +468,16 @@ export async function createServerCommunity(input: { name: string; cityId: strin
     if (error) throw new Error(/created_by_fkey/i.test(error.message) ? error.message : communityError(error.message));
     return data as string;
   });
+  // Private from its first minute: set right after it exists (nobody but its owner is in it yet). If that
+  // fails the community stays, open, and the caller says so: it is set again from Manage → Settings.
+  let accessError: string | undefined;
+  if (input.access === 'application') {
+    const { error } = await sb.rpc('community_set_access', { p_community: id, p_access: 'application', p_questions: (input.questions ?? []).map((q) => q.trim()).filter(Boolean) });
+    if (error) accessError = friendlyError(error.message);
+  }
   changed('communities', 'inbox');
   const { data: conv } = await sb.from('conversations').select('id').eq('community_id', id).maybeSingle();
-  return { id, conversationId: (conv?.id as string) ?? '' };
+  return { id, conversationId: (conv?.id as string) ?? '', accessError };
 }
 
 export type ActivityDetail = {

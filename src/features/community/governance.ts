@@ -26,6 +26,8 @@ export const asRole = (r: unknown): CommunityRole => (r === 'owner' || r === 'co
 export type PermKey = 'members' | 'moderation' | 'announcements' | 'activities' | 'settings' | 'stats' | 'roles';
 export const PERM_KEYS: PermKey[] = ['members', 'moderation', 'announcements', 'activities', 'settings', 'stats', 'roles'];
 export type Permissions = Record<PermKey, boolean>;
+/** What a member named co-admin may do at once (community_set_role); the owner changes it in Roles. */
+export const DEFAULT_CO_ADMIN_PERMS: PermKey[] = ['members', 'moderation', 'announcements', 'activities', 'stats'];
 const NO_PERMS: Permissions = { members: false, moderation: false, announcements: false, activities: false, settings: false, stats: false, roles: false };
 
 export type MyRights = {
@@ -278,7 +280,7 @@ export async function moderateActivity(activityId: string, reason: string): Prom
  * One server read kept fresh: reloaded when communities change, the last
  * request wins, and a failure is kept apart from « nothing ».
  */
-function useServerRead<T>(key: string, empty: T, read: () => Promise<T>, kind?: string) {
+export function useServerRead<T>(key: string, empty: T, read: () => Promise<T>, kind?: string) {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ key: string; value: T; error: string | null }>({ key: '', value: empty, error: null });
   const seq = useRef(0);
@@ -376,12 +378,25 @@ export function memberActions(me: MyRights, myId: string | null, target: Member)
   const mine = ROLE_RANK[me.role];
   const theirs = ROLE_RANK[target.role];
   const sanctions = isManager(me);
-  if (theirs >= mine) return { ...none, sanctions };
-  const owner = me.role === 'owner';
-  // A co-admin with « roles » names moderators and members only, on members and moderators.
-  const roles = owner || (me.canRoles && target.role !== 'co_admin');
+  // Equal rank: nothing, except a co-admin in charge of roles on another co-admin's role.
+  if (theirs > mine) return { ...none, sanctions };
+  if (theirs === mine) {
+    const peer = me.role === 'co_admin' && me.canRoles && target.role === 'co_admin';
+    return peer ? { ...none, sanctions, makeModerator: true, removeRole: true } : { ...none, sanctions };
+  }
+  return memberRoleActions(me, target, sanctions);
+}
+
+/**
+ * Roles: the owner gives any of them. A co-admin in charge of roles names and
+ * removes moderators and co-admins too (the server refuses the one case the
+ * app cannot see: a co-admin who is in charge of roles as well). The co-admin
+ * she names never receives the roles permission: only the owner grants it.
+ */
+function memberRoleActions(me: MyRights, target: Member, sanctions: boolean): MemberActions {
+  const roles = me.role === 'owner' || me.canRoles;
   return {
-    makeCoAdmin: owner && target.role !== 'co_admin',
+    makeCoAdmin: roles && target.role !== 'co_admin',
     makeModerator: roles && target.role !== 'moderator',
     removeRole: roles && target.role !== 'member',
     warn: me.canModerate,

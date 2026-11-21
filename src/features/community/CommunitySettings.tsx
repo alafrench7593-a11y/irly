@@ -12,6 +12,8 @@ import { a11y, t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessPicker } from './AccessPicker';
+import { QUESTION_MIN, setCommunityAccess, useCommunityAccess, type CommunityAccess, type CommunityAccessMode } from './applications';
 import type { CommunityDetail } from './data';
 import { RULES_MAX, updateCommunityInfo, useCommunityRules } from './space';
 
@@ -38,7 +40,60 @@ export function SettingsSection({ c }: { c: CommunityDetail | null }) {
     );
   }
   // The form starts from what the server has, once (a reload while typing keeps what is typed).
-  return <SettingsForm key={c.id} c={c} rules={rules} />;
+  return (
+    <View style={{ gap: space[6] }}>
+      <SettingsForm key={c.id} c={c} rules={rules} />
+      {c.official ? null : <AccessSettings communityId={c.id} />}
+    </View>
+  );
+}
+
+/** « Who can join »: open, or private by application with the team's questions. Members stay when it changes. */
+function AccessSettings({ communityId }: { communityId: string }) {
+  const { access, loading } = useCommunityAccess(communityId);
+  if (!access || loading) return <View style={styles.pad}><Skeleton height={120} radius={radius.md} /></View>;
+  return <AccessForm key={`${communityId}|${access.access}|${access.questions.join('|')}`} communityId={communityId} current={access} />;
+}
+
+function AccessForm({ communityId, current }: { communityId: string; current: CommunityAccess }) {
+  const [mode, setMode] = useState<CommunityAccessMode>(current.access);
+  const [questions, setQuestions] = useState<string[]>(current.questions);
+  const [busy, setBusy] = useState(false);
+  const clean = questions.map((q) => q.trim()).filter(Boolean);
+  const dirty = mode !== current.access || (mode === 'application' && clean.join('\n') !== current.questions.join('\n'));
+  const valid = clean.every((q) => q.length >= QUESTION_MIN);
+  const save = async () => {
+    if (busy || !dirty || !valid) return;
+    setBusy(true);
+    try {
+      await setCommunityAccess(communityId, mode, mode === 'application' ? clean : undefined);
+      haptic('success');
+      toast(mode === 'application' ? 'The community is now private. Its members stay.' : 'The community is now open', 'check', 'brand');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={[styles.pad, { gap: space[4] }]}>
+      <View style={{ gap: 6 }}>
+        <Text variant="label">Who can join</Text>
+        <AccessPicker access={mode} onAccess={setMode} questions={questions} onQuestions={setQuestions} disabled={busy} />
+        {mode === 'application' && current.access === 'open' ? (
+          <Text variant="caption" tone="tertiary">
+            Current members stay. New people will ask to join.
+          </Text>
+        ) : null}
+        {!valid ? (
+          <Text variant="caption" tone="critical">
+            A question has at least 3 characters.
+          </Text>
+        ) : null}
+      </View>
+      <Button label="Save the access" icon="check" full loading={busy} disabled={!dirty || !valid} onPress={() => void save()} />
+    </View>
+  );
 }
 
 function SettingsForm({ c, rules }: { c: CommunityDetail; rules: string | null }) {

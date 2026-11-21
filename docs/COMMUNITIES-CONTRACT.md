@@ -20,7 +20,7 @@ The base is branch `claude/confident-ride-1o2o3x` (= main, commit 1b3a49f). An a
 
 ## Role ranks (server truth)
 owner 3 > co_admin 2 > moderator 1 > member 0.
-- Nobody acts on someone of equal or higher rank, except the owner on co-admins.
+- Nobody acts on someone of equal or higher rank, except the owner on co-admins, and (since 20261123000000) a co-admin in charge of `roles` on the role of a co-admin who is not.
 - A co-admin's rights come from `community_members.permissions` (jsonb booleans): `members`, `moderation`, `announcements`, `activities`, `settings`, `stats`, `roles`.
 - Moderators always have `moderation` + `activities` (moderate only).
 
@@ -42,7 +42,7 @@ owner 3 > co_admin 2 > moderator 1 > member 0.
 - `public.community_set_role(p_community uuid, p_user uuid, p_role text)`
   - role is one of `co_admin`, `moderator`, `member`
   - owner: any role
-  - co-admin with `roles`: moderator or member only, and only on members or moderators
+  - co-admin with `roles` (changed by 20261123000000): names and removes moderators and co-admins, except a co-admin who holds `roles` too (owner only). A new co-admin never receives `roles` from this function: only the owner grants it with `community_set_permissions`, so promotions cannot chain. A banned or restricted member is not named.
 - `public.community_set_permissions(p_community uuid, p_user uuid, p_perms jsonb)`
   - owner only; the target must be a co-admin
 - `public.community_transfer_ownership(p_community uuid, p_user uuid)`
@@ -115,3 +115,30 @@ All agents:
 - respect `src/theme/tokens.ts`, `useTheme()`, Glass, IRLY Girl flavor and night/day;
 - use single quotes, no prettier, no model names in files;
 - never touch `.github/testflight.txt`, version numbers or existing migrations.
+
+## Private communities by application: `supabase/migrations/20261123000000_irly_community_applications.sql`
+
+**Schema**
+- `communities.access` (`open` by default, or `application`) and `communities.application_questions` (up to three texts of 3 to 200 characters). IRLY's official communities and the groups of a community stay open; a group of a private community is closed with it.
+- `community_applications (id, community_id, user_id, message, answers jsonb, status pending | accepted | refused | withdrawn, created_at, decided_at, decided_by)`: one pending request per person and community. Read by its author and by the team in charge; written by the functions only.
+
+**Who reads what**
+- The community's row (name, texts, cover, member count) stays readable by everyone eligible, as before.
+- Posts, their comments and likes, categories, pinned activities, the member list, the media, the search inside the community and the chat are for members (and IRLY's moderators): restrictive policies on `community_posts`, `community_channels`, `community_activity_pins`, and `private.community_members_only` in `community_posts_page`, `community_members_list`, `community_media`, `community_search`. `community_header` returns no faces to a non-member.
+- Activities of a private community are for its members too, whatever their privacy (a restrictive policy on `activities`, `private.activity_readable`, `join_activity`); their organiser and the people already going keep them.
+- A private community shows on a member's profile (`member_communities`) and in the « same community » filter of Match only to its members.
+- `communities.access` and `application_questions` change through `community_set_access` only: a direct write by an API role is refused.
+
+**Who answers applications**
+- The owner, a co-admin with `members` or `moderation`, IRLY's admins. Not moderators.
+
+**RPCs**
+- `public.community_access(p_community) → jsonb` `{ access, private, questions, can_read, application, can_review, pending }`
+- `public.community_set_access(p_community, p_access, p_questions jsonb default null)`: owner, or co-admin with `settings`. Members stay.
+- `public.community_apply(p_community, p_message, p_answers jsonb)`: IRLY Girl, ban, account sanction and profile checked first; message of 10 to 600 characters, one answer per question; a second call returns the pending request; 10 a day, 3 a week per community.
+- `public.community_withdraw_application(p_community) → boolean`
+- `public.community_applications(p_community, p_status pending | answered, p_limit)`: for the team in charge.
+- `public.community_decide_application(p_application, p_accept) → jsonb` `{ decided, status }`: the row is locked; the first answer decides, a second one gets `decided: false` and the status. Nobody answers her own request. Accepting checks eligibility again (IRLY Girl, ban, account sanction, account), creates the membership and closes the request in one transaction.
+- `public.join_community` refuses a private community (`this community is joined by application`).
+
+**Notifications**: `COMMUNITY_APPLICATION` (to the team), `COMMUNITY_APPLICATION_ACCEPTED`, `COMMUNITY_APPLICATION_REFUSED` (to the applicant).
