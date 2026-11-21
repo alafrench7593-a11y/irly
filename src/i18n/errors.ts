@@ -425,6 +425,8 @@ export const SERVER_ERRORS: Record<string, string> = {
   'this person does not have access to IRLY Girl': 'This person does not have access to IRLY Girl: they cannot join this community',
   'this person is banned from this community': 'This person is banned from this community. Lift the ban first',
   'this account no longer exists': 'This account no longer exists',
+  'this account is suspended': 'This account is suspended: it cannot join a community',
+  'the access cannot be changed': GENERIC,
   'this community is joined by application': 'This community is joined by application. Ask to join from its page',
   'only the owner changes the role of a co-admin in charge of roles': 'Only the owner changes the role of a co-admin in charge of roles',
   'this member is banned or restricted: lift it first': 'This member is banned or restricted. Lift it first',

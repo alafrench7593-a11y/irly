@@ -125,7 +125,9 @@ All agents:
 **Who reads what**
 - The community's row (name, texts, cover, member count) stays readable by everyone eligible, as before.
 - Posts, their comments and likes, categories, pinned activities, the member list, the media, the search inside the community and the chat are for members (and IRLY's moderators): restrictive policies on `community_posts`, `community_channels`, `community_activity_pins`, and `private.community_members_only` in `community_posts_page`, `community_members_list`, `community_media`, `community_search`. `community_header` returns no faces to a non-member.
-- An activity its organiser made public stays public: only the community's own lists are closed.
+- Activities of a private community are for its members too, whatever their privacy (a restrictive policy on `activities`, `private.activity_readable`, `join_activity`); their organiser and the people already going keep them.
+- A private community shows on a member's profile (`member_communities`) and in the « same community » filter of Match only to its members.
+- `communities.access` and `application_questions` change through `community_set_access` only: a direct write by an API role is refused.
 
 **Who answers applications**
 - The owner, a co-admin with `members` or `moderation`, IRLY's admins. Not moderators.
@@ -133,10 +135,10 @@ All agents:
 **RPCs**
 - `public.community_access(p_community) → jsonb` `{ access, private, questions, can_read, application, can_review, pending }`
 - `public.community_set_access(p_community, p_access, p_questions jsonb default null)`: owner, or co-admin with `settings`. Members stay.
-- `public.community_apply(p_community, p_message, p_answers jsonb)`: IRLY Girl, ban and profile checked first; message of 10 to 600 characters, one answer per question; a second call returns the pending request; 10 a day, 3 a week per community.
+- `public.community_apply(p_community, p_message, p_answers jsonb)`: IRLY Girl, ban, account sanction and profile checked first; message of 10 to 600 characters, one answer per question; a second call returns the pending request; 10 a day, 3 a week per community.
 - `public.community_withdraw_application(p_community) → boolean`
 - `public.community_applications(p_community, p_status pending | answered, p_limit)`: for the team in charge.
-- `public.community_decide_application(p_application, p_accept) → jsonb` `{ decided, status }`: the row is locked; the first answer decides, a second one gets `decided: false` and the status. Accepting checks eligibility again (IRLY Girl, ban, account), creates the membership and closes the request in one transaction.
+- `public.community_decide_application(p_application, p_accept) → jsonb` `{ decided, status }`: the row is locked; the first answer decides, a second one gets `decided: false` and the status. Nobody answers her own request. Accepting checks eligibility again (IRLY Girl, ban, account sanction, account), creates the membership and closes the request in one transaction.
 - `public.join_community` refuses a private community (`this community is joined by application`).
 
 **Notifications**: `COMMUNITY_APPLICATION` (to the team), `COMMUNITY_APPLICATION_ACCEPTED`, `COMMUNITY_APPLICATION_REFUSED` (to the applicant).

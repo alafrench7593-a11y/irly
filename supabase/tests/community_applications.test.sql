@@ -92,6 +92,9 @@ insert into public.likes (target_type, target_id, user_id) values
   ('community_post', 'ca900000-0000-0000-0000-0000000000a1', 'ca900000-0000-0000-0000-000000000012');
 insert into public.community_channels (id, community_id, slug, name, created_by) values
   ('ca900000-0000-0000-0000-0000000000e1', 'ca900000-0000-0000-0000-0000000000c1', 'recipes', 'Recipes', 'ca900000-0000-0000-0000-000000000001');
+-- A member's activity in the community, with the default privacy (public).
+insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at, community_id) values
+  ('ca900000-0000-0000-0000-0000000000d1', 'ca900000-0000-0000-0000-000000000004', 'Supper at the marina', 'food', 'dubai', 'marina', now() + interval '3 days', 'ca900000-0000-0000-0000-0000000000c1');
 select id as chat from public.conversations where community_id = 'ca900000-0000-0000-0000-0000000000c1' \gset
 insert into public.messages (conversation_id, sender_id, body) values (:'chat', 'ca900000-0000-0000-0000-000000000004', 'apply private chat line');
 
@@ -223,6 +226,18 @@ select pg_temp.check((select count(*) from public.community_posts_page('ca900000
   'private (guard): and the posts page');
 select pg_temp.check((select count(*) from public.community_members_list('ca900000-0000-0000-0000-0000000000c1')) = 6,
   'private (guard): and the members');
+select pg_temp.as_user('ca900000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.activities where id = 'ca900000-0000-0000-0000-0000000000d1') = 1
+  and (select count(*) from public.member_communities('ca900000-0000-0000-0000-000000000004') where id = 'ca900000-0000-0000-0000-0000000000c1') = 1,
+  'private (guard): a member sees the community''s activity, and the community on another member''s profile');
+-- The access changes through community_set_access only (rights and journal), even for who may edit the settings.
+select pg_temp.as_user('ca900000-0000-0000-0000-000000000001');
+select pg_temp.check(pg_temp.fails($q$update public.communities set access = 'open' where id = 'ca900000-0000-0000-0000-0000000000c1'$q$) = '42501',
+  'access: a direct write to the table is refused, even to the owner');
+select pg_temp.check(pg_temp.fails($q$update public.communities set application_questions = '[]' where id = 'ca900000-0000-0000-0000-0000000000c1'$q$) = '42501',
+  'access: the questions too');
+select pg_temp.check(pg_temp.fails($q$update public.communities set tagline = 'Suppers, twice a month' where id = 'ca900000-0000-0000-0000-0000000000c1'$q$) is null,
+  'access (guard): the owner still edits the other fields');
 
 -- A non-member sees the page, and nothing of what members share.
 select pg_temp.as_user('ca900000-0000-0000-0000-000000000005');
@@ -262,6 +277,16 @@ select pg_temp.check(pg_temp.fails($q$insert into public.comments (target_type, 
   'private: she cannot comment a post she cannot read');
 select pg_temp.check(pg_temp.fails($q$select public.join_community('ca900000-0000-0000-0000-0000000000c1')$q$) = '42501',
   'private: joining directly is refused');
+select pg_temp.check((select count(*) from public.activities where community_id = 'ca900000-0000-0000-0000-0000000000c1') = 0,
+  'private: an activity of the community (public by default) is not shown to a non-member');
+select pg_temp.check((select count(*) from public.community_activities('ca900000-0000-0000-0000-0000000000c1')) = 0,
+  'private: nor in the community''s agenda');
+select pg_temp.check(pg_temp.fails($q$select public.join_activity('ca900000-0000-0000-0000-0000000000d1')$q$) is not null,
+  'private: nor joined by its id');
+select pg_temp.check((select count(*) from public.member_communities('ca900000-0000-0000-0000-000000000004') where id = 'ca900000-0000-0000-0000-0000000000c1') = 0,
+  'private: a member''s profile does not show the private community to a non-member');
+select pg_temp.check((select count(*) from public.member_communities('ca900000-0000-0000-0000-000000000005')) >= 0,
+  'private (guard): her own list still reads');
 select pg_temp.check((select public.join_communities(array['ca900000-0000-0000-0000-0000000000c1']::uuid[])) = 0,
   'private: the bulk join skips it');
 select pg_temp.as_admin();
@@ -366,6 +391,18 @@ select pg_temp.check((select count(*) from public.community_posts where communit
 select pg_temp.check(pg_temp.fails($q$select public.community_apply('ca900000-0000-0000-0000-0000000000c1', 'I am already in, asking again anyway.', '["x"]')$q$) = '22023',
   'apply: a member does not apply');
 
+-- Nobody answers her own request, an IRLY admin included.
+select pg_temp.as_admin();
+insert into public.staff_roles (user_id, role) values ('ca900000-0000-0000-0000-000000000007', 'admin');
+select pg_temp.as_user('ca900000-0000-0000-0000-000000000007');
+select public.community_apply('ca900000-0000-0000-0000-0000000000c1', 'I am on the IRLY team and would like in.', '["Anything"]');
+select id as gus_app from public.community_applications where user_id = 'ca900000-0000-0000-0000-000000000007' and status = 'pending' \gset
+select pg_temp.check(pg_temp.fails(format('select public.community_decide_application(%L, true)', :'gus_app')) = '22023',
+  'decide: an IRLY admin does not accept her own request');
+select pg_temp.check(public.community_withdraw_application('ca900000-0000-0000-0000-0000000000c1'), 'decide (guard): she withdraws it');
+select pg_temp.as_admin();
+delete from public.staff_roles where user_id = 'ca900000-0000-0000-0000-000000000007';
+
 -- Refusing.
 select pg_temp.as_user('ca900000-0000-0000-0000-000000000006');
 select public.community_apply('ca900000-0000-0000-0000-0000000000c1', 'Hello, I would like to join your suppers.', '["Curiosity"]');
@@ -402,6 +439,20 @@ select pg_temp.check((select status from public.community_applications where id 
   and not exists (select 1 from public.community_members where community_id = 'ca900000-0000-0000-0000-0000000000c1' and user_id = 'ca900000-0000-0000-0000-000000000006'),
   'decide: nothing was written by the refused acceptance');
 delete from public.community_bans where community_id = 'ca900000-0000-0000-0000-0000000000c1' and user_id = 'ca900000-0000-0000-0000-000000000006';
+-- A suspended account, as join_community refuses it: not accepted, and it cannot apply.
+insert into public.sanctions (user_id, kind, reason) values ('ca900000-0000-0000-0000-000000000006', 'suspension', 'apply test');
+select pg_temp.as_user('ca900000-0000-0000-0000-000000000001');
+select pg_temp.check(pg_temp.fails(format('select public.community_decide_application(%L, true)', :'ann_app2')) = '42501',
+  'decide: a suspended account is not accepted');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.community_members where community_id = 'ca900000-0000-0000-0000-0000000000c1' and user_id = 'ca900000-0000-0000-0000-000000000006'),
+  'decide: and is not a member');
+insert into public.sanctions (user_id, kind, reason) values ('ca900000-0000-0000-0000-000000000007', 'suspension', 'apply test');
+select pg_temp.as_user('ca900000-0000-0000-0000-000000000007');
+select pg_temp.check(pg_temp.fails($q$select public.community_apply('ca900000-0000-0000-0000-0000000000c1', 'Suspended, asking to join anyway.', '["x"]')$q$) = '42501',
+  'apply: a suspended account does not apply');
+select pg_temp.as_admin();
+delete from public.sanctions where reason = 'apply test';
 select pg_temp.as_user('ca900000-0000-0000-0000-000000000006');
 select pg_temp.check(public.community_withdraw_application('ca900000-0000-0000-0000-0000000000c1'), 'withdraw (guard): she withdraws the second request');
 

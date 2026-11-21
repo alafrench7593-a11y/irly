@@ -58,22 +58,31 @@ begin
   end if;
   return clean;
 end $$;
-revoke all on function private.application_questions_clean(jsonb) from public, anon, authenticated;
+revoke all on function private.application_questions_clean(jsonb) from public;
+grant execute on function private.application_questions_clean(jsonb) to anon, authenticated;
 
 /**
  * Whatever writes the row: IRLY's official communities and the groups of a
- * community stay open, and the questions keep their shape.
+ * community stay open, and the questions keep their shape. The access of an
+ * existing community changes through community_set_access only (rights and
+ * journal): a direct write by an API role is refused. Not security definer,
+ * so that current_user is the role that writes.
  */
 create or replace function private.community_access_guard() returns trigger
-language plpgsql security definer set search_path = public as $$
+language plpgsql set search_path = public as $$
 begin
+  if tg_op = 'UPDATE' and current_user in ('anon', 'authenticated')
+     and (new.access is distinct from old.access or new.application_questions is distinct from old.application_questions) then
+    raise exception 'the access cannot be changed' using errcode = '42501';
+  end if;
   if new.access = 'application' and (new.official or new.parent_id is not null) then
     raise exception 'this community cannot be private' using errcode = '22023';
   end if;
   new.application_questions := private.application_questions_clean(new.application_questions);
   return new;
 end $$;
-revoke all on function private.community_access_guard() from public, anon, authenticated;
+revoke all on function private.community_access_guard() from public;
+grant execute on function private.community_access_guard() to anon, authenticated;
 drop trigger if exists communities_access_guard on public.communities;
 create trigger communities_access_guard before insert or update of access, application_questions, official, parent_id
   on public.communities for each row execute function private.community_access_guard();
@@ -106,8 +115,8 @@ create or replace function private.community_content_open(cid uuid) returns bool
 language sql stable security definer set search_path = public as $$
   select private.community_content_open_for(cid, auth.uid())
 $$;
-revoke all on function private.community_content_open(uuid) from public, anon;
-grant execute on function private.community_content_open(uuid) to authenticated;
+revoke all on function private.community_content_open(uuid) from public;
+grant execute on function private.community_content_open(uuid) to anon, authenticated;
 
 /** For the functions that read past row level security: refuses a non-member of a private community. */
 create or replace function private.community_members_only(cid uuid) returns void
@@ -124,15 +133,15 @@ revoke all on function private.community_members_only(uuid) from public, anon, a
 -- of the existing rules is rewritten. Comments, likes, poll votes and post
 -- pins read their post through community_posts, so they close with it.
 drop policy if exists community_posts_private on public.community_posts;
-create policy community_posts_private on public.community_posts as restrictive for select to authenticated
+create policy community_posts_private on public.community_posts as restrictive for select
   using (community_id is null or private.community_content_open(community_id));
 
 drop policy if exists community_channels_private on public.community_channels;
-create policy community_channels_private on public.community_channels as restrictive for select to authenticated
+create policy community_channels_private on public.community_channels as restrictive for select
   using (private.community_content_open(community_id));
 
 drop policy if exists community_activity_pins_private on public.community_activity_pins;
-create policy community_activity_pins_private on public.community_activity_pins as restrictive for select to authenticated
+create policy community_activity_pins_private on public.community_activity_pins as restrictive for select
   using (private.community_content_open(community_id));
 
 -- The four functions that read a community's content past row level
@@ -385,7 +394,7 @@ end $$;
 revoke all on function public.community_set_access(uuid, text, jsonb) from public, anon;
 grant execute on function public.community_set_access(uuid, text, jsonb) to authenticated;
 
-/** May this person be a member there: the rules join_community applies, for anyone (why: account, gone, girl, banned). */
+/** May this person be a member there: the rules join_community applies, for anyone (why: account, gone, girl, banned, sanctioned). */
 create or replace function private.community_eligible(c public.communities, uid uuid, out ok boolean, out why text)
 language plpgsql stable security definer set search_path = public as $$
 begin
@@ -398,6 +407,8 @@ begin
     why := 'girl';
   elsif private.community_banned(c.id, uid) then
     why := 'banned';
+  elsif private.is_sanctioned(uid) then
+    why := 'sanctioned';
   else
     ok := true;
   end if;
@@ -440,6 +451,8 @@ begin
       raise exception 'you were banned from this community' using errcode = '42501';
     elsif e.why = 'girl' then
       raise exception 'this community is reserved for IRLY Girl' using errcode = '42501';
+    elsif e.why = 'sanctioned' then
+      raise exception 'your account is suspended' using errcode = '42501';
     else
       raise exception 'community not found' using errcode = 'P0002';
     end if;
@@ -561,6 +574,8 @@ begin
   if not private.community_reviews(app.community_id, me) then
     raise exception 'only the community’s team answers applications' using errcode = '42501';
   end if;
+  -- Nobody answers her own request (an IRLY admin included).
+  if app.user_id = me then raise exception 'not on yourself' using errcode = '22023'; end if;
   if app.status <> 'pending' then
     return jsonb_build_object('decided', false, 'status', app.status);
   end if;
@@ -580,6 +595,8 @@ begin
       raise exception 'this person is banned from this community' using errcode = '42501';
     elsif e.why = 'account' then
       raise exception 'this account no longer exists' using errcode = '42501';
+    elsif e.why = 'sanctioned' then
+      raise exception 'this account is suspended' using errcode = '42501';
     else
       raise exception 'community not found' using errcode = 'P0002';
     end if;
@@ -700,3 +717,62 @@ begin
 end $$;
 revoke all on function public.community_set_role(uuid, uuid, text) from public, anon;
 grant execute on function public.community_set_role(uuid, uuid, text) to authenticated;
+
+-- ───────── 7. What else showed the inside of a private community ─────────
+-- Activities of a private community (public by default) are for its members:
+-- their organiser and the people already going keep them.
+drop policy if exists activities_private_community on public.activities;
+create policy activities_private_community on public.activities as restrictive for select
+  using (community_id is null or creator_id = (select auth.uid())
+    or id in (select private.my_participations())
+    or private.community_content_open(community_id));
+
+/** As 20261107000000, plus: a public activity of a private community is for its members. */
+create or replace function private.activity_readable(aid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.activities a
+    where a.id = aid and a.moderated_at is null
+      and (not a.girl_only or a.creator_id = auth.uid() or private.girl_eligible_unchecked(auth.uid()))
+      and (a.creator_id = auth.uid()
+        or exists (select 1 from public.activity_participants ap where ap.activity_id = a.id and ap.user_id = auth.uid())
+        or (a.cancelled_at is null
+          and not private.blocked_unchecked(auth.uid(), a.creator_id)
+          and ((a.privacy = 'public' and (a.community_id is null or private.community_content_open_for(a.community_id, auth.uid())))
+            or (a.privacy = 'community' and a.community_id is not null and private.i_belong(a.community_id))
+            or (a.privacy = 'friends' and private.friends_unchecked(auth.uid(), a.creator_id))
+            or (a.privacy = 'invite' and private.invited_to(a.id)))))
+  )
+$$;
+
+-- Three functions read past row level security with one line each that did
+-- not know private communities: joining a public activity, the communities
+-- shown on someone's profile, and the « same community » filter of Match.
+-- One line changes in each; the migration stops if a line is not found.
+do $$
+declare
+  spec text[];
+  specs constant text[][] := array[
+    array['join_activity',
+      E'    a.privacy = ''public''\n',
+      E'    (a.privacy = ''public'' and (a.community_id is null or private.community_content_open_for(a.community_id, me)))\n'],
+    array['member_communities',
+      E'    and not private.community_banned(c.id, p_user)\n',
+      E'    and not private.community_banned(c.id, p_user)\n    and (v.own or private.community_content_open_for(c.id, v.me))\n'],
+    array['irly_match_discover',
+      E'      and (p_filters ->> ''community_id'' is null or exists (\n',
+      E'      and (p_filters ->> ''community_id'' is null or private.community_content_open_for((p_filters ->> ''community_id'')::uuid, auth.uid()) and exists (\n']
+  ];
+  def text;
+begin
+  foreach spec slice 1 in array specs loop
+    select pg_get_functiondef(p.oid) into strict def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = spec[1];
+    if position('community_content_open_for' in def) > 0 then continue; end if;
+    if position(spec[2] in def) = 0 then
+      raise exception using message = format('community applications: the line to change in %s was not found', spec[1]);
+    end if;
+    execute replace(def, spec[2], spec[3]);
+  end loop;
+end $$;

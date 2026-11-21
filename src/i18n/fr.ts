@@ -7266,4 +7266,5 @@ export const fr: Record<string, string> = {
   'This community is joined by application. Ask to join from its page': 'Cette communauté se rejoint sur candidature. Demande à la rejoindre depuis sa fiche',
   'Only the owner changes the role of a co-admin in charge of roles': 'Seul le propriétaire modifie le rôle d’un co-administrateur chargé des rôles',
   'This member is banned or restricted. Lift it first': 'Ce membre est exclu ou restreint. Lève d’abord la sanction',
+  'This account is suspended: it cannot join a community': 'Ce compte est suspendu : il ne peut pas rejoindre de communauté',
 };
