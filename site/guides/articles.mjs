@@ -112,7 +112,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'New to Dubai?', body: 'Meet people who share your interests, join communities and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Summer in Dubai: keeping a social life', path: 'blog/summer-dubai-social-life/' }],
   },
   {
     lang: 'fr',
@@ -200,7 +200,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt, rejoins des communautés et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Été à Dubaï : garder une vie sociale', path: 'fr/blog/ete-dubai-vie-sociale/' }],
   },
   {
     lang: 'en',
@@ -650,7 +650,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Feeling alone in Dubai?', body: 'Join a community around what you like and find a plan this week, in real life.', label: 'Join a community' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }, { label: 'Summer in Dubai: keeping a social life', path: 'blog/summer-dubai-social-life/' }],
   },
   {
     lang: 'fr',
@@ -720,7 +720,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Seul à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }, { label: 'Été à Dubaï : garder une vie sociale', path: 'fr/blog/ete-dubai-vie-sociale/' }],
   },
   {
     lang: 'en',
