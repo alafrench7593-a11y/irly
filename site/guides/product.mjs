@@ -971,7 +971,8 @@ export const PRODUCT = [
 <li><strong>Making something.</strong> A cooking class, a ceramics or painting workshop, a baking afternoon at home.</li>
 <li><strong>Culture.</strong> Museums, galleries and exhibitions.</li>
 <li><strong>Very early or very late.</strong> A walk at sunrise or after dark is still possible on many days, if you keep it short.</li>
-</ul>`,
+</ul>
+<p>Summer is also when many residents travel and regular plans pause. If your own group thins out, see <a href="../../blog/summer-dubai-social-life/">how to keep a social life in Dubai’s summer</a>.</p>`,
       },
       {
         h2: 'On a low budget',
@@ -1072,7 +1073,8 @@ export const PRODUCT = [
 <li><strong>Fabriquer quelque chose.</strong> Un cours de cuisine, un atelier de céramique ou de peinture, un après-midi pâtisserie à la maison.</li>
 <li><strong>La culture.</strong> Musées, galeries et expositions.</li>
 <li><strong>Très tôt ou très tard.</strong> Une marche au lever du soleil ou à la nuit tombée reste possible bien des jours, si elle est courte.</li>
-</ul>`,
+</ul>
+<p>L’été, c’est aussi le moment où beaucoup de résidents voyagent et où les plans habituels se mettent en pause. Si ton groupe se réduit, lis <a href="../../blog/ete-dubai-vie-sociale/">comment garder une vie sociale pendant l’été à Dubaï</a>.</p>`,
       },
       {
         h2: 'Avec un petit budget',
