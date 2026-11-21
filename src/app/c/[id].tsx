@@ -326,7 +326,7 @@ function CommunityScreen() {
       </View>
 
       {/* Joining swaps Join for the chat: the new actions rise in. */}
-      <Animated.View key={c.isMember ? 'member' : 'visitor'} entering={reduced ? undefined : enter.rise(0)} style={[styles.pad, styles.row]}>
+      <Animated.View key={c.isMember ? 'member' : 'visitor'} entering={reduced ? undefined : enter.rise(0)} style={[styles.pad, styles.row, byApplication ? { alignItems: 'flex-start' } : null]}>
         {c.isMember ? (
           <>
             <View style={{ flex: 1 }}>
