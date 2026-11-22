@@ -325,14 +325,14 @@ function TransferSheet({ visible, communityId, communityName, onClose }: { visib
   return (
     <Sheet visible={visible} onClose={close} title={tx('Transfer ownership')} scroll>
       {!to ? (
-        <View style={{ gap: 10, marginHorizontal: -space.gutter }}>
+        <View style={{ gap: 10, paddingBottom: space[6] }}>
           <Text variant="bodyS" tone="secondary" style={styles.pad}>
             Choose the new owner among the members.
           </Text>
           <MemberList communityId={communityId} onPick={setTo} filter={(m) => m.userId !== myId && m.role !== 'owner'} />
         </View>
       ) : (
-        <View style={{ gap: 14 }}>
+        <View style={[styles.pad, { gap: 14, paddingBottom: space[6] }]}>
           <View style={styles.row}>
             <Avatar name={to.name} hue={hueOf(to.userId)} size={44} userId={to.userId} />
             <Text variant="titleS" raw style={{ flex: 1 }} numberOfLines={1}>
