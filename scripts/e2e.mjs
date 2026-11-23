@@ -562,10 +562,11 @@ try {
   if (!groupsV2) console.log('○ communities v2: migration not deployed yet, steps skipped');
   // Groups were removed on 2026-11-06 (migration 20261109000000): none is listed, none can be made.
   if (groupsV2) await step('communities have no groups: none listed, none can be created', async () => {
-    const sport = must(await A.sb.from('communities').select('id').eq('official', true).eq('topic', 'sport').eq('city_id', 'dubai').is('parent_id', null).single());
+    // Regions (20261125000000): the test members live in Bali, so the official community read here is Bali's.
+    const sport = must(await A.sb.from('communities').select('id').eq('official', true).eq('topic', 'sport').eq('city_id', 'bali').is('parent_id', null).single());
     const groups = must(await A.sb.rpc('community_subgroups', { p_parent: sport.id }));
     const refused = (await A.sb.rpc('create_subgroup', { p_parent: sport.id, p_name: `Padel ${run}` })).error;
-    const suggested = must(await A.sb.rpc('suggest_groups', { p_city: 'dubai', p_limit: 20 }));
+    const suggested = must(await A.sb.rpc('suggest_groups', { p_city: 'bali', p_limit: 20 }));
     if (groups.length) throw new Error(`IRLY Sport still lists ${groups.length} groups`);
     if (!refused) throw new Error('a group could still be created');
     if (suggested.length) throw new Error(`${suggested.length} groups still suggested`);

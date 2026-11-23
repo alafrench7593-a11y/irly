@@ -188,12 +188,16 @@ async function main() {
       },
       [destinationId, cityId],
     );
+  // Regions (20261125000000): a member reads the region she lives in, whatever city the phone is set to.
+  // For the Dubai part the test member lives in Dubai on the server too, then goes back to Bali.
+  await sql(`update public.profiles set city_id = 'dubai' where id = '${uid}'`);
   await setCity('emirates', 'dubai');
   await check('Your communities (Dubai): newcomers recommended (IRLY Expat), join or skip', '/onboarding/communities', ['IRLY Community · Dubai', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now']);
   await check('Communities (Dubai): For you recommends IRLY Expat (not joined)', '/communities', ['For you', 'New in Dubai', 'IRLY Expat', 'Join']);
   await check('Communities (Dubai): All lists IRLY\'s communities; search finds IRLY Expat (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expat'], async () => {
     await page.getByPlaceholder('Search by name, theme or description').fill('expat');
   });
+  await sql(`update public.profiles set city_id = 'bali' where id = '${uid}'`);
   await setCity('bali', 'bali');
   // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
   // closed) must lead to its coming-soon page, which says so, not to a list of people.
