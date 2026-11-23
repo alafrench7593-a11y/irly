@@ -24,6 +24,7 @@ import { CreateHost } from '@/features/create/CreateHost';
 import { girl } from '@/features/girl/theme';
 import { GirlSpaceGuard } from '@/features/girl/access';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
+import { RegionChangeSheet } from '@/features/region/RegionChangeSheet';
 import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
@@ -207,6 +208,7 @@ function App() {
       <CreateHost />
       <GirlSpaceGuard />
       <DestinationTransition />
+      <RegionChangeSheet />
       <AppIntro />
       <ToastHost />
       <OfflineBar />

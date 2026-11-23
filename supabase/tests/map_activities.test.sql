@@ -188,7 +188,14 @@ select pg_temp.check(exists (select 1 from public.map_activity_pins('dubai', p_l
 select pg_temp.check(exists (select 1 from public.map_activity_pins('dubai', p_category => 'sport') where id = 'c9a50000-0000-0000-0000-0000000000b2')
   and not exists (select 1 from public.map_activity_pins('dubai', p_category => 'food') where id = 'c9a50000-0000-0000-0000-0000000000b2'), 'category filter');
 select pg_temp.check(not exists (select 1 from public.map_activity_pins('dubai', p_to => now() + interval '12 hours') where id = 'c9a50000-0000-0000-0000-0000000000b1'), 'time filter (today)');
+-- Regions (20261125000000): Marc lives in Bali for this part.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = 'c9a50000-0000-0000-0000-0000000000a2';
+select pg_temp.as_user('c9a50000-0000-0000-0000-0000000000a2');
 select pg_temp.check(not exists (select 1 from public.map_activity_pins('bali') where id = 'c9a50000-0000-0000-0000-0000000000b1'), 'another country: not on its map');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'c9a50000-0000-0000-0000-0000000000a2';
+select pg_temp.as_user('c9a50000-0000-0000-0000-0000000000a2');
 
 -- ───────── Nothing about people ─────────
 select pg_temp.check(pg_get_function_result('public.map_activity_pins(text, timestamp with time zone, timestamp with time zone, text, uuid, double precision, double precision, double precision, integer, boolean)'::regprocedure)

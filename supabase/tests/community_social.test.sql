@@ -303,7 +303,14 @@ select pg_temp.check((select string_agg(name, ',') from public.community_directo
 select pg_temp.check((select string_agg(name, ',') from public.community_directory('dubai', 'members', 'social runners')) = 'Social Runners', 'search: name');
 select pg_temp.check(not exists (select 1 from public.community_directory('dubai', 'members', 'zq_')), 'search: a typed _ is a literal');
 select pg_temp.check(not exists (select 1 from public.community_directory('dubai', 'members', 'social girls')), 'directory: no IRLY Girl community for a man');
+-- Regions (20261125000000): Karim lives in Bali for this part.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = 'cb500000-0000-0000-0000-0000000000b2';
+select pg_temp.as_user('cb500000-0000-0000-0000-0000000000b2');
 select pg_temp.check(not exists (select 1 from public.community_directory('bali', 'members', 'zqx')), 'directory: another country''s city does not list Dubai''s');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'cb500000-0000-0000-0000-0000000000b2';
+select pg_temp.as_user('cb500000-0000-0000-0000-0000000000b2');
 select pg_temp.as_user('cb500000-0000-0000-0000-0000000000b3');
 select pg_temp.check((select girl_only and is_member from public.community_directory('dubai', 'members', 'social girls')), 'directory: IRLY Girl community listed for a woman with access');
 

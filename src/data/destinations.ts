@@ -28,7 +28,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     flag: '🇮🇩',
     country: 'Indonesia',
     tagline: 'Discover, connect & belong in Bali',
-    status: 'soon',
+    status: 'live',
     light: 'bali',
     photo: 'bali',
     cities: ['bali'],

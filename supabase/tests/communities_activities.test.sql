@@ -220,7 +220,14 @@ select pg_temp.check(exists (select 1 from public.activities where id = 'c0aa000
   'Karim: the new plan is in his list (what useServerActivities reads)');
 select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_girl_only => false) where id = 'c0aa0000-0000-0000-0000-0000000000b1' and going = 1 and capacity = 3),
   'Karim: on the IRLY map, 1 going of 3');
+-- Regions (20261125000000): Karim lives in Bali for this part.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = 'c0aa0000-0000-0000-0000-0000000000a2';
+select pg_temp.as_user('c0aa0000-0000-0000-0000-0000000000a2');
 select pg_temp.check(not exists (select 1 from public.map_activities('bali', p_girl_only => false) where id = 'c0aa0000-0000-0000-0000-0000000000b1'), 'region: not on the Bali map');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'c0aa0000-0000-0000-0000-0000000000a2';
+select pg_temp.as_user('c0aa0000-0000-0000-0000-0000000000a2');
 select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_category => 'sport', p_girl_only => false) where id = 'c0aa0000-0000-0000-0000-0000000000b1')
   and not exists (select 1 from public.map_activities('dubai', p_category => 'food', p_girl_only => false) where id = 'c0aa0000-0000-0000-0000-0000000000b1'), 'map: category filter');
 select pg_temp.check(not exists (select 1 from public.map_activities('dubai', p_to => now() + interval '1 day', p_girl_only => false) where id = 'c0aa0000-0000-0000-0000-0000000000b1'),

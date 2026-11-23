@@ -318,6 +318,9 @@ select pg_temp.check((select count(*) = 1 and bool_and(answers = '[{"q": "Why do
   from public.community_applications where community_id = 'ca900000-0000-0000-0000-0000000000c1'), 'apply: she reads her own request, once, with her answer');
 select pg_temp.check((select a #>> '{application,status}' = 'pending' from public.community_access('ca900000-0000-0000-0000-0000000000c1') a),
   'apply: the page shows it pending');
+select pg_temp.check((select e -> 'community_applications' -> 0 ->> 'status' = 'pending' and e -> 'community_applications' -> 0 ->> 'message' like 'I cook%'
+  and jsonb_array_length(e -> 'community_applications') = 1 and not (e -> 'community_applications' -> 0) ? 'decided_by'
+  from public.export_my_data() e), 'export: her data export has her request, without who answers');
 select pg_temp.check((select count(*) from public.community_posts where community_id = 'ca900000-0000-0000-0000-0000000000c1') = 0,
   'apply: a pending request opens nothing');
 select pg_temp.as_admin();

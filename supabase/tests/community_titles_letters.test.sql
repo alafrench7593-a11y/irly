@@ -55,7 +55,8 @@ insert into public.communities (id, city_id, name, topic, girl_only, created_by)
   -- A real word of eight letters: never a code.
   ('c9000000-0000-0000-0000-0000000000c5', 'dubai', 'Morning marathon', null, true, null),
   -- A stamp with vowels, left by a deleted test account, a real member in it.
-  ('c9000000-0000-0000-0000-0000000000c6', 'bali', 'Sync club mncukilg', null, false, null);
+  -- Regions (20261125000000): this leftover is in Dubai, where Rae (its member) lives.
+  ('c9000000-0000-0000-0000-0000000000c6', 'dubai', 'Sync club mncukilg', null, false, null);
 insert into public.community_members (community_id, user_id, role) values
   ('c9000000-0000-0000-0000-0000000000c1', 'c9000000-0000-0000-0000-0000000000a1', 'member'),
   ('c9000000-0000-0000-0000-0000000000c2', 'c9000000-0000-0000-0000-0000000000a2', 'owner'),

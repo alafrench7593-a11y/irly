@@ -2,7 +2,7 @@ import { DEMO, storageName } from '@/config/app';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safeStorage';
-import { DESTINATIONS, cityOpen, destinationOpen } from '@/data/destinations';
+import { CITIES, DESTINATIONS, cityOpen, destinationOpen } from '@/data/destinations';
 import type {
   ActivityKind,
   CityId,
@@ -146,6 +146,8 @@ type State = {
 type Actions = {
   setDestination: (destinationId: DestinationId, cityId?: CityId) => void;
   setCity: (cityId: CityId) => void;
+  /** The city the server holds for this account (sign-in, a region change it accepted): set as is, never asked about. */
+  forceCity: (cityId: CityId) => void;
   setEmirateOnly: (on: boolean) => void;
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
@@ -192,6 +194,16 @@ function toggle(flags: Flags, id: string): [Flags, boolean] {
   return [next, true];
 }
 
+/**
+ * Asked before the city changes: true when the change is a move to another
+ * region that has to be requested (features/auth/account registers it; a
+ * visitor without an account is never held).
+ */
+let crossRegionGate: ((next: CityId, current: CityId | null) => boolean) | null = null;
+export const setCrossRegionGate = (gate: typeof crossRegionGate) => {
+  crossRegionGate = gate;
+};
+
 export const useStore = create<State & Actions>()(
   persist(
     (set, get) => ({
@@ -218,12 +230,20 @@ export const useStore = create<State & Actions>()(
       storySeen: 0,
       communityIntroSeen: false,
 
-      setDestination: (destinationId, cityId) =>
-        destinationOpen(destinationId)
-          ? set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null })
-          : set({ destinationId: 'emirates', cityId: 'dubai' }),
+      setDestination: (destinationId, cityId) => {
+        if (!destinationOpen(destinationId)) return set({ destinationId: 'emirates', cityId: 'dubai' });
+        const next = cityId ?? DESTINATIONS[destinationId].defaultCity ?? null;
+        // A member's region is where she lives: another destination is asked for, not switched to.
+        if (next && crossRegionGate?.(next, get().cityId)) return;
+        set({ destinationId, cityId: next });
+      },
+      forceCity: (cityId) => {
+        if (!(cityId in CITIES)) return;
+        set({ cityId, destinationId: CITIES[cityId].destinationId });
+      },
       setCity: (cityId) => {
         if (!cityOpen(cityId)) return set({ destinationId: 'emirates', cityId: 'dubai' });
+        if (crossRegionGate?.(cityId, get().cityId)) return;
         const destinationId = (Object.keys(DESTINATIONS) as DestinationId[]).find((d) =>
           DESTINATIONS[d].cities.includes(cityId),
         );

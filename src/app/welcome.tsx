@@ -161,10 +161,10 @@ export default function Welcome() {
         <View style={[styles.choose, { paddingTop: insets.top + 132, paddingBottom: insets.bottom + space[5] }]}>
           <Animated.View entering={enter.rise(0, 120)} style={{ paddingHorizontal: space.gutter }}>
             <Text variant="displayL" tone="onDark">
-              Where are you going?
+              Where do you live?
             </Text>
             <Text variant="body" color="rgba(255,255,255,0.6)" style={{ marginTop: 6 }}>
-              Pick your IRLY. You can switch destination anytime.
+              Each IRLY is for the people who live there. Choosing one says that you live there; if you move, you ask to change region in your settings.
             </Text>
           </Animated.View>
           <View style={styles.cards}>

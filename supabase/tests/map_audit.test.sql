@@ -116,7 +116,10 @@ select pg_temp.as_user('cb000000-0000-0000-0000-0000000000b2');
 select pg_temp.check(pg_temp.people('dubai', false) = 'Lina,Omar',
   'IRLY map, Tom: only members who opted in, at neighbourhood precision, visible to him, not blocked, not sanctioned, open, with a neighbourhood');
 select pg_temp.check((select area_id from public.map_people('dubai') where user_id = 'cb000000-0000-0000-0000-0000000000c1') = 'marina', 'IRLY map: the neighbourhood is given');
-select pg_temp.check(pg_temp.people('bali', false) = 'Ari' and position('Ari' in pg_temp.people('dubai', false)) = 0, 'IRLY map: each country shows its own members');
+-- Regions (20261125000000): a member reads her own region whatever city she asks for. Tom lives in Dubai:
+-- asking for Bali gives him the Emirates again, never Ari, who lives in Bali.
+select pg_temp.check(pg_temp.people('bali', false) = pg_temp.people('dubai', false) and position('Ari' in pg_temp.people('bali', false)) = 0
+  and position('Ari' in pg_temp.people('dubai', false)) = 0, 'IRLY map: each country shows its own members');
 select pg_temp.check(pg_temp.fails('select * from public.map_people(''dubai'', true)') = '42501', 'IRLY Girl map refused to a man');
 -- Another member's opt-in is not readable directly.
 select pg_temp.check((select count(*) from public.safety_settings where user_id = 'cb000000-0000-0000-0000-0000000000c1') = 0, 'opt-ins of others are not readable');

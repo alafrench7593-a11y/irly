@@ -65,9 +65,18 @@ where (c.official and c.topic = 'girls' and c.city_id = 'dubai' and c.parent_id 
    or (c.city_id = 'bali' and c.name = 'Bali Surf Girls' and c.deleted_at is null);
 select pg_temp.check((select count(*) from before_rename) = 2, 'both communities found');
 
+-- Regions (20261125000000): Ada and Bea live in Dubai for this part (they join the Dubai community), then in Bali (the Bali one), then each in her own city again.
+update public.profiles set city_id = 'dubai' where id = 'f2000000-0000-0000-0000-0000000000a2';
 insert into public.community_members (community_id, user_id, role)
 select id, u, 'member' from before_rename, unnest(array['f2000000-0000-0000-0000-0000000000a1'::uuid, 'f2000000-0000-0000-0000-0000000000a2'::uuid]) u
+where name <> 'Bali Surf Girls'
 on conflict do nothing;
+update public.profiles set city_id = 'bali' where id in ('f2000000-0000-0000-0000-0000000000a1', 'f2000000-0000-0000-0000-0000000000a2');
+insert into public.community_members (community_id, user_id, role)
+select id, u, 'member' from before_rename, unnest(array['f2000000-0000-0000-0000-0000000000a1'::uuid, 'f2000000-0000-0000-0000-0000000000a2'::uuid]) u
+where name = 'Bali Surf Girls'
+on conflict do nothing;
+update public.profiles set city_id = 'dubai' where id = 'f2000000-0000-0000-0000-0000000000a1';
 insert into public.community_posts (community_id, author_id, body)
 select id, 'f2000000-0000-0000-0000-0000000000a1', 'Hello from before the rename' from before_rename;
 

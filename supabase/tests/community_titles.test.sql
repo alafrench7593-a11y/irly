@@ -84,8 +84,14 @@ insert into public.communities (id, city_id, name, category_id, created_by) valu
 insert into public.community_members (community_id, user_id, role)
 select c, 'c7100000-0000-0000-0000-0000000000a1', 'member'
 from unnest(array['c7100000-0000-0000-0000-0000000000c2', 'c7100000-0000-0000-0000-0000000000c3', 'c7100000-0000-0000-0000-0000000000c4',
-                  'c7100000-0000-0000-0000-0000000000c5', 'c7100000-0000-0000-0000-0000000000c6', 'c7100000-0000-0000-0000-0000000000c8',
+                  'c7100000-0000-0000-0000-0000000000c8',
                   'c7100000-0000-0000-0000-0000000000c9']::uuid[]) c;
+-- Regions (20261125000000): Rae lives in Dubai for this part (she joined the two Dubai leftovers there), then in Bali again.
+update public.profiles set city_id = 'dubai' where id = 'c7100000-0000-0000-0000-0000000000a1';
+insert into public.community_members (community_id, user_id, role)
+select c, 'c7100000-0000-0000-0000-0000000000a1', 'member'
+from unnest(array['c7100000-0000-0000-0000-0000000000c5', 'c7100000-0000-0000-0000-0000000000c6']::uuid[]) c;
+update public.profiles set city_id = 'bali' where id = 'c7100000-0000-0000-0000-0000000000a1';
 insert into public.community_members (community_id, user_id, role) values ('c7100000-0000-0000-0000-0000000000c7', 'c7100000-0000-0000-0000-0000000000a2', 'owner');
 insert into public.community_posts (id, community_id, author_id, body) values
   ('c7100000-0000-0000-0000-0000000000d2', 'c7100000-0000-0000-0000-0000000000c2', 'c7100000-0000-0000-0000-0000000000a1', 'Before the rename');
@@ -142,6 +148,9 @@ select pg_temp.check(not exists (select 1 from public.conversation_members cm jo
 -- The other order: the creator first, then the last member (the orphan is remembered).
 select pg_temp.as_user('c7100000-0000-0000-0000-0000000000a6');
 create temp table orphan_club as select public.create_community('Sunset Yoga', 'dubai') as id;
+-- Regions (20261125000000): Rae lives in Dubai for this part (she joins a Dubai community).
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'c7100000-0000-0000-0000-0000000000a1';
 select pg_temp.as_user('c7100000-0000-0000-0000-0000000000a1');
 select public.join_community((select id from orphan_club));
 select pg_temp.as_admin();
@@ -149,7 +158,9 @@ delete from auth.users where id = 'c7100000-0000-0000-0000-0000000000a6';
 select pg_temp.check((select deleted_at is null and created_by is null and name = 'Sunset Yoga' from public.communities where id = (select id from orphan_club)), 'creator gone, a member left: the community stays with its name');
 select pg_temp.check(exists (select 1 from public.community_members where community_id = (select id from orphan_club) and user_id = 'c7100000-0000-0000-0000-0000000000a1'), '… and its member');
 -- A seeded IRLY community (no creator ever) whose only member leaves the same way is kept.
+-- Regions (20261125000000): one of Sol's own region (he lives in Dubai), not whichever comes first.
 create temp table seeded as select id from public.communities where created_by is null and not official and deleted_at is null and parent_id is null
+  and private.country_of(city_id) = 'ae'
   and not exists (select 1 from public.community_members m where m.community_id = communities.id) limit 1;
 insert into public.community_members (community_id, user_id, role) select id, 'c7100000-0000-0000-0000-0000000000a2', 'member' from seeded;
 delete from auth.users where id = 'c7100000-0000-0000-0000-0000000000a1';
