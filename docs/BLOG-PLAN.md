@@ -33,7 +33,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] Feeling lonely even with people around you
 - [x] Working from home in Dubai and feeling isolated
 - [x] Summer in Dubai: keeping a social life when many people travel
-- [ ] When your friends in Dubai leave: starting again
+- [x] When your friends in Dubai leave: starting again
 - [ ] Single in Dubai and looking for friends, not dates
 - [ ] Social anxiety in a new city: small steps that help
 - [ ] Saying yes to invitations without burning out
