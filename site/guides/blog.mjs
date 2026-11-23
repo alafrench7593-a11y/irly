@@ -1765,4 +1765,160 @@ export const POSTS = [
       { label: 'Télétravail à Dubaï : quand on se sent isolé', path: 'fr/blog/teletravail-dubai-isolement/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-friends-leave-dubai',
+    path: 'blog/friends-leaving-dubai-starting-again/',
+    city: 'Dubai',
+    published: '2026-11-23',
+    title: 'Friends Leaving Dubai: How to Start Again | IRLY',
+    description: 'When close friends leave Dubai, the loss is real and the circle has to be rebuilt. How to say goodbye well, keep the friendship, and start again here.',
+    h1: 'When your friends in Dubai leave: how to start again',
+    lead: 'When a close friend leaves Dubai, you lose the person and the habits you had together, and it is normal to feel it for weeks. Starting again does not mean replacing them. It means keeping that friendship at a distance, and rebuilding regular contact here with a few people, some of whom you already know.',
+    sections: [
+      {
+        h2: 'Why it hits harder here',
+        html: `<p>In a city where most people have come from somewhere else, friends do the work that family and old schoolmates do at home. They are your emergency contact, your weekend, the people who know how your week went. Many residents are here for a job or a few years, so departures are part of life in Dubai, and they often come in clusters: around <a href="../summer-dubai-social-life/">the start of summer</a>, when school ends, or when one company moves several people at once.</p>
+<p>Knowing that does not make it lighter. What goes with a close friend is not only the person: it is the Saturday breakfast, the lift to padel, the group that only worked because they organised it. Give it its name. This is a loss, and feeling flat or even a little resentful for a while is an ordinary reaction, not a sign that you are bad at friendship.</p>`,
+      },
+      {
+        h2: 'Before they go: use the last weeks well',
+        html: `<p>The final month fills up with packing and paperwork, and goodbyes get squeezed into one crowded dinner. A few things are worth doing on purpose.</p>
+<ul>
+<li><strong>See them one to one.</strong> A farewell party is for the group. An unhurried breakfast is where you say what the friendship meant.</li>
+<li><strong>Ask to be introduced.</strong> “Who should I keep seeing when you are gone?” Your friend knows people you have met only in passing. One introduction made while they are still here is worth ten made by message later.</li>
+<li><strong>Take over one thing they ran.</strong> The monthly dinner, the Saturday walk, the chat. If nobody picks it up, the whole group dissolves with them.</li>
+<li><strong>Fix the first call before they leave.</strong> A date in both diaries, two or three weeks after the move, when the excitement has dropped on their side too.</li>
+</ul>`,
+      },
+      {
+        h2: 'Keep the friendship, in a new shape',
+        html: `<p>Long-distance friendships rarely end with an argument. They fade because nobody decided how they would continue. Decide.</p>
+<ul>
+<li><strong>Choose a rhythm you can keep.</strong> A call every other Sunday holds better than daily messages that thin out after a month.</li>
+<li><strong>Send small things.</strong> A photo of the café you both liked, a voice note on the way home. Ordinary news keeps you in each other’s week.</li>
+<li><strong>Sort out the time difference once.</strong> Find the hour that works for both and stick to it.</li>
+<li><strong>Plan a visit, even a distant one.</strong> A date to look forward to changes how the gap feels.</li>
+</ul>
+<p>Accept that it will be a different friendship: fewer shared afternoons, more catching up. That is still worth a great deal, and it leaves room for the people around you now.</p>`,
+      },
+      {
+        h2: 'Look at who is still here',
+        html: `<p>After a departure it is easy to believe you are back to zero. You almost never are. Take ten minutes and write three lists.</p>
+<ul>
+<li><strong>People you like and see rarely.</strong> The colleague from a previous job, the neighbour, the friend of your friend who was always good company.</li>
+<li><strong>People you see often and barely know.</strong> The regulars of your class, your run group, your building’s gym.</li>
+<li><strong>Groups you drifted away from</strong> because your friend’s plans filled your weekends.</li>
+</ul>
+<p>Then send two messages this week, with a precise proposal: a day, a place, an activity. “Coffee on Saturday morning near the Marina?” is easier to accept than “we should catch up”. For the second list, <a href="../gym-class-acquaintance-to-friend/">turning a gym or class acquaintance into a friend</a> gives the steps.</p>`,
+      },
+      {
+        h2: 'Rebuild with repetition, not with one big effort',
+        html: `<p>The friend who left became close because you saw each other again and again. The same thing will make the next friendships, and it takes time: see <a href="../how-often-see-someone-become-friend/">how often you need to see someone before they become a friend</a>. Two habits help more than a burst of social evenings.</p>
+<ul>
+<li><strong>One fixed slot a week.</strong> The same class, the same group, the same evening. You become a familiar face without having to be brilliant each time.</li>
+<li><strong>One invitation of your own a fortnight.</strong> Small and simple, two or three people.</li>
+</ul>
+<p>Our guide to <a href="../../dubai/make-friends/">making friends in Dubai</a> goes through where to find those regular groups, and <a href="../../dubai/expat-communities/">joining an expat community</a> covers the national and language groups that take in newcomers and long-timers alike. Apps are one more route. IRLY is one of them: an app to meet people who share your interests and do things together in real life, not a dating app. You join communities by interest, and any member can create an activity with a date, a time and a neighbourhood. It is free, on the App Store for iPhone and in the browser; the Android app is coming soon.</p>`,
+      },
+      {
+        h2: 'When it keeps happening',
+        html: `<p>After the second or third goodbye, some people stop investing: why get close to someone who will leave in two years? It is an understandable defence, and it costs more than it saves, because the years in between are then spent alone. Two things make the cycle easier to live with. Spread your friendships over several circles, so that one departure does not empty your week. And include people who have settled for the long term alongside those passing through.</p>
+<p>If the sadness does not ease after several weeks, if you sleep badly or have lost interest in most things, talk to a doctor or a mental health professional: a string of goodbyes can weigh more than it seems. <a href="../../dubai/lonely/">Lonely in Dubai: what actually helps</a> goes further on the days when the city feels empty.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is it normal to grieve when a friend moves away?', a: 'Yes. You lose daily contact and shared routines, and it can feel like a small bereavement for a few weeks. It usually eases as new routines take shape.' },
+      { q: 'Should I leave Dubai too now my friends have gone?', a: 'Not on the strength of one hard month. Rebuild a routine first; decide once the sadness has eased.' },
+      { q: 'Should I avoid making friends with people who might leave?', a: 'No. Nobody knows how long they will stay, and good years of friendship are worth having. Spreading your friendships over several circles softens each departure.' },
+      { q: 'How long does it take to rebuild a circle after friends leave?', a: 'It varies with how often you see people. With one regular activity a week and an invitation now and then, familiar faces appear within a few weeks; close friendships take months.' },
+    ],
+    cta: { title: 'Rebuilding your circle in Dubai?', body: 'Join a community around what you like, or create an activity and invite two or three people.', label: 'Join a community' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: 'How to join an expat community in Dubai', path: 'dubai/expat-communities/' },
+      { label: 'How often do you need to see someone to become friends?', path: 'blog/how-often-see-someone-become-friend/' },
+      { label: 'Gym or class: from acquaintance to friend', path: 'blog/gym-class-acquaintance-to-friend/' },
+      { label: 'Summer in Dubai: keeping a social life', path: 'blog/summer-dubai-social-life/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-friends-leave-dubai',
+    path: 'fr/blog/amis-qui-quittent-dubai-recommencer/',
+    city: 'Dubaï',
+    published: '2026-11-23',
+    title: 'Amis qui quittent Dubaï : comment recommencer | IRLY',
+    description: 'Quand des amis proches quittent Dubaï, la perte est réelle et le cercle est à reconstruire. Bien se dire au revoir, garder le lien, repartir ici.',
+    h1: 'Quand tes amis quittent Dubaï : comment recommencer',
+    lead: 'Quand un ami proche quitte Dubaï, tu perds la personne et les habitudes que vous aviez ensemble, et il est normal de le sentir pendant des semaines. Recommencer ne veut pas dire le remplacer. C’est garder cette amitié à distance, et retrouver ici un contact régulier avec quelques personnes, dont certaines que tu connais déjà.',
+    sections: [
+      {
+        h2: 'Pourquoi ça pèse plus lourd ici',
+        html: `<p>Dans une ville où presque tout le monde vient d’ailleurs, les amis font le travail que font ailleurs la famille et les amis d’enfance. Ce sont eux ton contact en cas d’urgence, ton week-end, ceux qui savent comment s’est passée ta semaine. Beaucoup de résidents sont là pour un poste ou pour quelques années : les départs font partie de la vie à Dubaï, et ils arrivent souvent groupés, au <a href="../ete-dubai-vie-sociale/">début de l’été</a>, quand l’école finit, ou quand une entreprise mute plusieurs personnes d’un coup.</p>
+<p>Le savoir n’allège rien. Ce qui part avec un ami proche, ce n’est pas seulement la personne : c’est le petit-déjeuner du samedi, le trajet partagé jusqu’au padel, le groupe qui ne tenait que parce qu’il l’organisait. C’est une perte, et te sentir à plat, voire un peu amer, pendant un temps est une réaction ordinaire. Ce n’est pas le signe que tu ne sais pas garder tes amis.</p>`,
+      },
+      {
+        h2: 'Avant le départ : bien utiliser les dernières semaines',
+        html: `<p>Le dernier mois se remplit de cartons et de démarches, et les au revoir se réduisent à un seul grand dîner.</p>
+<ul>
+<li><strong>Vois ton ami en tête à tête.</strong> La soirée de départ est pour le groupe. C’est autour d’un petit-déjeuner sans se presser qu’on se dit ce que l’amitié a compté.</li>
+<li><strong>Demande à être présenté.</strong> « Qui est-ce que je devrais continuer à voir quand tu seras parti ? » Ton ami connaît des gens que tu n’as fait que croiser. Une présentation faite tant qu’il est là en vaut dix envoyées plus tard par message.</li>
+<li><strong>Reprends une chose qu’il organisait.</strong> Le dîner du mois, la marche du samedi, la conversation de groupe. Si personne ne la reprend, tout le groupe se défait avec lui.</li>
+<li><strong>Fixe le premier appel avant le départ.</strong> Une date dans les deux agendas, deux ou trois semaines après le déménagement, quand l’excitation est retombée de son côté aussi.</li>
+</ul>`,
+      },
+      {
+        h2: 'Garder l’amitié, sous une autre forme',
+        html: `<p>Les amitiés à distance finissent rarement sur une dispute. Elles s’effacent parce que personne n’a décidé comment elles allaient continuer. Décidez-le ensemble.</p>
+<ul>
+<li><strong>Choisissez un rythme tenable.</strong> Un appel un dimanche sur deux tient mieux que des messages quotidiens qui s’espacent au bout d’un mois.</li>
+<li><strong>Envoyez de petites choses.</strong> Une photo du café que vous aimiez, un message vocal en rentrant. Les nouvelles ordinaires vous gardent présents dans le quotidien l’un de l’autre.</li>
+<li><strong>Réglez le décalage horaire une fois pour toutes.</strong> Trouvez l’heure qui convient aux deux et gardez-la.</li>
+<li><strong>Prévoyez une visite, même lointaine.</strong> Une date à attendre change la façon de vivre la distance.</li>
+</ul>
+<p>Accepte que ce sera une autre amitié : moins d’après-midi partagés, plus de nouvelles échangées. Elle garde sa valeur et laisse de la place à ceux qui t’entourent.</p>`,
+      },
+      {
+        h2: 'Regarde qui est encore là',
+        html: `<p>Après un départ, on croit facilement repartir de zéro. Ce n’est presque jamais vrai. Écris trois listes.</p>
+<ul>
+<li><strong>Les gens que tu apprécies et que tu vois peu.</strong> Le collègue d’un ancien poste, la voisine, l’ami de ton ami qui était toujours de bonne compagnie.</li>
+<li><strong>Les gens que tu vois souvent et que tu connais à peine.</strong> Les habitués de ton cours, de ton groupe de course, de la salle de ton immeuble.</li>
+<li><strong>Les groupes dont tu t’es éloigné</strong> parce que les plans de ton ami remplissaient tes week-ends.</li>
+</ul>
+<p>Puis envoie deux messages cette semaine, avec une proposition précise : un jour, un lieu, une activité. « Un café samedi matin du côté de la Marina ? » s’accepte plus facilement que « il faut qu’on se voie ». Pour la deuxième liste, <a href="../connaissance-sport-cours-devenir-ami/">faire d’une connaissance de salle ou de cours un ami</a> donne la marche à suivre.</p>`,
+      },
+      {
+        h2: 'Reconstruire par la répétition, pas par un grand effort',
+        html: `<p>L’ami qui est parti est devenu proche parce que vous vous êtes revus, encore et encore. C’est la même chose qui fera les prochaines amitiés, et cela prend du temps : lis <a href="../combien-de-fois-se-voir-pour-devenir-amis/">combien de fois il faut se voir avant de devenir amis</a>. Deux habitudes aident plus qu’une rafale de soirées.</p>
+<ul>
+<li><strong>Un créneau fixe par semaine.</strong> Le même cours, le même groupe, le même soir. Tu deviens un visage familier sans avoir à briller à chaque fois.</li>
+<li><strong>Une invitation de ta part tous les quinze jours.</strong> Petite et simple, à deux ou trois.</li>
+</ul>
+<p>Notre guide pour <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> détaille où trouver ces groupes réguliers, et <a href="../../dubai/communautes-expatries/">rejoindre une communauté d’expatriés</a> présente les groupes par pays ou par langue, qui accueillent nouveaux comme anciens. Autre voie, les applications, dont IRLY : une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble dans la vraie vie, pas une application de rencontres amoureuses. Tu rejoins des communautés par centre d’intérêt, et chaque membre peut créer une activité avec une date, une heure et un quartier. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt.</p>`,
+      },
+      {
+        h2: 'Quand ça se répète',
+        html: `<p>Au deuxième ou troisième au revoir, certains cessent de s’investir : à quoi bon se rapprocher de quelqu’un qui partira dans deux ans ? C’est une défense compréhensible, et elle coûte plus qu’elle ne protège, parce que les années entre deux départs se passent alors seul. Répartis tes amitiés sur plusieurs cercles, pour qu’un départ ne vide pas ta semaine. Et compte parmi tes proches des personnes installées pour longtemps, à côté de celles qui sont de passage.</p>
+<p>Si la tristesse ne s’allège pas au bout de plusieurs semaines, si tu dors mal ou n’as plus goût à grand-chose, parles-en à un médecin ou à un professionnel de santé mentale. <a href="../../dubai/solitude/">Se sentir seul à Dubaï : ce qui aide vraiment</a> va plus loin sur les jours où la ville paraît vide.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Est-ce normal d’avoir du chagrin quand un ami déménage ?', a: 'Oui. Tu perds un contact quotidien et des habitudes partagées, et cela peut ressembler à un petit deuil pendant quelques semaines. Le plus souvent, cela s’apaise quand de nouvelles habitudes s’installent.' },
+      { q: 'Dois-je partir aussi, maintenant que mes amis sont partis ?', a: 'Pas sur un mois difficile. Reconstruis d’abord une routine ; décide quand la tristesse sera retombée.' },
+      { q: 'Faut-il éviter de se lier avec des gens qui risquent de partir ?', a: 'Non. Personne ne sait combien de temps il restera, et de bonnes années d’amitié valent d’être vécues. Répartir ses amitiés sur plusieurs cercles adoucit chaque départ.' },
+      { q: 'Combien de temps faut-il pour reconstruire un cercle après des départs ?', a: 'Cela dépend de la fréquence à laquelle tu vois les gens. Avec une activité régulière par semaine et une invitation de temps en temps, des visages familiers apparaissent en quelques semaines ; les amitiés proches demandent des mois.' },
+    ],
+    cta: { title: 'Tu reconstruis ton cercle à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes, ou crée une activité et invite deux ou trois personnes.', label: 'Rejoindre une communauté' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Rejoindre une communauté d’expatriés à Dubaï', path: 'fr/dubai/communautes-expatries/' },
+      { label: 'Combien de fois se voir avant de devenir amis ?', path: 'fr/blog/combien-de-fois-se-voir-pour-devenir-amis/' },
+      { label: 'Salle de sport ou cours : d’une connaissance à un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
+      { label: 'Été à Dubaï : garder une vie sociale', path: 'fr/blog/ete-dubai-vie-sociale/' },
+    ],
+  },
 ];
