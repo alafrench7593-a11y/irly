@@ -158,7 +158,9 @@ delete from auth.users where id = 'c7100000-0000-0000-0000-0000000000a6';
 select pg_temp.check((select deleted_at is null and created_by is null and name = 'Sunset Yoga' from public.communities where id = (select id from orphan_club)), 'creator gone, a member left: the community stays with its name');
 select pg_temp.check(exists (select 1 from public.community_members where community_id = (select id from orphan_club) and user_id = 'c7100000-0000-0000-0000-0000000000a1'), '… and its member');
 -- A seeded IRLY community (no creator ever) whose only member leaves the same way is kept.
+-- Regions (20261125000000): one of Sol's own region (he lives in Dubai), not whichever comes first.
 create temp table seeded as select id from public.communities where created_by is null and not official and deleted_at is null and parent_id is null
+  and private.country_of(city_id) = 'ae'
   and not exists (select 1 from public.community_members m where m.community_id = communities.id) limit 1;
 insert into public.community_members (community_id, user_id, role) select id, 'c7100000-0000-0000-0000-0000000000a2', 'member' from seeded;
 delete from auth.users where id = 'c7100000-0000-0000-0000-0000000000a1';
