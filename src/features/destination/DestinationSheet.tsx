@@ -36,7 +36,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Where are you?" subtitle="Changed country? Just tell IRLY where you are: the app follows you.">
+    <Sheet visible={visible} onClose={onClose} title="Where do you live?" subtitle="Your region is where you live. Switch city inside it freely; moving to another region is asked for here.">
       <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ paddingBottom: space[4] }} showsVerticalScrollIndicator={false}>
         {/* The quick switch: one tap per country, then the city below. */}
         <View style={styles.quick}>
@@ -64,7 +64,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
                   {tx(dest.shortName)}
                 </Text>
                 <Text variant="caption" color={here ? t.c.bg : t.c.textSecondary}>
-                  {here ? tx('You are here') : tx('I am here now')}
+                  {here ? tx('You live here') : tx('I live there now')}
                 </Text>
               </PressableScale>
             );

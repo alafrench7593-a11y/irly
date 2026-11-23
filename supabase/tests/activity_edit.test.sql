@@ -126,9 +126,17 @@ insert into public.activities (id, creator_id, title, description, category_id, 
     now() + interval '5 days', null, null, 0, 'AED', 'community', false, 'all', 'ae220000-0000-0000-0000-0000000000c1'),
   -- b6 nobody joined it. b7 in Bali, priced in IDR.
   ('ae220000-0000-0000-0000-0000000000b6', 'ae220000-0000-0000-0000-0000000000a1', 'AE solo plan', null, 'sport', 'dubai', 'marina', null,
-    now() + interval '6 days', null, null, 0, 'AED', 'public', false, 'all', null),
+    now() + interval '6 days', null, null, 0, 'AED', 'public', false, 'all', null);
+-- Regions (20261125000000): Lina lives in Bali for this part (she creates b7 there), then in Dubai again.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = 'ae220000-0000-0000-0000-0000000000a1';
+select pg_temp.as_user('ae220000-0000-0000-0000-0000000000a1');
+insert into public.activities (id, creator_id, title, description, category_id, city_id, area_id, place_name, starts_at, ends_at, capacity, price_minor, currency, privacy, girl_only, audience, community_id) values
   ('ae220000-0000-0000-0000-0000000000b7', 'ae220000-0000-0000-0000-0000000000a1', 'AE Bali surf', null, 'sport', 'bali', 'canggu', null,
     now() + interval '6 days', null, null, 5000000, 'IDR', 'public', false, 'all', null);
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'ae220000-0000-0000-0000-0000000000a1';
+select pg_temp.as_user('ae220000-0000-0000-0000-0000000000a1');
 update public.activities set cancelled_at = now() where id = 'ae220000-0000-0000-0000-0000000000b4';
 select pg_temp.as_user('ae220000-0000-0000-0000-0000000000a2');
 select public.join_activity('ae220000-0000-0000-0000-0000000000b1', 'going');

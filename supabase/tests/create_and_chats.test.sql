@@ -197,8 +197,15 @@ values ('c9900000-0000-0000-0000-0000000000b1', auth.uid(), 'c99 Sunset run', 's
   'c9900000-0000-0000-0000-0000000000a1/run.jpg');
 select pg_temp.check((select to_char(starts_at at time zone timezone, 'YYYY-MM-DD HH24:MI') from public.activities where id = 'c9900000-0000-0000-0000-0000000000b1') = '2030-11-02 19:30', 'stored instant reads 19:30 in Dubai');
 -- Bali (UTC+8): its own time zone even when the request says Dubai (or nothing).
+-- Regions (20261125000000): Mia lives in Bali for this part.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = 'c9900000-0000-0000-0000-0000000000a1';
+select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a1');
 insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at, timezone, format)
 values ('c9900000-0000-0000-0000-0000000000b4', auth.uid(), 'c99 Canggu surf', 'sport', 'bali', 'canggu', '2030-11-02T11:30:00Z', 'Asia/Dubai', 'meetup');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'c9900000-0000-0000-0000-0000000000a1';
+select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a1');
 select pg_temp.check((select timezone = 'Asia/Makassar' and to_char(starts_at at time zone timezone, 'HH24:MI') = '19:30' from public.activities where id = 'c9900000-0000-0000-0000-0000000000b4'), 'a Bali activity is stored in Asia/Makassar (19:30 there)');
 select pg_temp.check((select timezone from public.activities where id = 'c9900000-0000-0000-0000-0000000000b1') = 'Asia/Dubai', 'a Dubai activity stays in Asia/Dubai');
 select pg_temp.check((select place_name = 'Marina Walk' and area_id = 'marina' and cover_path = 'c9900000-0000-0000-0000-0000000000a1/run.jpg' from public.activities where id = 'c9900000-0000-0000-0000-0000000000b1'), 'place and photo on the right activity');

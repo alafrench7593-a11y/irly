@@ -84,8 +84,14 @@ insert into public.communities (id, city_id, name, category_id, created_by) valu
 insert into public.community_members (community_id, user_id, role)
 select c, 'c7100000-0000-0000-0000-0000000000a1', 'member'
 from unnest(array['c7100000-0000-0000-0000-0000000000c2', 'c7100000-0000-0000-0000-0000000000c3', 'c7100000-0000-0000-0000-0000000000c4',
-                  'c7100000-0000-0000-0000-0000000000c5', 'c7100000-0000-0000-0000-0000000000c6', 'c7100000-0000-0000-0000-0000000000c8',
+                  'c7100000-0000-0000-0000-0000000000c8',
                   'c7100000-0000-0000-0000-0000000000c9']::uuid[]) c;
+-- Regions (20261125000000): Rae lives in Dubai for this part (she joined the two Dubai leftovers there), then in Bali again.
+update public.profiles set city_id = 'dubai' where id = 'c7100000-0000-0000-0000-0000000000a1';
+insert into public.community_members (community_id, user_id, role)
+select c, 'c7100000-0000-0000-0000-0000000000a1', 'member'
+from unnest(array['c7100000-0000-0000-0000-0000000000c5', 'c7100000-0000-0000-0000-0000000000c6']::uuid[]) c;
+update public.profiles set city_id = 'bali' where id = 'c7100000-0000-0000-0000-0000000000a1';
 insert into public.community_members (community_id, user_id, role) values ('c7100000-0000-0000-0000-0000000000c7', 'c7100000-0000-0000-0000-0000000000a2', 'owner');
 insert into public.community_posts (id, community_id, author_id, body) values
   ('c7100000-0000-0000-0000-0000000000d2', 'c7100000-0000-0000-0000-0000000000c2', 'c7100000-0000-0000-0000-0000000000a1', 'Before the rename');
@@ -142,6 +148,9 @@ select pg_temp.check(not exists (select 1 from public.conversation_members cm jo
 -- The other order: the creator first, then the last member (the orphan is remembered).
 select pg_temp.as_user('c7100000-0000-0000-0000-0000000000a6');
 create temp table orphan_club as select public.create_community('Sunset Yoga', 'dubai') as id;
+-- Regions (20261125000000): Rae lives in Dubai for this part (she joins a Dubai community).
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = 'c7100000-0000-0000-0000-0000000000a1';
 select pg_temp.as_user('c7100000-0000-0000-0000-0000000000a1');
 select public.join_community((select id from orphan_club));
 select pg_temp.as_admin();

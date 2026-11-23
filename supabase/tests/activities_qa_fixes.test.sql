@@ -45,13 +45,14 @@ end $$;
 select pg_temp.as_admin();
 insert into auth.users (id) values ('e7a00000-0000-0000-0000-0000000000a1'), ('e7a00000-0000-0000-0000-0000000000a2'),
   ('e7a00000-0000-0000-0000-0000000000a3'), ('e7a00000-0000-0000-0000-0000000000a5');
+-- Regions (20261125000000): Hana, Mo, Wia and Rae live in Bali, and their community is there (the plans of this file are in Bali).
 insert into public.profiles (id, first_name, birthdate, gender, city_id) values
-  ('e7a00000-0000-0000-0000-0000000000a1', 'Hana', '1994-02-02', 'woman', 'dubai'),
-  ('e7a00000-0000-0000-0000-0000000000a2', 'Mo', '1993-03-03', 'man', 'dubai'),
-  ('e7a00000-0000-0000-0000-0000000000a3', 'Wia', '1995-04-04', 'woman', 'dubai'),
-  ('e7a00000-0000-0000-0000-0000000000a5', 'Rae', '1996-05-05', 'woman', 'dubai');
+  ('e7a00000-0000-0000-0000-0000000000a1', 'Hana', '1994-02-02', 'woman', 'bali'),
+  ('e7a00000-0000-0000-0000-0000000000a2', 'Mo', '1993-03-03', 'man', 'bali'),
+  ('e7a00000-0000-0000-0000-0000000000a3', 'Wia', '1995-04-04', 'woman', 'bali'),
+  ('e7a00000-0000-0000-0000-0000000000a5', 'Rae', '1996-05-05', 'woman', 'bali');
 insert into public.communities (id, city_id, name, created_by) values
-  ('e7a00000-0000-0000-0000-0000000000c1', 'dubai', 'e7a Runners', 'e7a00000-0000-0000-0000-0000000000a1');
+  ('e7a00000-0000-0000-0000-0000000000c1', 'bali', 'e7a Runners', 'e7a00000-0000-0000-0000-0000000000a1');
 insert into public.community_members (community_id, user_id, role) values
   ('e7a00000-0000-0000-0000-0000000000c1', 'e7a00000-0000-0000-0000-0000000000a1', 'owner'),
   ('e7a00000-0000-0000-0000-0000000000c1', 'e7a00000-0000-0000-0000-0000000000a2', 'member');

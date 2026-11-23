@@ -211,7 +211,8 @@ export function activityColumns(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Dat
     starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
     timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
     price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
-    currency: plan.currency ?? 'AED',
+    // The city's own currency (IDR in Bali) when the plan names none.
+    currency: plan.currency ?? CITIES[plan.cityId as CityId]?.currency ?? 'AED',
     capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
     privacy: PRIVACY[plan.privacy ?? 'public'],
   };

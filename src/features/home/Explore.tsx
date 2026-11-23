@@ -1,3 +1,4 @@
+import { useStore } from '@/state/store';
 import { useRouter } from 'expo-router';
 import { memo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -36,9 +37,11 @@ export const ExploreDoors = memo(function ExploreDoors() {
   const woman = useGirlEntry();
   // Already in IRLY Girl: its own door would lead nowhere.
   const inGirl = useAppSpace() === 'girl';
+  // « Dubai News & Life » reads the Emirates' own sources: a region without sources yet (Bali) has no news door, rather than an empty or borrowed one.
+  const emirates = useStore((s) => s.destinationId) === 'emirates';
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-      {DOORS.filter((d) => (!d.women || woman) && !(inGirl && d.route === GIRL_DOOR)).map((d, i) => (
+      {DOORS.filter((d) => (!d.women || woman) && !(inGirl && d.route === GIRL_DOOR) && (emirates || d.route !== '/news')).map((d, i) => (
         <Animated.View key={d.route} entering={enter.slide(Math.min(i, 6))}>
         <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}>
           <GlassLayer radius={radius.xl} />

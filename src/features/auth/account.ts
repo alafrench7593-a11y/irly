@@ -9,7 +9,8 @@ import { friendlyError, supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secureSessionStorage } from '@/lib/secureSession';
 import * as Crypto from 'expo-crypto';
-import { useStore, type Profile } from '@/state/store';
+import { askRegionChange, declareResidency, regionOfCity } from '@/features/region/region';
+import { setCrossRegionGate, useStore, type Profile } from '@/state/store';
 import { cleanImage } from '@/lib/media';
 import { thumbOf, uploadFaceThumb as uploadThumb } from '@/features/server/media';
 import { wipeLocal } from '@/state/wipe';
@@ -44,11 +45,28 @@ function setSession(u: { id: string; email?: string } | null | undefined) {
   useAuthStore.setState(u ? { status: 'in', account: { userId: u.id, email: u.email } } : { status: 'out', account: null });
 }
 
+// A member with an account lives in one region: picking a city of another one
+// (the destination sheet, the assistant, search, the profile) opens the request
+// to move instead of switching. Before the account exists, the choice is free.
+setCrossRegionGate((next, current) => {
+  const signedIn = Boolean(useAuthStore.getState().account?.userId);
+  if (!signedIn || !supabase || !useStore.getState().onboarded) return false;
+  const from = regionOfCity(current);
+  const to = regionOfCity(next);
+  if (!from || !to || from === to) return false;
+  askRegionChange(next);
+  return true;
+});
+
 // Signup finished while signed in: publish the profile now. Changing city
 // later moves your profile too (people nearby, recommendations).
 useStore.subscribe((st, prev) => {
   const uid = useAuthStore.getState().account?.userId;
-  if (uid && st.onboarded && !prev.onboarded) syncProfile(uid).catch(() => undefined);
+  if (uid && st.onboarded && !prev.onboarded)
+    syncProfile(uid)
+      // « I live here », said when the destination was chosen, is recorded with the profile.
+      .then(() => (regionOfCity(st.cityId) ? declareResidency(regionOfCity(st.cityId) as string) : undefined))
+      .catch(() => undefined);
   if (uid && supabase && st.onboarded && prev.onboarded && st.cityId && st.cityId !== prev.cityId && (!st.profile.ownerId || st.profile.ownerId === uid)) {
     supabase.from('profiles').update({ city_id: st.cityId }).eq('id', uid).then(() => undefined);
   }
@@ -470,7 +488,8 @@ async function readBack(uid: string, force = false, strict = false): Promise<boo
     ...(photoUri ? { photoUri } : {}),
   });
   const city = r.city_id && r.city_id in CITIES ? (r.city_id as keyof typeof CITIES) : 'dubai';
-  st.setDestination(CITIES[city].destinationId, city);
+  // The server's city is the account's: taken as is.
+  st.forceCity(city);
   st.completeOnboarding();
   // An account that already exists (a new phone, another browser, after signing out) skips the intros it went through at sign-up.
   st.markCommunityIntroSeen();
@@ -605,7 +624,8 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
     if (patch.activities !== undefined) row.activity_prefs = patch.activities.map(String);
     if (patch.lookingFor !== undefined) row.intentions = patch.lookingFor.map(String);
     if (patch.types !== undefined) row.member_types = knownTypes(patch.types);
-    if (patch.cityId !== undefined) row.city_id = patch.cityId;
+    // A city of another region is a move: asked for apart (the store opens the request), never written with the profile.
+    if (patch.cityId !== undefined && regionOfCity(patch.cityId as never) === regionOfCity(st.cityId)) row.city_id = patch.cityId;
     if (patch.username !== undefined) row.username = patch.username.trim().toLowerCase() || null;
     if (isAvatar(patch.photoUri)) {
       // An IRLY avatar replaces the photo without an upload; the old photo file goes.

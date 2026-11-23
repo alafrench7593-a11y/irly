@@ -369,6 +369,9 @@ select pg_temp.check((select count(*) from public.places_search('bali', null, 'r
 select pg_temp.check((select count(*) from public.places_search('bali', null, 'restaurant', null, 4.8)) = 1, 'minimum rating filter');
 reset role;
 
+-- Regions (20261125000000): Bea lives in Bali for this part (an account creates and reads in its own region).
+reset role;
+update public.profiles set city_id = 'bali' where id = '00000000-0000-0000-0000-00000000000b';
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, place_id, activity_type, audience, girl_only)
 values (auth.uid(), 'Mom brunch at Loved', 'food', 'bali', 'berawa', now() + interval '2 days', (select id from public.places where slug = 't-loved'), 'MOM_BRUNCH', 'moms', true);
@@ -395,6 +398,9 @@ select pg_temp.check((select count(*) from public.communities where name like '%
 select pg_temp.expect_denied($$select private.friends_unchecked('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'private helpers are not callable by members');
 
 -- ───── Community posts, polls, digest ─────
+-- Regions (20261125000000): Bea lives in Dubai again from here (the communities of this part are in Dubai).
+reset role;
+update public.profiles set city_id = 'dubai' where id = '00000000-0000-0000-0000-00000000000b';
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.join_community('20000000-0000-0000-0000-000000000001');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
@@ -579,6 +585,9 @@ declare
   aid uuid; gid uuid; mid uuid; cid uuid; gcid uuid; conv uuid;
 begin
   if area is null then raise exception 'FAIL % has no areas', c; end if;
+  -- Regions (20261125000000): Bea, Carl and Dina live in the city under test for this part.
+  perform pg_temp.as_admin();
+  update public.profiles set city_id = c where id in ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d');
   -- Bea (IRLY Girl) creates a public session: its chat exists with her as admin.
   perform pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
   insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, currency)
@@ -623,6 +632,8 @@ begin
 end $$;
 select pg_temp.sync_city(c) from unnest(array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq', 'bali']) as c;
 select pg_temp.as_admin();
+-- Regions (20261125000000): Bea, Carl and Dina live in Dubai again from here.
+update public.profiles set city_id = 'dubai' where id in ('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d');
 
 -- ───── One country: the seven emirates see each other, Bali stays apart ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
@@ -630,7 +641,14 @@ select pg_temp.check((select count(*) from public.recommend_activities('dubai', 
 select pg_temp.check((select count(*) from public.recommend_activities('dubai', 50) where city_id = 'bali') = 0, 'from Dubai: no Bali sessions');
 select pg_temp.check((select count(*) from public.community_list('dubai') where city_id = 'fujairah') >= 1, 'from Dubai: Fujairah communities are listed');
 select pg_temp.check((select city_id from public.community_list('ajman') limit 1) = 'ajman', 'own emirate first in communities');
+-- Regions (20261125000000): Dina lives in Bali for this check, then in Dubai again.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = '00000000-0000-0000-0000-00000000000d';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select pg_temp.check((select count(*) from public.community_list('bali') where city_id <> 'bali') = 0, 'from Bali: only Bali communities');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = '00000000-0000-0000-0000-00000000000d';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select pg_temp.check((select count(*) from public.search_all('Sync', 'dubai') where kind = 'activity' and city_id = 'rak') >= 1, 'search from Dubai finds a RAK session');
 select pg_temp.check(private.city_scope('uaq') @> array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq'] and not ('bali' = any (private.city_scope('uaq'))), 'UAE scope is the seven emirates');
 select pg_temp.as_admin();
@@ -654,7 +672,14 @@ select pg_temp.check(not exists (select 1 from public.pro_discover('sharjah', '{
 select pg_temp.check(exists (select 1 from public.pro_discover('sharjah', '{"role":"founder","intent":"investors"}')), 'role + looking for filters');
 select pg_temp.check(exists (select 1 from public.pro_discover('sharjah', '{"q":"pyth"}') where first_name = 'Bea'), 'search by skill');
 select pg_temp.check(not exists (select 1 from public.pro_discover('sharjah', '{"city":"ajman"}')), 'city filter');
+-- Regions (20261125000000): Carl lives in Bali for this check, then in Dubai again.
+select pg_temp.as_admin();
+update public.profiles set city_id = 'bali' where id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check(not exists (select 1 from public.pro_discover('bali')), 'Bali does not see the Emirates');
+select pg_temp.as_admin();
+update public.profiles set city_id = 'dubai' where id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check(not exists (select 1 from public.pro_discover('dubai') where user_id = auth.uid()), 'I am not in my own list');
 select pg_temp.check((select connection from public.pro_discover('dubai') where first_name = 'Bea') = 'none', 'not connected yet');
 select public.add_friend('00000000-0000-0000-0000-00000000000b');
