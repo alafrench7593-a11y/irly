@@ -1779,7 +1779,7 @@ export const POSTS = [
       {
         h2: 'Why it hits harder here',
         html: `<p>In a city where most people have come from somewhere else, friends do the work that family and old schoolmates do at home. They are your emergency contact, your weekend, the people who know how your week went. Many residents are here for a job or a few years, so departures are part of life in Dubai, and they often come in clusters: around <a href="../summer-dubai-social-life/">the start of summer</a>, when school ends, or when one company moves several people at once.</p>
-<p>Knowing that does not make it lighter. What goes with a close friend is not only the person: it is the Friday breakfast, the lift to padel, the group that only worked because they organised it. Give it its name. This is a loss, and feeling flat or even a little resentful for a while is an ordinary reaction, not a sign that you are bad at friendship.</p>`,
+<p>Knowing that does not make it lighter. What goes with a close friend is not only the person: it is the Saturday breakfast, the lift to padel, the group that only worked because they organised it. Give it its name. This is a loss, and feeling flat or even a little resentful for a while is an ordinary reaction, not a sign that you are bad at friendship.</p>`,
       },
       {
         h2: 'Before they go: use the last weeks well',
@@ -1857,13 +1857,13 @@ export const POSTS = [
       {
         h2: 'Pourquoi ça pèse plus lourd ici',
         html: `<p>Dans une ville où presque tout le monde vient d’ailleurs, les amis font le travail que font ailleurs la famille et les amis d’enfance. Ce sont eux ton contact en cas d’urgence, ton week-end, ceux qui savent comment s’est passée ta semaine. Beaucoup de résidents sont là pour un poste ou pour quelques années : les départs font partie de la vie à Dubaï, et ils arrivent souvent groupés, au <a href="../ete-dubai-vie-sociale/">début de l’été</a>, quand l’école finit, ou quand une entreprise mute plusieurs personnes d’un coup.</p>
-<p>Le savoir n’allège rien. Ce qui part avec un ami proche, ce n’est pas seulement la personne : c’est le petit-déjeuner du vendredi, le trajet partagé jusqu’au padel, le groupe qui ne tenait que parce qu’il l’organisait. C’est une perte, et te sentir à plat, voire un peu amer, pendant un temps est une réaction ordinaire. Ce n’est pas le signe que tu ne sais pas garder tes amis.</p>`,
+<p>Le savoir n’allège rien. Ce qui part avec un ami proche, ce n’est pas seulement la personne : c’est le petit-déjeuner du samedi, le trajet partagé jusqu’au padel, le groupe qui ne tenait que parce qu’il l’organisait. C’est une perte, et te sentir à plat, voire un peu amer, pendant un temps est une réaction ordinaire. Ce n’est pas le signe que tu ne sais pas garder tes amis.</p>`,
       },
       {
         h2: 'Avant le départ : bien utiliser les dernières semaines',
         html: `<p>Le dernier mois se remplit de cartons et de démarches, et les au revoir se réduisent à un seul grand dîner.</p>
 <ul>
-<li><strong>Vois ton ami en tête à tête.</strong> La soirée de départ est pour le groupe. C’est autour d’un petit-déjeuner sans montre qu’on se dit ce que l’amitié a compté.</li>
+<li><strong>Vois ton ami en tête à tête.</strong> La soirée de départ est pour le groupe. C’est autour d’un petit-déjeuner sans se presser qu’on se dit ce que l’amitié a compté.</li>
 <li><strong>Demande à être présenté.</strong> « Qui est-ce que je devrais continuer à voir quand tu seras parti ? » Ton ami connaît des gens que tu n’as fait que croiser. Une présentation faite tant qu’il est là en vaut dix envoyées plus tard par message.</li>
 <li><strong>Reprends une chose qu’il organisait.</strong> Le dîner du mois, la marche du samedi, la conversation de groupe. Si personne ne la reprend, tout le groupe se défait avec lui.</li>
 <li><strong>Fixe le premier appel avant le départ.</strong> Une date dans les deux agendas, deux ou trois semaines après le déménagement, quand l’excitation est retombée de son côté aussi.</li>
@@ -1874,7 +1874,7 @@ export const POSTS = [
         html: `<p>Les amitiés à distance finissent rarement sur une dispute. Elles s’effacent parce que personne n’a décidé comment elles allaient continuer. Décidez-le ensemble.</p>
 <ul>
 <li><strong>Choisissez un rythme tenable.</strong> Un appel un dimanche sur deux tient mieux que des messages quotidiens qui s’espacent au bout d’un mois.</li>
-<li><strong>Envoyez de petites choses.</strong> Une photo du café que vous aimiez, un message vocal en rentrant. Les nouvelles ordinaires vous gardent dans la semaine l’un de l’autre.</li>
+<li><strong>Envoyez de petites choses.</strong> Une photo du café que vous aimiez, un message vocal en rentrant. Les nouvelles ordinaires vous gardent présents dans le quotidien l’un de l’autre.</li>
 <li><strong>Réglez le décalage horaire une fois pour toutes.</strong> Trouvez l’heure qui convient aux deux et gardez-la.</li>
 <li><strong>Prévoyez une visite, même lointaine.</strong> Une date à attendre change la façon de vivre la distance.</li>
 </ul>
