@@ -345,7 +345,7 @@ export const POSTS = [
     title: 'Making Friends at Work in Dubai Without Awkwardness | IRLY',
     description: 'Colleagues can become real friends in Dubai if you go slowly: small shared moments, one plan outside the office, and clear limits between work and friendship.',
     h1: 'Making friends at work in Dubai without making it awkward',
-    lead: 'Yes, colleagues can become real friends in Dubai, and work is where many newcomers spend most of their waking hours, so it is a sensible place to start. Go step by step: small shared moments first, then one simple plan outside the office, while keeping work and friendship apart where it matters. One or two colleagues you enjoy seeing are enough.',
+    lead: 'Yes, colleagues can become real friends in Dubai, and work is where many newcomers spend most of their waking hours, so it is a sensible place to start. Go step by step: small shared moments first, then one simple plan outside the office, while keeping work and friendship apart where it matters.',
     sections: [
       {
         h2: 'Start with small shared moments',
@@ -399,7 +399,7 @@ export const POSTS = [
     ],
     faq: [
       { q: 'Should I add colleagues on social media?', a: 'Wait until you have met outside work once. What you post is then seen at work too.' },
-      { q: 'How do I invite a colleague without it seeming like a date?', a: 'Invite two or three people at once, choose daytime and a public place, and name the plan plainly: a coffee, a walk, a game. If they still read it differently, say plainly that you mean it as friends.' },
+      { q: 'How do I invite a colleague without it seeming like a date?', a: 'Invite two or three people at once, choose daytime and a public place, and name the plan plainly: a coffee, a walk, a game. If they still read it differently, say clearly that you mean it as friends.' },
       { q: 'What if I am the only newcomer in a team that already knows each other?', a: 'Join what already exists before proposing something new: the lunch, the coffee run, the team chat. After a few weeks of showing up, an invitation from you will feel natural.' },
       { q: 'What happens to a work friendship when one of us changes job?', a: 'It either moves outside work or fades. If you already met outside the office, it usually continues; fix a plan in the first month after the move.' },
     ],
@@ -477,7 +477,7 @@ export const POSTS = [
     ],
     faq: [
       { q: 'Faut-il ajouter ses collègues sur les réseaux sociaux ?', a: 'Attends de vous être vus une fois hors du bureau. Ce que tu publies sera ensuite vu au travail aussi.' },
-      { q: 'Comment inviter un collègue sans que cela ressemble à un rendez-vous amoureux ?', a: 'Invite deux ou trois personnes à la fois, choisis la journée et un lieu public, et nomme le plan simplement : un café, une balade, une partie. Si la personne comprend autre chose, dis simplement que c’est amical.' },
+      { q: 'Comment inviter un collègue sans que cela ressemble à un rendez-vous amoureux ?', a: 'Invite deux ou trois personnes à la fois, choisis la journée et un lieu public, et nomme le plan simplement : un café, une balade, une partie. Si la personne comprend autre chose, dis clairement que c’est amical.' },
       { q: 'Et si je suis le seul nouveau dans une équipe qui se connaît déjà ?', a: 'Rejoins ce qui existe avant de proposer du nouveau : le déjeuner, la pause café, la conversation de l’équipe. Après quelques semaines de présence, une invitation de ta part paraîtra naturelle.' },
       { q: 'Que devient une amitié de travail quand l’un des deux change de poste ?', a: 'Elle passe hors du travail ou elle s’efface. Si vous vous êtes déjà vus en dehors du bureau, elle continue en général ; fixe un plan dans le mois qui suit le départ.' },
     ],
