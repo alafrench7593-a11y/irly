@@ -341,40 +341,67 @@ export const POSTS = [
     path: 'blog/make-friends-at-work-dubai/',
     city: 'Dubai',
     published: '2026-11-06',
+    updated: '2026-11-24',
     title: 'Making Friends at Work in Dubai Without Awkwardness | IRLY',
     description: 'Colleagues can become real friends in Dubai if you go slowly: small shared moments, one plan outside the office, and clear limits between work and friendship.',
     h1: 'Making friends at work in Dubai without making it awkward',
-    lead: 'Work is where many newcomers spend most of their time, so it is a natural place to start friendships. The trick is to go step by step: small shared moments first, then one simple plan outside the office, while keeping work and friendship separate when it matters. You do not need to be close to everyone; one or two colleagues you enjoy seeing are enough to start.',
+    lead: 'Yes, colleagues can become real friends in Dubai, and work is where many newcomers spend most of their waking hours, so it is a sensible place to start. Go step by step: small shared moments first, then one simple plan outside the office, while keeping work and friendship apart where it matters. One or two colleagues you enjoy seeing are enough.',
     sections: [
       {
         h2: 'Start with small shared moments',
-        html: `<ul>
-<li><strong>Join the lunch or coffee break</strong> instead of eating at your desk. Regular, low-stakes time together is how colleagues become familiar.</li>
-<li><strong>Ask about their life outside work,</strong> not only about projects: where they live, what they do on weekends, how long they have been here.</li>
-<li><strong>Remember details.</strong> Asking later how the move, the trip or the weekend went shows you listened.</li>
+        html: `<p>Friendship at work is built from repetition, not from one big conversation. The same people, a few minutes at a time, several times a week.</p>
+<ul>
+<li><strong>Join the lunch or coffee break</strong> instead of eating at your desk. If there is no habit of eating together, start one: “I am going down for lunch at one, anyone coming?”</li>
+<li><strong>Ask about life outside work,</strong> not only about projects: where they live, what they do at weekends, how long they have been here. In a city where most people arrived from somewhere else, “how did you end up in Dubai?” opens almost any conversation.</li>
+<li><strong>Remember details.</strong> Asking later how the move, the trip or the weekend went shows you listened, and it is rarer than it should be.</li>
+<li><strong>Be around at the edges of the day.</strong> The five minutes before a meeting starts or the walk to the car park are when people talk about something other than work.</li>
 </ul>`,
       },
       {
         h2: 'Take one step outside the office',
-        html: `<p>A friendship starts when you meet without work as the reason. Keep the first plan small and easy to say yes to: a coffee on the weekend, a walk, a game, or joining something they already mentioned they like. Inviting two or three colleagues together often feels less awkward than a one-to-one invitation. If they say no, try once more another time, then let them come to you.</p>`,
+        html: `<p>A colleague becomes a friend the first time you meet without work as the reason. Keep that first plan small and easy to say yes to: a coffee at the weekend, a walk, a game of padel, or joining something they already said they like.</p>
+<ul>
+<li><strong>Invite two or three people together.</strong> It feels lighter than a one-to-one invitation, for you and for them.</li>
+<li><strong>Be precise.</strong> A day, a time and a place. “A few of us are getting coffee on Saturday morning near the Marina, want to come?” is easier to answer than “we should hang out”.</li>
+<li><strong>Take a no lightly.</strong> Try once more another time, then let them come to you. Two polite refusals usually mean “not now”, and pressing costs you more at work than it would elsewhere.</li>
+</ul>
+<p>After a first plan that went well, propose the next one within a couple of weeks. <a href="../how-often-see-someone-become-friend/">How often you need to see someone before they become a friend</a> explains why the second and third meetings matter more than the first.</p>`,
       },
       {
-        h2: 'Choose plans that suit everyone',
-        html: `<p>Teams in Dubai often mix many nationalities, religions and habits. Pick plans most people can join: a coffee, a meal or an activity rather than only drinks, at a time that fits different schedules. If a colleague says no, it is often about timing or family, not about you. A short, open message works well: “A few of us are getting coffee on Saturday morning, want to come?”</p>`,
+        h2: 'Choose plans that suit a mixed team',
+        html: `<p>Teams in Dubai often bring together many nationalities, religions and family situations. A plan that works for one group can quietly exclude another.</p>
+<ul>
+<li><strong>Do not make it only about drinks.</strong> A coffee, a meal or an activity includes colleagues who do not drink.</li>
+<li><strong>Vary the hour.</strong> Parents are rarely free in the evening; a weekend morning or a lunch suits them better.</li>
+<li><strong>Mind the calendar.</strong> During Ramadan, colleagues who fast may prefer to skip a daytime lunch, and an evening meal after sunset can be a good moment to share instead. Ask rather than assume.</li>
+<li><strong>Keep the cost low.</strong> Not everyone on a team earns the same, and nobody likes to say so.</li>
+</ul>`,
       },
       {
         h2: 'Keep work and friendship apart when it matters',
         html: `<ul>
-<li><strong>Be careful with venting.</strong> Venting about the company or a manager can build a quick bond, but it rarely builds a lasting one, and it can come back to you.</li>
-<li><strong>Think twice with your own manager or your team.</strong> Friendly is fine; close friendship with someone you manage, or who manages you, needs more care.</li>
-<li><strong>Do not rely on work alone.</strong> Colleagues change jobs and leave. Build at least one circle outside work too.</li>
+<li><strong>Be careful with venting.</strong> Complaining about the company or a manager creates a quick bond, rarely a lasting one, and it can travel further than you intended.</li>
+<li><strong>Think twice across a reporting line.</strong> Friendly is fine. A close friendship with someone you manage, or who manages you, needs more care: others will notice, and reviews and promotions get harder.</li>
+<li><strong>Keep confidences in both directions.</strong> What a friend tells you over dinner does not belong in a meeting, and what you know from work does not belong at the dinner.</li>
+<li><strong>Do not rely on work alone.</strong> Colleagues change jobs and leave the country, sometimes at short notice. Build at least one circle outside the office.</li>
 </ul>`,
       },
       {
-        h2: 'Widen your circle from there',
-        html: `<p>Colleagues often know other newcomers, clubs and groups. Ask what they do on weekends and whether you can come along once. For more ways to meet people outside the office, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>
-<p>No office to make friends in? <a href="../working-from-home-dubai-isolated/">Working from home in Dubai and feeling isolated</a> covers that case.</p>`,
+        h2: 'If your workplace makes it hard',
+        html: `<p>Some jobs give little to work with: a very small team, shifts that do not overlap, colleagues much older or younger, or a culture where everyone leaves at six without a word. That says something about the place, not about you.</p>
+<p>Look one step wider. People in the same building, the same business centre or the same profession are often easier to meet than your own team: a shared lunch spot, an industry meetup, a class nearby after work. <a href="../../dubai/networking/">Networking in Dubai</a> lists where professionals meet, and a contact made there can become a friend like any other. No office at all? <a href="../working-from-home-dubai-isolated/">Working from home in Dubai and feeling isolated</a> covers that case.</p>`,
       },
+      {
+        h2: 'Widen your circle from there',
+        html: `<p>Colleagues often know other newcomers, clubs and groups. Ask what they do at weekends and whether you can come along once; being introduced by someone is the easiest way into a group. For more ways to meet people outside the office, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>
+<p>Apps are another route when work does not provide enough. IRLY is one: an app to meet people who share your interests and do things together in real life, not a dating app, with communities by interest and activities any member can create. It is free, on the App Store for iPhone and in the browser; the Android app is coming soon.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Should I add colleagues on social media?', a: 'Wait until you have met outside work once. What you post is then seen at work too.' },
+      { q: 'How do I invite a colleague without it seeming like a date?', a: 'Invite two or three people at once, choose daytime and a public place, and name the plan plainly: a coffee, a walk, a game. If they still read it differently, say plainly that you mean it as friends.' },
+      { q: 'What if I am the only newcomer in a team that already knows each other?', a: 'Join what already exists before proposing something new: the lunch, the coffee run, the team chat. After a few weeks of showing up, an invitation from you will feel natural.' },
+      { q: 'What happens to a work friendship when one of us changes job?', a: 'It either moves outside work or fades. If you already met outside the office, it usually continues; fix a plan in the first month after the move.' },
     ],
     cta: { title: 'Want a circle outside work?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
     related: [
@@ -392,40 +419,67 @@ export const POSTS = [
     path: 'fr/blog/amis-au-travail-dubai/',
     city: 'Dubaï',
     published: '2026-11-06',
+    updated: '2026-11-24',
     title: 'Se faire des amis au travail à Dubaï sans malaise | IRLY',
     description: 'Des collègues peuvent devenir de vrais amis à Dubaï : avance doucement, propose un plan hors du bureau et garde des limites claires.',
     h1: 'Se faire des amis au travail à Dubaï sans malaise',
-    lead: 'Le travail est l’endroit où beaucoup de nouveaux arrivants passent le plus de temps : c’est un point de départ naturel pour des amitiés. L’astuce, c’est d’avancer pas à pas : d’abord des petits moments partagés, puis un plan simple hors du bureau, en gardant travail et amitié séparés quand c’est important. Pas besoin d’être proche de tout le monde : un ou deux collègues que tu aimes voir suffisent pour commencer.',
+    lead: 'Oui, des collègues peuvent devenir de vrais amis à Dubaï, et le travail est l’endroit où beaucoup de nouveaux arrivants passent le plus clair de leur temps : c’est un point de départ logique. Avance pas à pas : d’abord de petits moments partagés, puis un plan simple hors du bureau, en gardant travail et amitié séparés là où ça compte.',
     sections: [
       {
-        h2: 'Commence par des petits moments partagés',
-        html: `<ul>
-<li><strong>Rejoins la pause déjeuner ou café</strong> au lieu de manger à ton bureau. Du temps régulier et sans enjeu, c’est ce qui rend les collègues familiers.</li>
-<li><strong>Intéresse-toi à leur vie hors du travail,</strong> pas seulement aux projets : où ils habitent, ce qu’ils font le week-end, depuis quand ils sont là.</li>
+        h2: 'Commence par de petits moments partagés',
+        html: `<p>L’amitié au travail se construit par la répétition, pas par une grande conversation. Les mêmes personnes, quelques minutes à la fois, plusieurs fois par semaine.</p>
+<ul>
+<li><strong>Rejoins la pause déjeuner ou café</strong> au lieu de manger à ton bureau. S’il n’y a pas d’habitude de déjeuner ensemble, lance-la : « Je descends manger à 13 h, quelqu’un vient ? »</li>
+<li><strong>Intéresse-toi à leur vie hors du travail,</strong> pas seulement aux projets : où ils habitent, ce qu’ils font le week-end, depuis quand ils sont là. Dans une ville où presque tout le monde vient d’ailleurs, « comment es-tu arrivé à Dubaï ? » ouvre à peu près toutes les conversations.</li>
 <li><strong>Retiens les détails.</strong> Demander plus tard comment s’est passé le déménagement, le voyage ou le week-end montre que tu as écouté.</li>
+<li><strong>Sois là aux bords de la journée.</strong> Les cinq minutes avant une réunion ou le trajet jusqu’au parking sont les moments où l’on parle d’autre chose que du travail.</li>
 </ul>`,
       },
       {
         h2: 'Fais un pas hors du bureau',
-        html: `<p>Une amitié commence quand on se voit sans que le travail en soit la raison. Garde le premier plan simple et facile à accepter : un café le week-end, une balade, un match ou un jeu, ou rejoindre une activité qu’ils ont mentionnée. Inviter deux ou trois collègues ensemble est souvent moins gênant qu’une invitation en tête-à-tête. S’ils disent non, propose encore une fois plus tard, puis laisse-les venir vers toi.</p>`,
+        html: `<p>Un collègue devient un ami la première fois que vous vous voyez sans que le travail en soit la raison. Garde ce premier plan petit et facile à accepter : un café le week-end, une balade, une partie de padel, ou une activité qu’il a déjà dit aimer.</p>
+<ul>
+<li><strong>Invite deux ou trois personnes ensemble.</strong> C’est plus léger qu’une invitation en tête-à-tête, pour toi comme pour elles.</li>
+<li><strong>Sois précis.</strong> Un jour, une heure, un lieu. « On prend un café samedi matin à quelques-uns du côté de la Marina, tu viens ? » appelle une réponse plus facilement que « il faudrait qu’on se voie ».</li>
+<li><strong>Prends un non avec légèreté.</strong> Repropose une fois, plus tard, puis laisse la personne venir vers toi. Deux refus polis veulent en général dire « pas maintenant », et insister coûte plus cher au travail qu’ailleurs.</li>
+</ul>
+<p>Après un premier plan réussi, propose le suivant dans les deux semaines. <a href="../combien-de-fois-se-voir-pour-devenir-amis/">Combien de fois il faut se voir avant de devenir amis</a> explique pourquoi la deuxième et la troisième rencontre comptent plus que la première.</p>`,
       },
       {
-        h2: 'Choisis des plans qui conviennent à tout le monde',
-        html: `<p>À Dubaï, les équipes mêlent souvent beaucoup de nationalités, de religions et d’habitudes. Choisis des plans que la plupart peuvent rejoindre : un café, un repas ou une activité plutôt qu’un simple verre, à un horaire qui convient à des emplois du temps différents. Si un collègue dit non, c’est souvent une question d’horaire ou de famille, pas à cause de toi. Un message court et ouvert marche bien : « On prend un café samedi matin à quelques-uns, tu viens ? »</p>`,
-      },
-      {
-        h2: 'Sépare travail et amitié quand c’est important',
-        html: `<ul>
-<li><strong>Attention à la critique facile.</strong> Critiquer l’entreprise ou un manager rapproche vite, mais construit rarement un lien durable, et peut se retourner contre toi.</li>
-<li><strong>Réfléchis à deux fois avec ton propre manager ou ton équipe.</strong> Être cordial, c’est bien ; une amitié proche avec quelqu’un que tu encadres, ou qui t’encadre, demande plus de prudence.</li>
-<li><strong>Ne compte pas que sur le travail.</strong> Les collègues changent de poste et partent. Construis aussi au moins un cercle en dehors.</li>
+        h2: 'Choisis des plans qui conviennent à une équipe mélangée',
+        html: `<p>À Dubaï, les équipes réunissent souvent beaucoup de nationalités, de religions et de situations familiales. Un plan qui convient à un groupe peut en exclure un autre sans bruit.</p>
+<ul>
+<li><strong>Ne fais pas tout tourner autour d’un verre.</strong> Un café, un repas ou une activité incluent les collègues qui ne boivent pas d’alcool.</li>
+<li><strong>Varie les horaires.</strong> Les parents sont rarement libres le soir ; un matin de week-end ou un déjeuner leur convient mieux.</li>
+<li><strong>Tiens compte du calendrier.</strong> Pendant le ramadan, les collègues qui jeûnent préféreront peut-être éviter un déjeuner, et un repas le soir, après le coucher du soleil, peut être un bon moment à partager. Demande plutôt que de supposer.</li>
+<li><strong>Garde un budget modeste.</strong> Tout le monde ne gagne pas la même chose dans une équipe, et personne n’aime le dire.</li>
 </ul>`,
       },
       {
-        h2: 'Élargis ton cercle à partir de là',
-        html: `<p>Les collègues connaissent souvent d’autres nouveaux arrivants, des clubs et des groupes. Demande-leur ce qu’ils font le week-end et si tu peux venir une fois. Pour d’autres façons de rencontrer du monde hors du bureau, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>
-<p>Pas de bureau où te faire des amis ? <a href="../teletravail-dubai-isolement/">Télétravail à Dubaï : quand on se sent isolé</a> traite ce cas.</p>`,
+        h2: 'Sépare travail et amitié quand ça compte',
+        html: `<ul>
+<li><strong>Attention à la critique facile.</strong> Se plaindre ensemble de l’entreprise ou d’un manager rapproche vite, rarement durablement, et ça peut circuler plus loin que prévu.</li>
+<li><strong>Réfléchis à deux fois dans une ligne hiérarchique.</strong> Être cordial, c’est bien. Une amitié proche avec quelqu’un que tu encadres, ou qui t’encadre, demande plus de prudence : les autres le remarquent, et les évaluations comme les promotions se compliquent.</li>
+<li><strong>Garde les confidences dans les deux sens.</strong> Ce qu’un ami te dit au dîner n’a pas sa place en réunion, et ce que tu sais par le travail n’a pas sa place au dîner.</li>
+<li><strong>Ne compte pas que sur le travail.</strong> Les collègues changent de poste et quittent le pays, parfois très vite. Construis au moins un cercle en dehors du bureau.</li>
+</ul>`,
       },
+      {
+        h2: 'Si ton lieu de travail s’y prête mal',
+        html: `<p>Certains postes offrent peu de prises : une toute petite équipe, des horaires décalés qui ne se croisent pas, des collègues bien plus âgés ou plus jeunes, ou une culture où chacun part à 18 h sans un mot. Cela dit quelque chose du lieu, pas de toi.</p>
+<p>Regarde un cran plus large. Les gens du même immeuble, du même centre d’affaires ou du même métier sont souvent plus faciles à rencontrer que ta propre équipe : une cantine partagée, une rencontre professionnelle, un cours à côté après le travail. <a href="../../dubai/networking/">Networking à Dubaï</a> indique où les professionnels se retrouvent, et un contact noué là peut devenir un ami comme un autre. Pas de bureau du tout ? <a href="../teletravail-dubai-isolement/">Télétravail à Dubaï : quand on se sent isolé</a> traite ce cas.</p>`,
+      },
+      {
+        h2: 'Élargis ton cercle à partir de là',
+        html: `<p>Les collègues connaissent souvent d’autres nouveaux arrivants, des clubs et des groupes. Demande-leur ce qu’ils font le week-end et si tu peux venir une fois ; être présenté par quelqu’un est la façon la plus simple d’entrer dans un groupe. Pour d’autres façons de rencontrer du monde hors du bureau, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>
+<p>Les applications sont une autre voie quand le travail ne suffit pas. IRLY en est une : une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble dans la vraie vie, pas une application de rencontres amoureuses, avec des communautés par centre d’intérêt et des activités que chaque membre peut créer. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Faut-il ajouter ses collègues sur les réseaux sociaux ?', a: 'Attends de vous être vus une fois hors du bureau. Ce que tu publies sera ensuite vu au travail aussi.' },
+      { q: 'Comment inviter un collègue sans que cela ressemble à un rendez-vous amoureux ?', a: 'Invite deux ou trois personnes à la fois, choisis la journée et un lieu public, et nomme le plan simplement : un café, une balade, une partie. Si la personne comprend autre chose, dis simplement que c’est amical.' },
+      { q: 'Et si je suis le seul nouveau dans une équipe qui se connaît déjà ?', a: 'Rejoins ce qui existe avant de proposer du nouveau : le déjeuner, la pause café, la conversation de l’équipe. Après quelques semaines de présence, une invitation de ta part paraîtra naturelle.' },
+      { q: 'Que devient une amitié de travail quand l’un des deux change de poste ?', a: 'Elle passe hors du travail ou elle s’efface. Si vous vous êtes déjà vus en dehors du bureau, elle continue en général ; fixe un plan dans le mois qui suit le départ.' },
     ],
     cta: { title: 'Envie d’un cercle hors du travail ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
     related: [
