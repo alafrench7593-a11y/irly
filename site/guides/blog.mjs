@@ -1975,4 +1975,154 @@ export const POSTS = [
       { label: 'Été à Dubaï : garder une vie sociale', path: 'fr/blog/ete-dubai-vie-sociale/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-single-dubai-friends-not-dates',
+    path: 'blog/single-in-dubai-friends-not-dates/',
+    city: 'Dubai',
+    published: '2026-11-25',
+    title: 'Single in Dubai: Make Friends, Not Dates | IRLY',
+    description: 'Single in Dubai and looking for friends, not dates? Where friendship starts more easily, how to say what you want, and what to do when signals get mixed.',
+    h1: 'Single in Dubai and looking for friends, not dates',
+    lead: 'You can build a full circle of friends in Dubai while single, without it turning into dating: choose settings built around an activity rather than around meeting someone, say plainly what you are looking for, and prefer groups to one-to-one plans at the start. Most of the confusion comes from the setting, not from you.',
+    sections: [
+      {
+        h2: 'Why it gets confusing when you are single',
+        html: `<p>When you arrive alone, the easiest tools to reach for are the ones designed for meeting one person at a time, and many of those are built for dating. So a simple “fancy a coffee?” can be read two ways.</p>
+<p>There is also what other people assume. Friends in couples introduce you to their one single friend. Colleagues ask whether you are “seeing anyone” before they ask what you like doing. None of that means something is wrong with wanting friends first, or friends only. It helps to be a little clearer than someone who arrives with a partner.</p>`,
+      },
+      {
+        h2: 'Choose settings where the activity is the point',
+        html: `<p>Where you meet people decides most of how the meeting is read. A plan with a purpose of its own leaves little room for doubt.</p>
+<ul>
+<li><strong>Regular groups:</strong> a run club, a padel session, a book club, a language exchange, a volunteering shift. People come back for the activity, and friendship grows on the side.</li>
+<li><strong>Classes with the same faces each week:</strong> climbing, pottery, a dance style you do not need a partner for.</li>
+<li><strong>Daytime and weekend mornings.</strong> A Saturday hike or a breakfast reads differently from a late drink.</li>
+<li><strong>Mixed groups and single-gender groups, both.</strong> If you prefer to start in a women-only circle, our guide to <a href="../../dubai/make-female-friends/">finding female friends in Dubai</a> covers them.</li>
+</ul>
+<p>The <a href="../../dubai/group-activities/">15 group activities to meet people in Dubai</a> give concrete formats, and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> helps if walking in by yourself is the hard part.</p>`,
+      },
+      {
+        h2: 'Say what you are looking for, early and lightly',
+        html: `<p>You do not owe anyone an announcement, but one easy sentence saves weeks of guessing. It works best said in passing, before there is anything to correct.</p>
+<ul>
+<li>“I moved here in spring and I am mostly trying to build a group of friends.”</li>
+<li>“I am not dating at the moment, I just want people to do things with at the weekend.”</li>
+<li>In an app profile: “Here for friends and plans, not dates.”</li>
+</ul>
+<p>Then let your invitations match your words: propose group plans, bring another friend along, suggest the morning rather than the evening. People believe the pattern more than the sentence.</p>`,
+      },
+      {
+        h2: 'When the signals get mixed',
+        html: `<p>It will happen at some point: someone you thought of as a friend hopes for more, or you are unsure how an invitation was meant. Being clear helps; it never makes you responsible for someone else’s interest or behaviour.</p>
+<ul>
+<li><strong>If you are unsure, ask about the plan, not the feelings.</strong> “Is it a group thing?” tells you most of what you need.</li>
+<li><strong>If someone is interested and you are not,</strong> say so kindly and soon: “I like spending time with you, as a friend. I wanted to be clear.” A short, warm sentence is easier on both of you than slowly disappearing.</li>
+<li><strong>Give it room afterwards.</strong> Some friendships continue after that sentence, some pause. Seeing each other in a group for a while helps.</li>
+<li><strong>If someone does not accept a clear no,</strong> you do not have to keep explaining. Step back, tell a friend, and use the block or report tools of whatever app or group you met through. If it continues or you feel unsafe, contact the police.</li>
+</ul>
+<p>With anyone new, whatever the intention, meet in a public place the first times and let someone know where you are.</p>`,
+      },
+      {
+        h2: 'Apps: read what each one is for',
+        html: `<p>Apps differ in purpose, and using a dating app to look for friends is the surest way to mixed signals. Check what an app says about itself before you set up a profile. Some are built for dates, some have a separate friends mode, some are built around groups and activities. Our comparison of <a href="../../dubai/app-to-make-friends/">apps to make friends in Dubai</a> goes through the main kinds.</p>
+<p>IRLY is in the last group: an app to meet people who share your interests and do things together in real life, and not a dating app. You join communities by interest and take part in activities that members create, with a date, a time and a neighbourhood. It is free, on the App Store for iPhone and in the browser; the Android app is coming soon.</p>`,
+      },
+      {
+        h2: 'A circle that does not depend on your relationship status',
+        html: `<p>Friendships made around a shared activity tend to hold when life changes: when you start seeing someone, when you stop, when a friend does. That is the circle worth building while single, and it is built the usual way, by seeing the same people often enough. <a href="../how-often-see-someone-become-friend/">How often you need to see someone before they become a friend</a> gives an idea of the time it takes, and <a href="../../dubai/make-friends/">how to make friends in Dubai</a> is the full guide.</p>
+<p>If you are single because something just ended and the days feel heavy, <a href="../lonely-after-breakup-new-city/">lonely after a breakup in a new city</a> is written for that. And if low mood lasts for weeks, talk to a doctor or a mental health professional.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is it normal to want only friends and not date?', a: 'Yes. Many people, newly arrived or not, want a social circle first, or only. It needs no justification; saying it once, simply, is enough.' },
+      { q: 'Do I have to say that I am single?', a: 'No. Your relationship status is yours to share or not. Saying what you are looking for, friends and plans, is enough.' },
+      { q: 'Can men and women be just friends in Dubai?', a: 'Yes, plenty are. It is easiest inside a group built around an activity, where everyone sees each other regularly and nothing has to be guessed.' },
+      { q: 'What if a friendship turns into more?', a: 'It happens, and it is fine when both of you want it. Say so openly rather than guessing. If only one of you does, a clear and kind conversation protects the friendship best.' },
+    ],
+    cta: { title: 'Here for friends and plans?', body: 'Join a community around what you like and meet people through activities, in real life.', label: 'Join a community' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Apps to make friends in Dubai', path: 'dubai/app-to-make-friends/' },
+      { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
+      { label: 'Meet new people in Dubai: 15 group activities', path: 'dubai/group-activities/' },
+      { label: 'How to find female friends in Dubai', path: 'dubai/make-female-friends/' },
+      { label: 'Lonely after a breakup in a new city', path: 'blog/lonely-after-breakup-new-city/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-single-dubai-friends-not-dates',
+    path: 'fr/blog/celibataire-dubai-amis-pas-rencontres/',
+    city: 'Dubaï',
+    published: '2026-11-25',
+    title: 'Célibataire à Dubaï : se faire des amis, rien de plus | IRLY',
+    description: 'Célibataire à Dubaï et envie d’amis, pas d’une relation ? Où l’amitié démarre plus facilement, comment le dire, que faire si les signaux se brouillent.',
+    h1: 'Célibataire à Dubaï : tu cherches des amis, pas une relation amoureuse',
+    lead: 'On peut se construire un vrai cercle d’amis à Dubaï en étant célibataire, sans que cela tourne à la rencontre amoureuse : choisis des cadres construits autour d’une activité plutôt qu’autour de la rencontre, dis simplement ce que tu cherches, et préfère les groupes aux tête-à-tête au début. La confusion vient surtout du cadre, pas de toi.',
+    sections: [
+      {
+        h2: 'Pourquoi c’est flou quand on est célibataire',
+        html: `<p>Quand on arrive seul, les outils les plus simples à saisir sont ceux qui font rencontrer une personne à la fois, et beaucoup sont conçus pour les rencontres amoureuses. Du coup, un simple « on prend un café ? » peut se lire de deux façons.</p>
+<p>Il y a aussi ce que les autres supposent. Les amis en couple te présentent leur seul ami célibataire. Les collègues demandent si tu « vois quelqu’un » avant de demander ce que tu aimes faire. Rien de tout cela ne veut dire qu’il y a un problème à vouloir des amis d’abord, ou seulement des amis. Cela aide d’être un peu plus clair que quelqu’un qui arrive en couple.</p>`,
+      },
+      {
+        h2: 'Choisis des cadres où l’activité est le but',
+        html: `<p>L’endroit où tu rencontres les gens décide en grande partie de la façon dont la rencontre est lue. Un plan qui a son propre but laisse peu de place au doute.</p>
+<ul>
+<li><strong>Les groupes réguliers :</strong> un club de course, une partie de padel, un club de lecture, un échange linguistique, un créneau de bénévolat. On y revient pour l’activité, et l’amitié pousse à côté.</li>
+<li><strong>Les cours où l’on retrouve les mêmes visages chaque semaine :</strong> escalade, poterie, une danse qui se pratique sans partenaire.</li>
+<li><strong>La journée et les matins de week-end.</strong> Une randonnée le samedi ou un petit-déjeuner ne se lit pas comme un verre tard le soir.</li>
+<li><strong>Les groupes mixtes comme les groupes entre femmes ou entre hommes.</strong> Si tu préfères commencer par un cercle entre femmes, notre guide pour <a href="../../dubai/trouver-des-copines/">trouver des copines à Dubaï</a> les présente.</li>
+</ul>
+<p>Les <a href="../../dubai/activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> donnent des formats concrets, et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> aide si c’est d’entrer seul qui te retient.</p>`,
+      },
+      {
+        h2: 'Dis ce que tu cherches, tôt et légèrement',
+        html: `<p>Tu ne dois d’annonce à personne, mais une phrase simple épargne des semaines de suppositions. Elle passe mieux dite en passant, avant qu’il y ait quoi que ce soit à rectifier.</p>
+<ul>
+<li>« Je suis arrivé au printemps et je cherche surtout à me faire un groupe d’amis. »</li>
+<li>« Je ne cherche pas de relation en ce moment, juste des gens avec qui faire des choses le week-end. »</li>
+<li>Dans un profil d’application : « Ici pour des amis et des plans, pas pour des rencontres amoureuses. »</li>
+</ul>
+<p>Puis fais correspondre tes invitations à tes mots : propose des plans à plusieurs, viens avec un autre ami, suggère le matin plutôt que le soir. On croit davantage l’habitude que la phrase.</p>`,
+      },
+      {
+        h2: 'Quand les signaux se brouillent',
+        html: `<p>Cela arrivera un jour : quelqu’un que tu voyais comme un ami espère davantage, ou tu ne sais pas ce qu’une invitation voulait dire. Être clair aide ; cela ne te rend jamais responsable de l’intérêt ou du comportement de l’autre.</p>
+<ul>
+<li><strong>Si tu doutes, interroge le plan, pas les sentiments.</strong> « C’est à plusieurs ? » te dit presque tout ce qu’il faut savoir.</li>
+<li><strong>Si quelqu’un s’intéresse à toi et que ce n’est pas réciproque,</strong> dis-le avec gentillesse et sans attendre : « J’aime passer du temps avec toi, en toute amitié. Je préférais être clair. » Une phrase courte et chaleureuse est plus douce pour vous deux qu’une disparition progressive.</li>
+<li><strong>Laisse de l’air ensuite.</strong> Certaines amitiés continuent après cette phrase, d’autres font une pause. Se voir en groupe pendant un temps aide.</li>
+<li><strong>Si quelqu’un n’accepte pas un non clair,</strong> tu n’as pas à te justifier encore. Prends tes distances, parles-en à un ami, et utilise les fonctions de blocage ou de signalement de l’application ou du groupe où vous vous êtes connus. Si cela continue ou si tu ne te sens pas en sécurité, contacte la police.</li>
+</ul>
+<p>Avec toute personne nouvelle, quelle que soit l’intention, donnez-vous rendez-vous dans un lieu public les premières fois et dis à quelqu’un où tu es.</p>`,
+      },
+      {
+        h2: 'Applications : lis à quoi chacune sert',
+        html: `<p>Les applications n’ont pas toutes le même but, et chercher des amis sur une application de rencontres amoureuses est le plus sûr moyen de brouiller les signaux. Regarde ce qu’une application dit d’elle-même avant de créer un profil. Certaines sont faites pour les rencontres amoureuses, d’autres ont un mode « amis » séparé, d’autres sont construites autour de groupes et d’activités. Notre comparatif des <a href="../../dubai/application-pour-se-faire-des-amis/">applications pour se faire des amis à Dubaï</a> passe en revue les grandes familles.</p>
+<p>IRLY fait partie des dernières : une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble dans la vraie vie, pas une application de rencontres amoureuses. Tu rejoins des communautés par centre d’intérêt et tu participes à des activités créées par les membres, avec une date, une heure et un quartier. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt.</p>`,
+      },
+      {
+        h2: 'Un cercle qui ne dépend pas de ta situation amoureuse',
+        html: `<p>Les amitiés nées autour d’une activité tiennent en général quand la vie change : quand tu rencontres quelqu’un, quand ça s’arrête, quand c’est un ami qui se met en couple. C’est ce cercle-là qu’il vaut la peine de construire en étant célibataire, et il se construit comme les autres, en voyant les mêmes personnes assez souvent. <a href="../combien-de-fois-se-voir-pour-devenir-amis/">Combien de fois il faut se voir avant de devenir amis</a> donne une idée du temps nécessaire, et <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> est le guide complet.</p>
+<p>Si tu es célibataire parce que quelque chose vient de se terminer et que les journées pèsent, <a href="../seul-apres-rupture-nouvelle-ville/">seul après une rupture loin de chez toi</a> est écrit pour ça. Et si le moral reste bas pendant des semaines, parles-en à un médecin ou à un professionnel de santé mentale.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Est-ce normal de ne vouloir que des amis, sans chercher de relation ?', a: 'Oui. Beaucoup de gens, nouveaux arrivants ou non, veulent d’abord un cercle d’amis, ou seulement cela. Il n’y a rien à justifier ; le dire une fois, simplement, suffit.' },
+      { q: 'Dois-je dire que je suis célibataire ?', a: 'Non. Ta situation amoureuse t’appartient, à toi de la partager ou non. Dire ce que tu cherches, des amis et des plans, suffit.' },
+      { q: 'Un homme et une femme peuvent-ils être simplement amis à Dubaï ?', a: 'Oui, c’est le cas de beaucoup de gens. C’est plus simple au sein d’un groupe construit autour d’une activité, où tout le monde se voit régulièrement et où il n’y a rien à deviner.' },
+      { q: 'Et si une amitié devient autre chose ?', a: 'Cela arrive, et c’est très bien quand vous le voulez tous les deux. Dites-le ouvertement plutôt que de deviner. Si un seul de vous le souhaite, une conversation claire et bienveillante est ce qui protège le mieux l’amitié.' },
+    ],
+    cta: { title: 'Ici pour des amis et des plans ?', body: 'Rejoins une communauté autour de ce que tu aimes et rencontre du monde par les activités, en vrai.', label: 'Rejoindre une communauté' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Applications pour se faire des amis à Dubaï', path: 'fr/dubai/application-pour-se-faire-des-amis/' },
+      { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Trouver des copines à Dubaï', path: 'fr/dubai/trouver-des-copines/' },
+      { label: 'Seul après une rupture loin de chez toi', path: 'fr/blog/seul-apres-rupture-nouvelle-ville/' },
+    ],
+  },
 ];
