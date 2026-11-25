@@ -2063,8 +2063,8 @@ export const POSTS = [
     sections: [
       {
         h2: 'Pourquoi c’est flou quand on est célibataire',
-        html: `<p>Quand on arrive seul, les outils les plus simples à saisir sont ceux qui font rencontrer une personne à la fois, et beaucoup sont conçus pour les rencontres amoureuses. Du coup, un simple « on prend un café ? » peut se lire de deux façons.</p>
-<p>Il y a aussi ce que les autres supposent. Les amis en couple te présentent leur seul ami célibataire. Les collègues demandent si tu « vois quelqu’un » avant de demander ce que tu aimes faire. Rien de tout cela ne veut dire qu’il y a un problème à vouloir des amis d’abord, ou seulement des amis. Cela aide d’être un peu plus clair que quelqu’un qui arrive en couple.</p>`,
+        html: `<p>Quand on arrive seul, les outils les plus simples à saisir sont ceux qui font rencontrer une personne à la fois, et beaucoup sont conçus pour les rencontres amoureuses. Résultat : un simple « on prend un café ? » peut se lire de deux façons.</p>
+<p>Il y a aussi ce que les autres supposent. Les amis en couple te présentent leur seul ami célibataire. Les collègues demandent si tu « vois quelqu’un » avant de demander ce que tu aimes faire. Rien de tout cela ne veut dire qu’il y a un problème à vouloir des amis d’abord, ou seulement des amis. Mieux vaut être un peu plus clair que quelqu’un qui arrive en couple.</p>`,
       },
       {
         h2: 'Choisis des cadres où l’activité est le but',
@@ -2085,7 +2085,7 @@ export const POSTS = [
 <li>« Je ne cherche pas de relation en ce moment, juste des gens avec qui faire des choses le week-end. »</li>
 <li>Dans un profil d’application : « Ici pour des amis et des plans, pas pour des rencontres amoureuses. »</li>
 </ul>
-<p>Puis fais correspondre tes invitations à tes mots : propose des plans à plusieurs, viens avec un autre ami, suggère le matin plutôt que le soir. On croit davantage l’habitude que la phrase.</p>`,
+<p>Puis fais correspondre tes invitations à tes mots : propose des plans à plusieurs, viens avec un autre ami, suggère le matin plutôt que le soir.</p>`,
       },
       {
         h2: 'Quand les signaux se brouillent',
