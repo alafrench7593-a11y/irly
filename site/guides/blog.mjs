@@ -539,7 +539,7 @@ export const POSTS = [
       },
       {
         h2: 'Staying or leaving, and when to ask for more help',
-        html: `<p>Many people think about going home in the first days. Sometimes that is the right choice, but it is rarely one to make in the worst week. If nothing forces a date on you, give yourself a month or two with a routine of your own, then decide with a clearer head, and talk it through with someone who knows you. If you do not feel safe, at home or around your former partner, none of this applies: leave as soon as you can and go to someone you trust.</p>
+        html: `<p>You may think about going home in the first days. Sometimes that is the right choice, but it is rarely one to make in the worst week. If nothing forces a date on you, give yourself a month or two with a routine of your own, then decide with a clearer head, and talk it through with someone who knows you. If you do not feel safe, at home or around your former partner, none of this applies: leave as soon as you can and go to someone you trust.</p>
 <p>If you feel low most days for weeks, cannot sleep or eat properly, or daily life becomes hard, talk to a doctor or a mental health professional where you live; it is a normal step. If you are in danger or think about harming yourself, call the emergency services right away: 999 (police) or 998 (ambulance) in the UAE, or the local emergency number where you are. For more ideas, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
       },
     ],
@@ -607,7 +607,7 @@ export const POSTS = [
       },
       {
         h2: 'Rester ou partir, et quand demander plus d’aide',
-        html: `<p>Beaucoup de gens pensent à rentrer dans les premiers jours. C’est parfois le bon choix, mais rarement un choix à faire pendant la pire semaine. Si rien ne t’impose une date, donne-toi un mois ou deux avec une routine à toi, puis décide à tête reposée, et parles-en avec quelqu’un qui te connaît. Si tu ne te sens pas en sécurité, chez toi ou face à ton ex, rien de cela ne s’applique : pars dès que tu peux et rejoins une personne de confiance.</p>
+        html: `<p>Tu penseras peut-être à rentrer dans les premiers jours. C’est parfois le bon choix, mais rarement un choix à faire pendant la pire semaine. Si rien ne t’impose une date, donne-toi un mois ou deux avec une routine à toi, puis décide à tête reposée, et parles-en avec quelqu’un qui te connaît. Si tu ne te sens pas en sécurité, chez toi ou face à ton ex, rien de cela ne s’applique : pars dès que tu peux et rejoins une personne de confiance.</p>
 <p>Si tu te sens mal la plupart des jours pendant des semaines, si tu ne dors ou ne manges plus correctement, ou si le quotidien devient difficile, parle à un médecin ou à un professionnel de santé mentale là où tu vis ; c’est une démarche normale. Si tu es en danger ou si tu penses à te faire du mal, appelle tout de suite les secours : 999 (police) ou 998 (ambulance) aux Émirats, ou le numéro d’urgence local là où tu te trouves. Pour d’autres pistes, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
       },
     ],
