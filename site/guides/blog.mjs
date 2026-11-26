@@ -497,35 +497,57 @@ export const POSTS = [
     path: 'blog/lonely-after-breakup-new-city/',
     city: 'Dubai',
     published: '2026-11-06',
+    updated: '2026-11-26',
     title: 'Lonely After a Breakup in a New City: First Steps | IRLY',
     description: 'A breakup far from home can leave you alone where your partner was your main person. Small first steps to rebuild a routine and your own circle in Dubai.',
     h1: 'Lonely after a breakup in a new city: first steps',
-    lead: 'When you moved for or with a partner, a breakup can take away your main person, your routine and sometimes your shared friends at once. It is normal to feel very alone. The first steps are small: look after the basics, rebuild a simple weekly routine, and start one circle that is yours.',
+    lead: 'When you moved abroad for or with a partner, a breakup can take away your main person, your routine and some of your friends at once, and feeling very alone is a normal response. The first steps are small: look after the basics, get through the evenings and weekends with a plan, and start one circle that is yours.',
     sections: [
       {
         h2: 'Why it hits harder far from home',
-        html: `<p>In a new city, a partner often fills the roles that friends and family would fill at home: the person you eat with, plan weekends with and talk to at night. When that ends, the gap is bigger, and the friends you had may have been mostly shared. None of this means you will stay alone; it means you are starting your own social life now, and that takes a little time.</p>`,
+        html: `<p>In a new city, a partner often fills the roles that friends and family fill at home: the person you eat with, plan weekends with and talk to at night. When that ends, several things stop on the same day. The flat is quieter, the habits you had as a pair have no second person, and the friends you saw may have been mostly shared, or mostly theirs.</p>
+<p>There is also the question nobody at home has to ask: why am I here? If the move was for the relationship, the city itself can feel like part of what ended. None of this means you will stay alone. It means you are starting a social life of your own, later than you expected, and that takes time.</p>`,
       },
       {
         h2: 'Look after the basics first',
         html: `<ul>
-<li><strong>Keep a simple rhythm:</strong> sleep, meals, some movement and time outside each day.</li>
-<li><strong>Tell a few people you trust,</strong> here or back home, and schedule calls instead of waiting for them.</li>
-<li><strong>Go easy on big decisions, but check what cannot wait.</strong> If your visa, housing or bank account is linked to your partner, check your situation early with official sources. Other big choices, like leaving the city, can wait a few weeks.</li>
+<li><strong>Keep a simple rhythm:</strong> sleep at regular hours, three meals, some movement and time outside each day.</li>
+<li><strong>Tell a few people you trust,</strong> here or back home, and put calls in the diary instead of waiting to feel like it. Mind the time difference and fix a regular hour.</li>
+<li><strong>Tell one person at work,</strong> if you can, so that a bad day does not need explaining.</li>
+<li><strong>Check what cannot wait.</strong> If your visa, housing or bank account is linked to your partner, find out early where you stand, from official sources or the bodies concerned. Other big choices, like leaving the city, can wait a few weeks.</li>
+</ul>`,
+      },
+      {
+        h2: 'Have a plan for evenings and weekends',
+        html: `<p>The working day usually holds. The hard hours are the ones you used to share: after work, Friday night, the long middle of the weekend. Decide in advance what goes there, even something small.</p>
+<ul>
+<li><strong>One fixed thing on two weekday evenings:</strong> a class, a gym session at a set time, a walk along the same route.</li>
+<li><strong>One plan before the weekend starts.</strong> A breakfast with a colleague, a call home, a morning activity in a group. <a href="../lonely-weekends-dubai/">Lonely on weekends in Dubai</a> goes through this in detail.</li>
+<li><strong>Somewhere to be that is not the flat:</strong> a café where you can read, a library, a beach walk at sunset.</li>
+<li><strong>Less scrolling late at night,</strong> and no checking what your former partner is doing. Muting their accounts for a while is not dramatic, it is practical.</li>
 </ul>`,
       },
       {
         h2: 'What to do about shared friends',
-        html: `<p>If most of your friends were shared, you do not have to pick sides or step away from everyone. Keep in touch with the people you feel close to, tell them simply that you would like to see them on your own, and accept that some will drift. That is not a judgement on you. In the meantime, the circles you build for yourself will give you people who know you on your own terms.</p>`,
+        html: `<p>If most of your friends were shared, you do not have to choose sides or step away from everyone. Write to the people you feel close to and say it simply: “I would like to keep seeing you, on my own.” Suggest something small and one to one, where nobody has to manage the two of you in the same room.</p>
+<p>Some will drift, and a few may stay closer to your former partner. That is not a verdict on you. Avoid asking friends to carry messages or report back; it puts them in the middle and can cost the friendship. Meanwhile, the circles you build yourself will give you people who know you on your own terms.</p>`,
       },
       {
         h2: 'Rebuild a week that is yours',
-        html: `<p>Choose one or two regular activities that you pick for yourself, with a set time each week: a class, a sport, a volunteering slot, a community around your language or a hobby. Seeing the same people each week gives you something to look forward to and slowly builds friendships that are not linked to your past relationship. Our guide on <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> can help with the first outings.</p>`,
+        html: `<p>Choose one or two regular activities that you pick for yourself, with a set time each week: a class, a sport, a volunteering slot, a community around your language or a hobby. Something you had dropped because it did not suit you both is a good place to start.</p>
+<p>Seeing the same people each week gives you something to look forward to and slowly builds friendships that have nothing to do with the relationship. You do not need to tell anyone your story on day one. <a href="../../dubai/going-out-alone/">Going out alone in Dubai</a> helps with the first outings, and <a href="../../dubai/free-social-activities/">free social activities in Dubai</a> if money is tight after the separation. Apps are one more way to find groups: IRLY, for example, is an app to meet people who share your interests and do things together in real life, not a dating app. It is free, on the App Store for iPhone and in the browser; the Android app is coming soon.</p>`,
       },
       {
-        h2: 'When to ask for more help',
-        html: `<p>If you feel low most days for weeks, cannot sleep or eat properly, or daily life becomes hard, talk to a doctor or a mental health professional where you live; it is a normal step. If you are in danger or think about harming yourself, call the emergency services right away: 999 (police) or 998 (ambulance) in the UAE, or the local emergency number where you are. For more ideas, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
+        h2: 'Staying or leaving, and when to ask for more help',
+        html: `<p>Many people think about going home in the first days. Sometimes that is the right choice, but it is rarely one to make in the worst week. If nothing forces a date on you, give yourself a month or two with a routine of your own, then decide with a clearer head, and talk it through with someone who knows you. If you do not feel safe, at home or around your former partner, none of this applies: leave as soon as you can and go to someone you trust.</p>
+<p>If you feel low most days for weeks, cannot sleep or eat properly, or daily life becomes hard, talk to a doctor or a mental health professional where you live; it is a normal step. If you are in danger or think about harming yourself, call the emergency services right away: 999 (police) or 998 (ambulance) in the UAE, or the local emergency number where you are. For more ideas, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
       },
+    ],
+    faq: [
+      { q: 'How long does loneliness last after a breakup abroad?', a: 'It varies from person to person. It often eases as your own routine takes shape and you see the same people regularly. If it stays heavy for weeks, talk to a professional.' },
+      { q: 'Is it normal to miss the routine as much as the person?', a: 'Yes. Shared habits give the day its shape, and losing them is felt at once. A few habits of your own help fill that space.' },
+      { q: 'Is it too soon to meet new people?', a: 'Not for friendship. Group activities ask little of you and bring company without questions. There is no hurry for anything more.' },
+      { q: 'What do I say when people ask about my partner?', a: 'One short sentence is enough: “We separated recently, I would rather not go into it.” Most people take the cue and move on.' },
     ],
     cta: { title: 'Starting your own circle?', body: 'Join a community around what you like and find a plan this week, in real life.', label: 'Join a community' },
     related: [
@@ -543,35 +565,57 @@ export const POSTS = [
     path: 'fr/blog/seul-apres-rupture-nouvelle-ville/',
     city: 'Dubaï',
     published: '2026-11-06',
+    updated: '2026-11-26',
     title: 'Seul après une rupture loin de chez toi : premiers pas | IRLY',
     description: 'Seul après une rupture loin de chez toi ? Des premiers pas simples pour retrouver un rythme et construire ton propre cercle à Dubaï.',
     h1: 'Seul après une rupture loin de chez toi : les premiers pas',
-    lead: 'Quand tu as déménagé pour ou avec ton ou ta partenaire, une rupture peut t’enlever d’un coup la personne la plus proche de toi, ta routine et parfois vos amis communs. Se sentir très seul est normal. Les premiers pas sont petits : prendre soin de l’essentiel, retrouver une semaine simple, et commencer un cercle à toi.',
+    lead: 'Quand tu t’es installé à l’étranger pour ou avec ton ou ta partenaire, une rupture peut t’enlever d’un coup la personne la plus proche de toi, ta routine et une partie de tes amis, et te sentir très seul est une réaction normale. Les premiers pas sont petits : prendre soin de l’essentiel, passer les soirées et les week-ends avec un plan, et commencer un cercle qui soit le tien.',
     sections: [
       {
         h2: 'Pourquoi c’est plus dur loin de chez soi',
-        html: `<p>Dans une nouvelle ville, le ou la partenaire remplit souvent les rôles que tiendraient les amis et la famille au pays : la personne avec qui on mange, prévoit ses week-ends et parle le soir. Quand ça s’arrête, le vide est plus grand, et les amis que tu avais étaient peut-être surtout communs. Ça ne veut pas dire que tu resteras seul : tu commences maintenant ta propre vie sociale, et ça prend un peu de temps.</p>`,
+        html: `<p>Dans une nouvelle ville, le ou la partenaire tient souvent les rôles que tiennent ailleurs les amis et la famille : la personne avec qui tu manges, avec qui tu prévois le week-end, à qui tu parles le soir. Quand cela s’arrête, plusieurs choses s’arrêtent le même jour. L’appartement est plus silencieux, les habitudes à deux n’ont plus de deuxième personne, et les amis que tu voyais étaient peut-être surtout communs, ou surtout les siens.</p>
+<p>Il y a aussi la question que personne ne se pose chez soi : qu’est-ce que je fais ici ? Si tu es venu pour la relation, la ville elle-même peut sembler faire partie de ce qui s’est terminé. Rien de tout cela ne veut dire que tu resteras seul. Cela veut dire que tu commences une vie sociale à toi, plus tard que prévu, et que cela prend du temps.</p>`,
       },
       {
         h2: 'Prends d’abord soin de l’essentiel',
         html: `<ul>
-<li><strong>Garde un rythme simple :</strong> sommeil, repas, un peu de mouvement et du temps dehors chaque jour.</li>
-<li><strong>Parles-en à quelques personnes de confiance,</strong> ici ou au pays, et programme des appels au lieu d’attendre.</li>
-<li><strong>Ne te presse pas pour les grandes décisions, mais vérifie ce qui ne peut pas attendre.</strong> Si ton visa, ton logement ou ton compte bancaire dépend de ton ou ta partenaire, renseigne-toi tôt auprès des sources officielles. Les autres grands choix, comme quitter la ville, peuvent attendre quelques semaines.</li>
+<li><strong>Garde un rythme simple :</strong> des heures de sommeil régulières, trois repas, un peu de mouvement et du temps dehors chaque jour.</li>
+<li><strong>Préviens quelques personnes de confiance,</strong> ici ou au pays, et inscris des appels à l’agenda plutôt que d’attendre d’en avoir envie. Tiens compte du décalage horaire et fixe une heure régulière.</li>
+<li><strong>Dis-le à une personne au travail,</strong> si tu peux, pour qu’une mauvaise journée n’ait pas besoin d’explication.</li>
+<li><strong>Vérifie ce qui ne peut pas attendre.</strong> Si ton visa, ton logement ou ton compte bancaire dépend de ton ou ta partenaire, renseigne-toi tôt sur ta situation, auprès des sources officielles ou des organismes concernés. Les autres grandes décisions, comme quitter la ville, peuvent attendre quelques semaines.</li>
+</ul>`,
+      },
+      {
+        h2: 'Prévois tes soirées et tes week-ends',
+        html: `<p>La journée de travail tient en général. Les heures difficiles sont celles que vous partagiez : la sortie du bureau, le vendredi soir, le long milieu du week-end. Décide à l’avance de ce qui les occupe, même quelque chose de petit.</p>
+<ul>
+<li><strong>Une chose fixe deux soirs par semaine :</strong> un cours, une séance de sport à heure fixe, une marche sur le même trajet.</li>
+<li><strong>Un plan avant que le week-end commence.</strong> Un petit-déjeuner avec un collègue, un appel au pays, une activité de groupe le matin. <a href="../week-end-seul-dubai/">Seul le week-end à Dubaï</a> détaille tout cela.</li>
+<li><strong>Un endroit où être qui ne soit pas l’appartement :</strong> un café où lire, une bibliothèque, une marche sur la plage au coucher du soleil.</li>
+<li><strong>Moins d’écran tard le soir,</strong> et pas de coup d’œil à ce que fait ton ex. Masquer ses comptes pendant un temps n’a rien de dramatique, c’est pratique.</li>
 </ul>`,
       },
       {
         h2: 'Et les amis communs ?',
-        html: `<p>Si la plupart de tes amis étaient communs, tu n’as pas à choisir un camp ni à t’éloigner de tout le monde. Garde le contact avec ceux dont tu te sens proche, dis-leur simplement que tu aimerais les voir de ton côté, et accepte que certains s’éloignent. Ce n’est pas un jugement sur toi. En attendant, les cercles que tu construis pour toi te donneront des personnes qui te connaissent pour toi-même.</p>`,
+        html: `<p>Si la plupart de tes amis étaient communs, tu n’as pas à choisir un camp ni à t’éloigner de tout le monde. Écris aux personnes dont tu te sens proche et dis-le simplement : « J’aimerais continuer à te voir, de mon côté. » Propose quelque chose de petit, en tête-à-tête, où personne n’a à gérer votre présence à tous les deux dans la même pièce.</p>
+<p>Certains s’éloigneront, et quelques-uns resteront plus proches de ton ex. Ce n’est pas un verdict sur toi. Évite de demander à des amis de transmettre des messages ou de te rapporter des nouvelles : cela les met au milieu et peut coûter l’amitié. Pendant ce temps, les cercles que tu construis toi-même t’apporteront des personnes qui te connaissent pour toi.</p>`,
       },
       {
         h2: 'Reconstruis une semaine à toi',
-        html: `<p>Choisis une ou deux activités régulières, rien que pour toi, à heure fixe chaque semaine : un cours, un sport, du bénévolat, une communauté autour de ta langue ou d’un loisir. Revoir les mêmes personnes chaque semaine donne quelque chose à attendre et construit peu à peu des amitiés qui ne sont pas liées à ta relation passée. Notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> peut aider pour les premières sorties.</p>`,
+        html: `<p>Choisis une ou deux activités régulières, rien que pour toi, à heure fixe chaque semaine : un cours, un sport, un créneau de bénévolat, une communauté autour de ta langue ou d’un loisir. Une activité que tu avais abandonnée parce qu’elle ne vous convenait pas à tous les deux est un bon point de départ.</p>
+<p>Revoir les mêmes personnes chaque semaine te donne quelque chose à attendre et construit peu à peu des amitiés qui n’ont rien à voir avec la relation. Tu n’as pas à raconter ton histoire dès le premier jour. <a href="../../dubai/sortir-seul/">Sortir seul à Dubaï</a> aide pour les premières sorties, et les <a href="../../dubai/activites-gratuites/">activités gratuites à Dubaï</a> si le budget est serré après la séparation. Les applications sont un moyen de plus de trouver des groupes : IRLY, par exemple, est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble dans la vraie vie, pas une application de rencontres amoureuses. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt.</p>`,
       },
       {
-        h2: 'Quand demander plus d’aide',
-        html: `<p>Si tu te sens mal la plupart des jours pendant des semaines, si tu ne dors ou ne manges plus correctement, ou si le quotidien devient difficile, parles-en à un médecin ou à un professionnel de santé mentale là où tu vis : c’est une démarche normale. Si tu es en danger ou si tu penses à te faire du mal, appelle tout de suite les secours : le 999 (police) ou le 998 (ambulance) aux Émirats, ou le numéro d’urgence local là où tu es. Pour d’autres idées, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
+        h2: 'Rester ou partir, et quand demander plus d’aide',
+        html: `<p>Beaucoup de gens pensent à rentrer dans les premiers jours. C’est parfois le bon choix, mais rarement un choix à faire pendant la pire semaine. Si rien ne t’impose une date, donne-toi un mois ou deux avec une routine à toi, puis décide à tête reposée, et parles-en avec quelqu’un qui te connaît. Si tu ne te sens pas en sécurité, chez toi ou face à ton ex, rien de cela ne s’applique : pars dès que tu peux et rejoins une personne de confiance.</p>
+<p>Si tu te sens mal la plupart des jours pendant des semaines, si tu ne dors ou ne manges plus correctement, ou si le quotidien devient difficile, parle à un médecin ou à un professionnel de santé mentale là où tu vis ; c’est une démarche normale. Si tu es en danger ou si tu penses à te faire du mal, appelle tout de suite les secours : 999 (police) ou 998 (ambulance) aux Émirats, ou le numéro d’urgence local là où tu te trouves. Pour d’autres pistes, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
       },
+    ],
+    faq: [
+      { q: 'Combien de temps dure la solitude après une rupture à l’étranger ?', a: 'Cela varie d’une personne à l’autre. Elle s’allège souvent quand ta propre routine s’installe et que tu revois régulièrement les mêmes personnes. Si elle reste lourde pendant des semaines, parles-en à un professionnel.' },
+      { q: 'Est-ce normal que la routine me manque autant que la personne ?', a: 'Oui. Les habitudes partagées donnent sa forme à la journée, et leur perte se sent tout de suite. Quelques habitudes à toi aident à combler ce vide.' },
+      { q: 'Est-ce trop tôt pour rencontrer de nouvelles personnes ?', a: 'Pas pour l’amitié. Les activités de groupe te demandent peu et apportent de la compagnie sans questions. Pour le reste, rien ne presse.' },
+      { q: 'Que répondre quand on me demande des nouvelles de mon ou ma partenaire ?', a: 'Une phrase courte suffit : « Nous nous sommes séparés récemment, je préfère ne pas en parler. » La plupart des gens comprennent et passent à autre chose.' },
     ],
     cta: { title: 'Tu recommences ton propre cercle ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
     related: [
