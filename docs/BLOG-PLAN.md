@@ -35,7 +35,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] Summer in Dubai: keeping a social life when many people travel
 - [x] When your friends in Dubai leave: starting again
 - [x] Single in Dubai and looking for friends, not dates
-- [ ] Social anxiety in a new city: small steps that help
+- [x] Social anxiety in a new city: small steps that help
 - [ ] Saying yes to invitations without burning out
 - [ ] Following up after meeting someone: a simple message that works
 - [ ] Building a routine that brings the same faces back

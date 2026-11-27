@@ -235,7 +235,7 @@ export const POSTS = [
         h2: 'When a first meet-up drains you',
         html: `<p>You went, you talked, and you came home flat. That is tiredness, and it says little about the evening itself. Wait until the next day to judge it, then ask yourself two questions. Was there one person I would be glad to see again? And was it the people who tired me, or the format: the noise, the length, the size of the group?</p>
 <p>If it was the format, change the format and keep the habit: a smaller group, a shorter session, a morning instead of an evening. If there was one good conversation, send that person a short message the next day; it is easier in writing, and the thread is not broken.</p>
-<p>Introversion is a temperament; there is nothing to correct. If what holds you back feels more like fear than tiredness, for example dread that lasts for days or things you want to do and give up on, talk to a doctor or a mental health professional. For the wider picture, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
+<p>Introversion is a temperament; there is nothing to correct. If what holds you back feels more like fear than tiredness, for example dread that lasts for days or things you want to do and give up on, talk to a doctor or a mental health professional; <a href="../social-anxiety-new-city-small-steps/">social anxiety in a new city: small steps that help</a> covers that side. For the wider picture, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
       },
     ],
     faq: [
@@ -316,7 +316,7 @@ export const POSTS = [
         h2: 'Quand une première rencontre te vide',
         html: `<p>Tu y es allé, tu as parlé, et tu rentres à plat. C’est de la fatigue, et elle ne dit pas grand-chose de la soirée elle-même. Attends le lendemain pour juger, puis pose-toi deux questions. Y avait-il une personne que j’aurais plaisir à revoir ? Et qu’est-ce qui m’a fatigué : les gens, ou le format, c’est-à-dire le bruit, la durée, la taille du groupe ?</p>
 <p>Si c’est le format, change de format et garde l’habitude : un groupe plus petit, une séance plus courte, un matin au lieu d’un soir. S’il y a eu une bonne conversation, envoie un petit message à cette personne le lendemain ; par écrit c’est plus facile, et le fil n’est pas rompu.</p>
-<p>L’introversion est un tempérament : il n’y a rien à corriger. Si ce qui te retient ressemble plus à de la peur qu’à de la fatigue, par exemple une appréhension qui dure des jours ou des envies auxquelles tu renonces, parles-en à un médecin ou à un professionnel de santé mentale. Pour une vue d’ensemble, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
+<p>L’introversion est un tempérament : il n’y a rien à corriger. Si ce qui te retient ressemble plus à de la peur qu’à de la fatigue, par exemple une appréhension qui dure des jours ou des envies auxquelles tu renonces, parles-en à un médecin ou à un professionnel de santé mentale ; <a href="../anxiete-sociale-nouvelle-ville-petits-pas/">anxiété sociale dans une nouvelle ville : les petits pas qui aident</a> traite ce versant. Pour une vue d’ensemble, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
       },
     ],
     faq: [
@@ -2167,6 +2167,150 @@ export const POSTS = [
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
       { label: 'Trouver des copines à Dubaï', path: 'fr/dubai/trouver-des-copines/' },
       { label: 'Seul après une rupture loin de chez toi', path: 'fr/blog/seul-apres-rupture-nouvelle-ville/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-social-anxiety-new-city',
+    path: 'blog/social-anxiety-new-city-small-steps/',
+    city: 'Dubai',
+    published: '2026-11-27',
+    title: 'Social Anxiety in a New City: Small Steps That Help | IRLY',
+    description: 'Social anxiety in a new city: make each step smaller, from a short visit with a planned exit to one group you return to, and know when to ask for help.',
+    h1: 'Social anxiety in a new city: small steps that help',
+    lead: 'With social anxiety, a new city can get easier when you make each step smaller rather than trying to be braver: go for a short time with a planned exit, choose settings where there is something to do besides talk, and return to the same place until it is familiar. If the fear keeps you from daily life, talk to a doctor or a mental health professional first.',
+    sections: [
+      {
+        h2: 'Nervous or socially anxious: what a new city changes',
+        html: `<p>Feeling nervous before walking into a room of strangers is ordinary, all the more so when you have just arrived. Social anxiety is something more persistent: a fear of being judged or of embarrassing yourself, strong enough that you avoid things you would like to do. This page does not diagnose anything; its steps suit both.</p>
+<p>A move makes it louder for simple reasons. Nothing is familiar yet, so every outing is a first time, and there is nobody to go with. Staying in brings relief on the day, and tends to make the next attempt feel bigger. So the aim below is never a big evening, only a small step you can repeat.</p>`,
+      },
+      {
+        h2: 'Make the step smaller, not braver',
+        html: `<p>You need a version of the outing that you can actually do this week.</p>
+<ul>
+<li><strong>Decide your exit before you go.</strong> “I will stay half an hour” is a complete plan.</li>
+<li><strong>Choose a setting with a task.</strong> A class, a walk, a board game table or a volunteering shift gives your hands and eyes something to do, and gives conversation a subject.</li>
+<li><strong>Arrive early.</strong> A room with four people in it is easier to enter than a full one, and the organiser has time to say hello.</li>
+<li><strong>Prepare one question.</strong> “What made you pick this class?” is enough. See <a href="../what-to-say-start-conversation-activity/">what to say to start a conversation at an activity</a> for more.</li>
+</ul>
+<p>The <a href="../../dubai/group-activities/">15 group activities to meet people in Dubai</a> include formats with a clear start, a clear end and something to do.</p>`,
+      },
+      {
+        h2: 'A ladder for the first weeks',
+        html: `<p>Line the steps up from easiest to hardest and take them in order, at your own pace. An example:</p>
+<ol>
+<li>Go to the same café or gym at the same hour several times, and greet the person at the counter.</li>
+<li>Join a class where nobody has to talk: yoga, a guided run, a workshop.</li>
+<li>Return to that class and say one sentence to one person.</li>
+<li>Join a small group activity that has an end time.</li>
+<li>Stay ten minutes after it ends, or suggest a coffee to one person you have already seen twice.</li>
+</ol>
+<p>Move up when a step has become a little boring, not when you feel ready; feeling ready often comes after, not before. If a step is too much, cut it in half rather than dropping the ladder. <a href="../../dubai/going-out-alone/">Going out alone in Dubai</a> lists places where being by yourself is unremarkable, which suits the first steps.</p>`,
+      },
+      {
+        h2: 'Before, during and after',
+        html: `<p><strong>Before.</strong> Remove the practical unknowns: how you get there, where you park or which exit you take, what you do in the first two minutes (find the organiser, get a coffee, sit down). A drink to get through the door is a tempting shortcut that tends to cost more later; if you notice that pull, choose daytime plans.</p>
+<p><strong>During.</strong> Anxiety tends to turn attention inward, onto how you sound and look. Turn it outward on purpose: what is this person saying, what is on the table, what is the instructor showing. If it rises, slow your breathing or step outside for a few minutes. Coming back in afterwards is allowed, and so is going home.</p>
+<p><strong>After.</strong> The urge is to replay every sentence. Instead, write down one thing that went fine, however small, and when you will go next.</p>`,
+      },
+      {
+        h2: 'Use apps and group chats to shrink the unknown',
+        html: `<p>Much of the fear is about not knowing what you are walking into. Anything that tells you in advance who is coming, where, and for how long helps. Read a group’s chat for a while before you go. Send one message (“I am new, see you Saturday”), so that somebody expects you.</p>
+<p>IRLY is one option among others. It is an app to meet people who share your interests and do things together in real life, and not a dating app. You join communities by interest and take part in activities that members create, each with a date, a time and a neighbourhood; joining one opens its chat, where the exact meeting point is shared. It is free, on the App Store for iPhone and in the browser; the Android app is coming soon. If you are quiet by temperament rather than anxious, <a href="../introvert-make-friends-dubai/">making friends in Dubai as an introvert</a> is written for you.</p>`,
+      },
+      {
+        h2: 'When to ask for help',
+        html: `<p>Small steps are useful, and they are not a treatment. Talk to a doctor or a mental health professional if the fear is not easing with time, if it makes you avoid work, study or everyday tasks, if it comes with panic, low mood or drinking more than you want to, or if you have tried on your own and it is not moving. Social anxiety is a recognised difficulty and there are treatments for it; a professional can explain the options. Asking for help is a normal step. If what weighs most is being alone, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>
+<p>If you are in danger or think about harming yourself, call the emergency services right away: 999 (police) or 998 (ambulance) in the UAE, or the local emergency number where you are.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'Is social anxiety the same as being introverted?', a: 'No. Introversion is a preference for quieter settings and for time alone to recharge. Social anxiety is a fear of being judged. You can be one, the other, or both.' },
+      { q: 'Should I tell people that I am anxious?', a: 'It is your choice, and you owe no explanation. A light sentence such as “I am always a bit nervous at these things” can take the pressure off, and it gives the other person something easy to answer.' },
+      { q: 'Is it rude to leave early?', a: 'No. Thank the organiser, say you have to go, and leave. Coming for a short time is worth more than not coming, and nobody is counting the minutes.' },
+      { q: 'Can I bring someone with me the first time?', a: 'Yes, if you have someone. Agree that each of you will speak to one other person, so you do not spend the whole time together. If you know nobody yet, pick a format where coming alone is the norm, such as a class.' },
+    ],
+    cta: { title: 'Know where and when before you go', body: 'Join a community around what you like and pick one small activity, in real life.', label: 'Join a community' },
+    related: [
+      { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
+      { label: 'Making friends in Dubai as an introvert', path: 'blog/introvert-make-friends-dubai/' },
+      { label: 'What to say to start a conversation at an activity', path: 'blog/what-to-say-start-conversation-activity/' },
+      { label: 'Meet new people in Dubai: 15 group activities', path: 'dubai/group-activities/' },
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-social-anxiety-new-city',
+    path: 'fr/blog/anxiete-sociale-nouvelle-ville-petits-pas/',
+    city: 'Dubaï',
+    published: '2026-11-27',
+    title: 'Anxiété sociale dans une nouvelle ville : petits pas | IRLY',
+    description: 'Anxiété sociale dans une nouvelle ville : réduis chaque étape, de la visite courte au groupe où tu reviens, et sache quand demander de l’aide.',
+    h1: 'Anxiété sociale dans une nouvelle ville : les petits pas qui aident',
+    lead: 'Si tu vis avec de l’anxiété sociale, une nouvelle ville peut devenir plus facile quand tu réduis chaque étape au lieu d’essayer d’être plus courageux : viens pour un temps court en sachant à quelle heure tu repars, choisis des cadres où il y a autre chose à faire que parler, et retourne au même endroit jusqu’à ce qu’il te soit familier. Si la peur t’empêche de vivre ton quotidien, parles-en d’abord à un médecin ou à un professionnel de santé mentale.',
+    sections: [
+      {
+        h2: 'Trac ou anxiété sociale : ce qu’une nouvelle ville change',
+        html: `<p>Avoir le trac avant d’entrer dans une pièce pleine d’inconnus est banal, surtout quand on vient d’arriver. L’anxiété sociale est plus tenace : une peur d’être jugé ou de se ridiculiser, assez forte pour te faire éviter des choses que tu aimerais faire. Cette page ne pose aucun diagnostic ; ses étapes valent pour les deux.</p>
+<p>Un déménagement amplifie tout cela pour des raisons simples. Rien n’est encore familier, donc chaque sortie est une première fois, et tu n’as personne avec qui y aller. Rester chez soi soulage sur le moment, et rend souvent la tentative suivante plus impressionnante. Le but, ici, n’est donc jamais une grande soirée, seulement un petit pas que tu peux refaire.</p>`,
+      },
+      {
+        h2: 'Réduis l’étape plutôt que de forcer le courage',
+        html: `<p>Il te faut une version de la sortie que tu peux vraiment faire cette semaine.</p>
+<ul>
+<li><strong>Décide avant d’y aller de l’heure à laquelle tu repars.</strong> « Je reste une demi-heure » est un plan complet.</li>
+<li><strong>Choisis un cadre où il y a quelque chose à faire.</strong> Un cours, une balade, une table de jeux de société ou un créneau de bénévolat occupe tes mains et ton regard, et donne un sujet à la conversation.</li>
+<li><strong>Arrive en avance.</strong> On entre plus facilement dans une salle de quatre personnes que dans une salle pleine, et l’organisateur a le temps de te dire bonjour.</li>
+<li><strong>Prépare une question.</strong> « Qu’est-ce qui t’a fait choisir ce cours ? » suffit. Voir <a href="../quoi-dire-pour-lancer-une-conversation-activite/">quoi dire pour lancer une conversation lors d’une activité</a> pour d’autres idées.</li>
+</ul>
+<p>Les <a href="../../dubai/activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a> comprennent des formats avec un début net, une fin nette et quelque chose à faire.</p>`,
+      },
+      {
+        h2: 'Une échelle pour les premières semaines',
+        html: `<p>Range les étapes de la plus facile à la plus difficile et prends-les dans l’ordre, à ton rythme. Un exemple :</p>
+<ol>
+<li>Va plusieurs fois dans le même café ou la même salle de sport à la même heure, et dis bonjour à la personne au comptoir ou à l’accueil.</li>
+<li>Inscris-toi à un cours où personne n’est obligé de parler : yoga, sortie de course à pied encadrée, atelier.</li>
+<li>Retourne à ce cours et dis une phrase à une personne.</li>
+<li>Participe à une activité en petit groupe qui a une heure de fin.</li>
+<li>Reste dix minutes après la fin, ou propose un café à une personne que tu as déjà croisée deux fois.</li>
+</ol>
+<p>Passe à l’étape suivante quand celle-ci est devenue un peu ennuyeuse, pas quand tu te sens prêt ; se sentir prêt vient souvent après, pas avant. Si une étape est trop haute, coupe-la en deux plutôt que d’abandonner l’échelle. <a href="../../dubai/sortir-seul/">Sortir seul à Dubaï</a> liste des endroits où être seul ne se remarque pas.</p>`,
+      },
+      {
+        h2: 'Avant, pendant et après',
+        html: `<p><strong>Avant.</strong> Enlève les inconnues pratiques : comment tu y vas, où tu te gares ou quelle sortie tu prends, ce que tu fais dans les deux premières minutes (trouver l’organisateur, prendre une boisson, t’asseoir). Boire un verre pour réussir à franchir la porte est un raccourci tentant, qui coûte souvent plus cher ensuite ; si tu remarques cette pente, choisis des plans en journée.</p>
+<p><strong>Pendant.</strong> L’anxiété ramène souvent l’attention vers soi, vers sa voix et son allure. Tourne-la volontairement vers l’extérieur : que dit cette personne, qu’y a-t-il sur la table, que montre le professeur. Si ça monte, ralentis ta respiration ou sors quelques minutes. Tu as le droit de revenir ensuite, et aussi de rentrer chez toi.</p>
+<p><strong>Après.</strong> La tentation est de se repasser chaque phrase. À la place, note une chose qui s’est bien passée, même minuscule, et la date de ta prochaine sortie.</p>`,
+      },
+      {
+        h2: 'Applications et groupes de discussion : réduire l’inconnu',
+        html: `<p>Une grande part de la peur vient de l’inconnu : tout ce qui t’indique à l’avance qui vient, où et pour combien de temps t’aide. Lis la discussion d’un groupe avant d’y aller, puis envoie un message (« Je suis nouveau, à samedi »), pour que quelqu’un t’attende.</p>
+<p>IRLY est une option parmi d’autres. C’est une application pour rencontrer des personnes qui partagent tes centres d’intérêt et faire des choses ensemble dans la vraie vie, pas une application de rencontres amoureuses : tu rejoins des communautés par centre d’intérêt et tu participes à des activités créées par les membres, chacune avec une date, une heure et un quartier ; en rejoindre une ouvre son chat, où le point de rendez-vous exact est partagé. Elle est gratuite, disponible sur l’App Store pour iPhone et dans le navigateur ; l’application Android arrive bientôt. Si tu es plutôt réservé de nature qu’anxieux, <a href="../introverti-se-faire-des-amis-dubai/">se faire des amis à Dubaï quand on est introverti</a> est écrit pour toi.</p>`,
+      },
+      {
+        h2: 'Quand demander de l’aide',
+        html: `<p>Les petits pas sont utiles, mais ce n’est pas un traitement. Parle à un médecin ou à un professionnel de santé mentale si la peur ne diminue pas avec le temps, si elle te fait éviter le travail, les études ou les démarches du quotidien, si elle s’accompagne de crises de panique, d’un moral bas ou d’une consommation d’alcool plus forte que tu ne le voudrais, ou si tu as essayé seul et que rien ne bouge. L’anxiété sociale est une difficulté reconnue et il existe des traitements ; un professionnel peut t’expliquer les possibilités. Demander de l’aide est une démarche normale. Si ce qui pèse le plus est d’être seul, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>
+<p>Si tu es en danger ou si tu penses à te faire du mal, appelle tout de suite les secours : 999 (police) ou 998 (ambulance) aux Émirats, ou le numéro d’urgence local là où tu te trouves.</p>`,
+      },
+    ],
+    faq: [
+      { q: 'L’anxiété sociale, est-ce la même chose qu’être introverti ?', a: 'Non. L’introversion est une préférence pour les cadres calmes et pour des moments seul afin de se ressourcer. L’anxiété sociale est une peur d’être jugé. On peut être l’un, l’autre, ou les deux.' },
+      { q: 'Dois-je dire aux autres que je suis anxieux ?', a: 'C’est ton choix, et tu ne dois d’explication à personne. Une phrase légère comme « je suis toujours un peu stressé dans ce genre d’événement » peut enlever de la pression, et donne à l’autre une réponse facile.' },
+      { q: 'Est-ce impoli de partir tôt ?', a: 'Non. Remercie l’organisateur, dis que tu dois y aller, et pars. Venir un court moment vaut mieux que ne pas venir, et personne ne compte les minutes.' },
+      { q: 'Puis-je venir accompagné la première fois ?', a: 'Oui, si tu as quelqu’un. Convenez que chacun parlera à une autre personne, pour ne pas rester ensemble tout du long. Si tu ne connais encore personne, choisis un format où venir seul est la norme, un cours par exemple.' },
+    ],
+    cta: { title: 'Savoir où et quand avant d’y aller', body: 'Rejoins une communauté autour de ce que tu aimes et choisis une petite activité, en vrai.', label: 'Rejoindre une communauté' },
+    related: [
+      { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
+      { label: 'Se faire des amis à Dubaï quand on est introverti', path: 'fr/blog/introverti-se-faire-des-amis-dubai/' },
+      { label: 'Quoi dire pour lancer une conversation lors d’une activité', path: 'fr/blog/quoi-dire-pour-lancer-une-conversation-activite/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
     ],
   },
 ];
