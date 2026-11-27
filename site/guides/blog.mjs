@@ -2210,7 +2210,7 @@ export const POSTS = [
       },
       {
         h2: 'Before, during and after',
-        html: `<p><strong>Before.</strong> Remove the practical unknowns: how you get there, where you park or which exit you take, what you do in the first two minutes (find the organiser, get a drink, sit down). A drink to get through the door is a tempting shortcut that tends to cost more later; if you notice that pull, choose daytime plans.</p>
+        html: `<p><strong>Before.</strong> Remove the practical unknowns: how you get there, where you park or which exit you take, what you do in the first two minutes (find the organiser, get a coffee, sit down). A drink to get through the door is a tempting shortcut that tends to cost more later; if you notice that pull, choose daytime plans.</p>
 <p><strong>During.</strong> Anxiety tends to turn attention inward, onto how you sound and look. Turn it outward on purpose: what is this person saying, what is on the table, what is the instructor showing. If it rises, slow your breathing or step outside for a few minutes. Coming back in afterwards is allowed, and so is going home.</p>
 <p><strong>After.</strong> The urge is to replay every sentence. Instead, write down one thing that went fine, however small, and when you will go next.</p>`,
       },
