@@ -738,7 +738,7 @@ export const ARTICLES = [
       {
         h2: 'Why it feels awkward, and why it gets easier',
         html: `<p>The discomfort is mostly in your head: you notice yourself far more than others notice you. Most people around you are busy with their own evening. It also fades with practice. The first solo dinner feels long; the third feels like time for yourself.</p>
-<p>A city where so many people moved alone also means you are rarely the only one on your own, especially at classes, sports sessions and community events.</p>`,
+<p>A city where so many people moved alone also means you are rarely the only one on your own, especially at classes, sports sessions and community events. If going out alone brings more fear than awkwardness, read <a href="../../blog/social-anxiety-new-city-small-steps/">social anxiety in a new city: small steps that help</a>.</p>`,
       },
       {
         h2: 'Plans that work well on your own',
@@ -817,7 +817,7 @@ export const ARTICLES = [
       {
         h2: 'Pourquoi c’est gênant au début, et pourquoi ça passe',
         html: `<p>La gêne est surtout dans ta tête : tu te remarques bien plus que les autres ne te remarquent. La plupart des gens autour de toi sont occupés par leur propre soirée. Et ça s’efface avec l’habitude. Le premier dîner seul paraît long ; le troisième devient un moment pour toi.</p>
-<p>Dans une ville où tant de gens sont arrivés seuls, tu es rarement la seule personne seule, surtout aux cours, aux séances de sport et aux événements de communauté.</p>`,
+<p>Dans une ville où tant de gens sont arrivés seuls, tu es rarement la seule personne seule, surtout aux cours, aux séances de sport et aux événements de communauté. Si sortir seul te fait plus peur que cela ne te gêne, lis <a href="../../blog/anxiete-sociale-nouvelle-ville-petits-pas/">anxiété sociale dans une nouvelle ville : les petits pas qui aident</a>.</p>`,
       },
       {
         h2: 'Les sorties qui marchent bien en solo',

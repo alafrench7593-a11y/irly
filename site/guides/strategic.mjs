@@ -214,7 +214,7 @@ export const STRATEGIC = [
       {
         h2: 'Friendship app or dating app: the difference',
         html: `<p>The difference is less about features than about expectations. On a dating app, each person is looking for a partner, conversations are one-to-one, and a meeting is a date. On a friendship app, people come to do things together, often in groups, and nobody has to wonder what a message means.</p>
-<p>A friends mode inside a dating app can work, and some people do make friends that way. But if what you want is a circle rather than a single new contact, tools built around groups and activities are usually a shorter path. Whatever you use, say clearly what you are looking for on your profile and in your first message. It saves misunderstandings on both sides.</p>`,
+<p>A friends mode inside a dating app can work, and some people do make friends that way. But if what you want is a circle rather than a single new contact, tools built around groups and activities are usually a shorter path. Whatever you use, say clearly what you are looking for on your profile and in your first message. It saves misunderstandings on both sides. <a href="../../blog/single-in-dubai-friends-not-dates/">Single in Dubai and looking for friends, not dates</a> goes further on this.</p>`,
       },
       {
         h2: 'Getting from the app to real life',
@@ -298,7 +298,7 @@ export const STRATEGIC = [
       {
         h2: 'Application d’amitié ou application de rencontres : la différence',
         html: `<p>La différence tient moins aux fonctions qu’aux attentes. Sur une appli de rencontres, chacun cherche un ou une partenaire, les conversations sont à deux, et se voir est un rendez-vous. Sur une appli d’amitié, on vient pour faire des choses ensemble, souvent à plusieurs, et personne n’a à se demander ce que veut dire un message.</p>
-<p>Le mode amis d’une appli de rencontres peut marcher, et certaines personnes s’y font de vrais amis. Mais si tu cherches un cercle plutôt qu’un seul nouveau contact, les outils construits autour des groupes et des activités sont en général un chemin plus court. Quel que soit ton choix, écris clairement ce que tu cherches, sur ton profil comme dans ton premier message. Ça évite les malentendus des deux côtés.</p>`,
+<p>Le mode amis d’une appli de rencontres peut marcher, et certaines personnes s’y font de vrais amis. Mais si tu cherches un cercle plutôt qu’un seul nouveau contact, les outils construits autour des groupes et des activités sont en général un chemin plus court. Quel que soit ton choix, écris clairement ce que tu cherches, sur ton profil comme dans ton premier message. Ça évite les malentendus des deux côtés. <a href="../../blog/celibataire-dubai-amis-pas-rencontres/">Célibataire à Dubaï : des amis, pas une relation</a> approfondit ce point.</p>`,
       },
       {
         h2: 'Passer de l’appli à la vraie vie',
@@ -782,7 +782,7 @@ export const STRATEGIC = [
 <li><strong>Suggest a small plan.</strong> A coffee with two or three people after the meeting, or the same activity next week.</li>
 <li><strong>Move to one-to-one.</strong> A community gives you acquaintances; a friend is someone you also see outside it.</li>
 </ol>
-<p>The complete method is in <a href="../make-friends/">how to make friends in Dubai</a>.</p>`,
+<p>The complete method is in <a href="../make-friends/">how to make friends in Dubai</a>. People also leave; <a href="../../blog/friends-leaving-dubai-starting-again/">when your friends leave Dubai</a> covers that moment.</p>`,
       },
       {
         h2: 'Where IRLY fits in',
@@ -865,7 +865,7 @@ export const STRATEGIC = [
 <li><strong>Propose un petit plan.</strong> Un café à deux ou trois après la rencontre, ou la même activité la semaine suivante.</li>
 <li><strong>Passe au tête-à-tête.</strong> Une communauté te donne des connaissances ; un ami, c’est quelqu’un que tu vois aussi en dehors.</li>
 </ol>
-<p>La méthode complète est dans <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a>.</p>`,
+<p>La méthode complète est dans <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a>. Des gens repartent aussi ; <a href="../../blog/amis-qui-quittent-dubai-recommencer/">quand tes amis quittent Dubaï</a> traite ce moment.</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça ?',

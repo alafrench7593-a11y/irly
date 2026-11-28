@@ -530,7 +530,7 @@ export const POSTS = [
       {
         h2: 'What to do about shared friends',
         html: `<p>If most of your friends were shared, you do not have to choose sides or step away from everyone. Write to the people you feel close to and say it simply: “I would like to keep seeing you, on my own.” Suggest something small and one to one, where nobody has to manage the two of you in the same room.</p>
-<p>Some will drift, and a few may stay closer to your former partner. That is not a verdict on you. Avoid asking friends to carry messages or report back; it puts them in the middle and can cost the friendship. Meanwhile, the circles you build yourself will give you people who know you on your own terms.</p>`,
+<p>Some will drift, and a few may stay closer to your former partner. That is not a verdict on you. Avoid asking friends to carry messages or report back; it puts them in the middle and can cost the friendship. Meanwhile, the circles you build yourself will give you people who know you on your own terms. And if you want friends rather than dates for now, see <a href="../single-in-dubai-friends-not-dates/">single in Dubai and looking for friends, not dates</a>.</p>`,
       },
       {
         h2: 'Rebuild a week that is yours',
@@ -598,7 +598,7 @@ export const POSTS = [
       {
         h2: 'Et les amis communs ?',
         html: `<p>Si la plupart de tes amis étaient communs, tu n’as pas à choisir un camp ni à t’éloigner de tout le monde. Écris aux personnes dont tu te sens proche et dis-le simplement : « J’aimerais continuer à te voir, de mon côté. » Propose quelque chose de petit, en tête-à-tête, où personne n’a à gérer votre présence à tous les deux dans la même pièce.</p>
-<p>Certains s’éloigneront, et quelques-uns resteront plus proches de ton ex. Ce n’est pas un verdict sur toi. Évite de demander à des amis de transmettre des messages ou de te rapporter des nouvelles : cela les met au milieu et peut coûter l’amitié. Pendant ce temps, les cercles que tu construis toi-même t’apporteront des personnes qui te connaissent pour toi.</p>`,
+<p>Certains s’éloigneront, et quelques-uns resteront plus proches de ton ex. Ce n’est pas un verdict sur toi. Évite de demander à des amis de transmettre des messages ou de te rapporter des nouvelles : cela les met au milieu et peut coûter l’amitié. Pendant ce temps, les cercles que tu construis toi-même t’apporteront des personnes qui te connaissent pour toi. Et si tu veux des amis plutôt qu’une relation pour l’instant, lis <a href="../celibataire-dubai-amis-pas-rencontres/">célibataire à Dubaï : des amis, pas une relation</a>.</p>`,
       },
       {
         h2: 'Reconstruis une semaine à toi',
@@ -753,7 +753,7 @@ export const POSTS = [
       },
       {
         h2: 'Say clearly that you are looking for friends',
-        html: `<p>In your 30s, saying “I’m fairly new here and trying to meet people” is not strange; many people will relate. Being direct saves time and makes it easier for others to invite you. When you get along with someone, suggest a specific plan with a day and a time rather than “we should meet up sometime”. Before you leave, agree on the next one: busy people keep what is in their calendar.</p>`,
+        html: `<p>In your 30s, saying “I’m fairly new here and trying to meet people” is not strange; many people will relate. Being direct saves time and makes it easier for others to invite you. When you get along with someone, suggest a specific plan with a day and a time rather than “we should meet up sometime”. Before you leave, agree on the next one: busy people keep what is in their calendar. If you are single and people assume you are looking for a date, <a href="../single-in-dubai-friends-not-dates/">single in Dubai and looking for friends, not dates</a> has wording for that.</p>`,
       },
       {
         h2: 'Mix ages and life stages',
@@ -796,7 +796,7 @@ export const POSTS = [
       },
       {
         h2: 'Dis clairement que tu cherches des amis',
-        html: `<p>Dans la trentaine, dire « Je suis arrivé(e) il y a peu et j’essaie de rencontrer du monde » n’a rien de bizarre : beaucoup s’y reconnaîtront. Être direct fait gagner du temps et aide les autres à t’inviter. Quand le courant passe avec quelqu’un, propose un plan précis, avec un jour et une heure, plutôt qu’un « faudrait qu’on se voie un de ces jours ». Avant de vous quitter, cale le suivant : les gens occupés gardent ce qui est dans leur agenda.</p>`,
+        html: `<p>Dans la trentaine, dire « Je suis arrivé(e) il y a peu et j’essaie de rencontrer du monde » n’a rien de bizarre : beaucoup s’y reconnaîtront. Être direct fait gagner du temps et aide les autres à t’inviter. Quand le courant passe avec quelqu’un, propose un plan précis, avec un jour et une heure, plutôt qu’un « faudrait qu’on se voie un de ces jours ». Avant de vous quitter, cale le suivant : les gens occupés gardent ce qui est dans leur agenda. Si tu es célibataire et qu’on suppose que tu cherches une relation, <a href="../celibataire-dubai-amis-pas-rencontres/">célibataire à Dubaï : des amis, pas une relation</a> propose des formulations.</p>`,
       },
       {
         h2: 'Mélange les âges et les étapes de vie',
@@ -1315,7 +1315,7 @@ export const POSTS = [
       },
       {
         h2: 'Leave on a good note',
-        html: `<p>A conversation that ends well is easier to restart. Close it simply: “Nice talking to you, I’m Lina by the way. See you next week?” Saying your name and mentioning the next session gives you both an easy opening next time. If you clicked, you can suggest something small right away, like a coffee after the next session. Keep first plans in public places and share your number when you feel ready. For more on going alone, read <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>, and for what comes after a few good chats, <a href="../gym-class-acquaintance-to-friend/">how to turn a class acquaintance into a friend</a>. If social situations make you anxious most of the time, talking to a mental health professional can help; it is a normal step.</p>`,
+        html: `<p>A conversation that ends well is easier to restart. Close it simply: “Nice talking to you, I’m Lina by the way. See you next week?” Saying your name and mentioning the next session gives you both an easy opening next time. If you clicked, you can suggest something small right away, like a coffee after the next session. Keep first plans in public places and share your number when you feel ready. For more on going alone, read <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>, and for what comes after a few good chats, <a href="../gym-class-acquaintance-to-friend/">how to turn a class acquaintance into a friend</a>. If social situations make you anxious most of the time, talking to a mental health professional can help; it is a normal step. <a href="../social-anxiety-new-city-small-steps/">Social anxiety in a new city</a> gives small steps to take alongside that support.</p>`,
       },
     ],
     cta: { title: 'Want an easy place to start?', body: 'Join a small activity where conversation comes naturally, with people who want to meet too, in real life.', label: 'Find an activity' },
@@ -1360,7 +1360,7 @@ export const POSTS = [
       },
       {
         h2: 'Termine sur une bonne note',
-        html: `<p>Une conversation qui finit bien est plus facile à reprendre. Conclus simplement : « Ravie d’avoir discuté avec toi, moi c’est Lina, au fait. À la semaine prochaine ? » Donner ton prénom et évoquer la prochaine séance vous donne à tous les deux une façon simple de reprendre la conversation la prochaine fois. Si le courant est passé, tu peux proposer tout de suite quelque chose de simple, comme un café après la prochaine séance. Garde les premiers rendez-vous dans des lieux publics et donne ton numéro quand tu te sens prêt. Si tu y vas seul, lis notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> et, pour la suite après quelques bonnes discussions, <a href="../connaissance-sport-cours-devenir-ami/">comment faire d’une connaissance de cours un ami</a>. Si les situations sociales t’angoissent la plupart du temps, en parler à un professionnel de santé mentale peut aider : c’est une démarche normale.</p>`,
+        html: `<p>Une conversation qui finit bien est plus facile à reprendre. Conclus simplement : « Ravie d’avoir discuté avec toi, moi c’est Lina, au fait. À la semaine prochaine ? » Donner ton prénom et évoquer la prochaine séance vous donne à tous les deux une façon simple de reprendre la conversation la prochaine fois. Si le courant est passé, tu peux proposer tout de suite quelque chose de simple, comme un café après la prochaine séance. Garde les premiers rendez-vous dans des lieux publics et donne ton numéro quand tu te sens prêt. Si tu y vas seul, lis notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> et, pour la suite après quelques bonnes discussions, <a href="../connaissance-sport-cours-devenir-ami/">comment faire d’une connaissance de cours un ami</a>. Si les situations sociales t’angoissent la plupart du temps, en parler à un professionnel de santé mentale peut aider : c’est une démarche normale. <a href="../anxiete-sociale-nouvelle-ville-petits-pas/">Anxiété sociale dans une nouvelle ville</a> propose des petits pas à faire en parallèle de cet accompagnement.</p>`,
       },
     ],
     cta: { title: 'Envie d’un endroit facile pour commencer ?', body: 'Rejoins une petite activité où la conversation vient naturellement, avec des gens qui veulent aussi se rencontrer, en vrai.', label: 'Trouver une activité' },
@@ -1478,7 +1478,7 @@ export const POSTS = [
     sections: [
       {
         h2: 'Why it happens',
-        html: `<p>Being surrounded and being connected are two different things. Many conversations stay at the surface: work, plans, the weather, where to eat. They are pleasant, but nobody learns how you are really doing. In a city where people arrive and leave often, it is common to know many people a little and nobody well. Add a new job, a different language at work or friends in another time zone, and you can spend whole days talking without feeling heard. This does not mean something is wrong with you, or with the people around you.</p>`,
+        html: `<p>Being surrounded and being connected are two different things. Many conversations stay at the surface: work, plans, the weather, where to eat. They are pleasant, but nobody learns how you are really doing. In a city where people arrive and leave often, it is common to know many people a little and nobody well. Add a new job, a different language at work or friends in another time zone, and you can spend whole days talking without feeling heard. This does not mean something is wrong with you, or with the people around you. If it is because close friends have moved away, read <a href="../friends-leaving-dubai-starting-again/">when your friends leave Dubai</a>.</p>`,
       },
       {
         h2: 'Work out what is missing',
@@ -1523,7 +1523,7 @@ export const POSTS = [
     sections: [
       {
         h2: 'Pourquoi ça arrive',
-        html: `<p>Être entouré et être vraiment en lien avec quelqu’un, ce n’est pas la même chose. Beaucoup de conversations restent en surface : le travail, les projets, la météo, où manger. Elles sont agréables, mais personne n’apprend comment tu vas vraiment. Dans une ville où les gens arrivent et repartent souvent, il est courant de connaître un peu beaucoup de monde, et vraiment personne. Ajoute un nouveau poste, une autre langue au travail ou des amis sur un autre fuseau horaire, et tu peux passer des journées entières à parler sans te sentir entendu. Ça ne veut pas dire que quelque chose cloche chez toi, ni chez les gens qui t’entourent.</p>`,
+        html: `<p>Être entouré et être vraiment en lien avec quelqu’un, ce n’est pas la même chose. Beaucoup de conversations restent en surface : le travail, les projets, la météo, où manger. Elles sont agréables, mais personne n’apprend comment tu vas vraiment. Dans une ville où les gens arrivent et repartent souvent, il est courant de connaître un peu beaucoup de monde, et vraiment personne. Ajoute un nouveau poste, une autre langue au travail ou des amis sur un autre fuseau horaire, et tu peux passer des journées entières à parler sans te sentir entendu. Ça ne veut pas dire que quelque chose cloche chez toi, ni chez les gens qui t’entourent. Si c’est parce que tes amis proches sont partis, lis <a href="../amis-qui-quittent-dubai-recommencer/">quand tes amis quittent Dubaï</a>.</p>`,
       },
       {
         h2: 'Trouve ce qui manque',
@@ -1727,7 +1727,7 @@ export const POSTS = [
       {
         h2: 'What changes between June and September',
         html: `<p>Two things happen at once. The heat and humidity take away most of what was easy in winter: the beach walk, the terrace, the picnic, the outdoor run at a civilised hour. And a good part of your circle leaves, some for a fortnight, some for most of the season, especially families once school is out.</p>
-<p>Group chats go quiet, regular sessions pause or shrink, and a plan that used to gather six people now has two. It can feel as if the city has emptied. It has not: plenty of people stay, for work or by choice, and many of them are looking at the same blank calendar. Summer is less a dead season than a smaller one, and small groups are where acquaintances turn into friends.</p>`,
+<p>Group chats go quiet, regular sessions pause or shrink, and a plan that used to gather six people now has two. It can feel as if the city has emptied. It has not: plenty of people stay, for work or by choice, and many of them are looking at the same blank calendar. Summer is less a dead season than a smaller one, and small groups are where acquaintances turn into friends. If the people who left are not coming back, <a href="../friends-leaving-dubai-starting-again/">when your friends leave Dubai</a> is about starting again.</p>`,
       },
       {
         h2: 'Find out who is staying, before everyone scatters',
@@ -1802,7 +1802,7 @@ export const POSTS = [
       {
         h2: 'Ce qui change entre juin et septembre',
         html: `<p>Deux choses arrivent en même temps. La chaleur et l’humidité retirent presque tout ce qui était simple en hiver : la balade sur la plage, la terrasse, le pique-nique, le footing à une heure raisonnable. Et une bonne partie de ton cercle s’en va, pour quinze jours ou pour presque toute la saison, surtout les familles une fois l’école finie.</p>
-<p>Les groupes de discussion se taisent, les séances régulières s’arrêtent ou se réduisent, et le plan qui réunissait six personnes n’en compte plus que deux. On croit la ville vidée. Elle ne l’est pas : beaucoup de gens restent, pour le travail ou par choix, et regardent le même agenda désert. L’été n’est pas une saison morte, c’est une saison en petit comité, et c’est en petit comité que les connaissances deviennent des amis.</p>`,
+<p>Les groupes de discussion se taisent, les séances régulières s’arrêtent ou se réduisent, et le plan qui réunissait six personnes n’en compte plus que deux. On croit la ville vidée. Elle ne l’est pas : beaucoup de gens restent, pour le travail ou par choix, et regardent le même agenda désert. L’été n’est pas une saison morte, c’est une saison en petit comité, et c’est en petit comité que les connaissances deviennent des amis. Si ceux qui sont partis ne reviennent pas, <a href="../amis-qui-quittent-dubai-recommencer/">quand tes amis quittent Dubaï</a> parle de recommencer.</p>`,
       },
       {
         h2: 'Repère qui reste, avant que tout le monde se disperse',
